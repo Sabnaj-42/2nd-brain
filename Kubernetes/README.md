@@ -16,3 +16,10 @@ How It Works in the Control Plane
 - The apiserver writes the new object’s data into etcd.
 - The controllers and schedulers read from etcd to take action (like creating Pods).
 - The cluster’s current state is always synced with the desired state stored in etcd.
+
+### Pod anti-Affinity:
+- Pod anti-affinity is a Kubernetes scheduling rule that tells the scheduler not to place certain Pods together on the same node (or even in the same zone or rack).
+- Its primary purpose is to ensure that certain pods are not co-located on the same node or within the same failure domain (like an availability zone or region), thereby enhancing fault tolerance and resilience.
+- Let's assume, we have three replica(web-0, web-1, web-2) of our web app. Without anti-affinity, kubernetes might schedule all three on the same node- it there's enough CPU and memory. In that case, it the node fails -> all three Pods fo down.
+- Anti-affinity is done by using level-selector
+
