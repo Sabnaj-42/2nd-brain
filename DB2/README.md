@@ -1,5 +1,7 @@
-## DB2 Resources
+## DB2 Resources Link
 - pdf pages: https://www.ibm.com/support/pages/node/627743
+- DB2 sync: https://ibm.github.io/db2-hadr-wiki/hadrSyncMode.html
+- Setting up the HADR configuration for Db2: https://www.ibm.com/docs/en/software-hub/5.1.x?topic=scripts-setting-up-hadr-configuration
 
 
 
@@ -43,3 +45,10 @@ Four available method of setting up an etcd store for HADR:
 
 ## DB2 automated failover (using Governor mechanism)
 - Automated failover is only supported between the primary and principal standby, so a single etcd endpoint must be shared between the two deployments
+
+## To set up HADR, follow these steps:
+Procedure:
+1. Set up HADR by using the setup_config_hadr script on the primary database pod. 
+2. Copy the database backup image and keystore file in the backup storage area (/mnt/backup/) from the primary database to the standby database or databases by using rsync. <br>
+**Note:** If the backup volume is shared between the primary and standby databases, you can skip this step.
+3. Set up HADR by using the setup_config_hadr script on each standby database pod.
