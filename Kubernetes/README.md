@@ -17,20 +17,20 @@ How It Works in the Control Plane
 - The controllers and schedulers read from etcd to take action (like creating Pods).
 - The cluster’s current state is always synced with the desired state stored in etcd.
 
-### Pod anti-Affinity:
+## Pod anti-Affinity:
 - Pod anti-affinity is a Kubernetes scheduling rule that tells the scheduler not to place certain Pods together on the same node (or even in the same zone or rack).
 - Its primary purpose is to ensure that certain pods are not co-located on the same node or within the same failure domain (like an availability zone or region), thereby enhancing fault tolerance and resilience.
 - Let's assume, we have three replica(web-0, web-1, web-2) of our web app. Without anti-affinity, kubernetes might schedule all three on the same node- it there's enough CPU and memory. In that case, it the node fails -> all three Pods fo down.
 - Anti-affinity is done by using level-selector
 
-### Sidecar container
+## Sidecar container
 A sidecar container is a helper container that runs alongside the main container in the same Pod in Kubernetes.
 Both share:
 - The same IP address and port space
 - The same volumes
 - The same start and stop lifecycle
 
-### Service
+## Service
 In Kubernetes, a Service is an abstraction that defines a stable network endpoint (IP address and DNS name) to access a group of Pods running the same application. Expose Pods (your applicaiton) to other parts of the cluster or to the outside world. Provides a fixed IP and DNS name, even if underlying Pods change. 
 ``` 
 apiVersion: v1
