@@ -48,6 +48,14 @@ spec:
 
 ```
 This Service sends traffic to all Pods labeled app=my-app on port 8080, and exposes them inside the cluster on port 80.
+Types of Service:
+1. ClusterIP: Default; exposes the Service only within the cluster - Inside cluster
+2. NodePort: Expose the Service on each node's IP at a static port - Inside and ouside cluster (via Node Ip:Port)
+3. LoadBalancer: Integrates with cloud provider load balancers - Outside cluster
+4. ExternalName: Maps the Service to an external DNS name - Outside service (DNS only)
+
+### Cluster Ip Service:
+
 
 
 
