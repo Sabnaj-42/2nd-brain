@@ -23,3 +23,31 @@ How It Works in the Control Plane
 - Let's assume, we have three replica(web-0, web-1, web-2) of our web app. Without anti-affinity, kubernetes might schedule all three on the same node- it there's enough CPU and memory. In that case, it the node fails -> all three Pods fo down.
 - Anti-affinity is done by using level-selector
 
+### Sidecar container
+A sidecar container is a helper container that runs alongside the main container in the same Pod in Kubernetes.
+Both share:
+- The same IP address and port space
+- The same volumes
+- The same start and stop lifecycle
+
+### Service
+In Kubernetes, a Service is an abstraction that defines a stable network endpoint (IP address and DNS name) to access a group of Pods running the same application. Expose Pods (your applicaiton) to other parts of the cluster or to the outside world. Provides a fixed IP and DNS name, even if underlying Pods change. 
+``` 
+apiVersion: v1
+kind: Service
+metadata:
+  name: my-app-service
+spec:
+  selector:
+    app: my-app           # Selects Pods with label "app=my-app"
+  ports:
+    - protocol: TCP
+      port: 80            # Service port
+      targetPort: 8080    # Container port
+  type: ClusterIP         # Service type
+
+```
+This Service sends traffic to all Pods labeled app=my-app on port 8080, and exposes them inside the cluster on port 80.
+
+
+
