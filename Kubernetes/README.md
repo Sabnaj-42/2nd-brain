@@ -262,5 +262,85 @@ Pods (port 8080)
 ** NodePort Service is an extension of ClusterIP service <br>
 ** LoadBalancer Service is an extension of NodePort Service
 
+## Ingress
+In Kubernetes, an Ingress is an API object that manages external access to services within a cluster, typically HTTP and HTTPS traffic. It provides routing rules to direct incoming requests to the appropriate services based on hostnames, paths, or other criteria.
+***Ingress Controller:***
+- Kubernetes doesn't implement ingress routing itself
+- We must deploy an Ingress controller in the cluster (many ingress controllers are available, we need to install them in the cluster)
+- The controller watches Ingress objects and configures a load balancer or reverse proxy accordingly.
+Example Yaml:
+```yaml
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: my-ingress
+spec:
+  rules:
+    - host: example.com
+      http:
+        paths:
+          - path: /app1
+            pathType: Prefix
+            backend:
+              service:
+                name: app1-service
+                port:
+                  number: 80
+          - path: /app2
+            pathType: Prefix
+            backend:
+              service:
+                name: app2-service
+                port:
+                  number: 80
+```
+How it works:
+```
+Client (browser)
+   |
+   v
+Ingress Controller (e.g., NGINX)
+   |
+   |-- /app1 --> app1-service --> Pods
+   |
+   |-- /app2 --> app2-service --> Pods
 
+```
+***Note:***
+- A single Ingress can route traffic to multiple services.
+- To make it work, you must have an Ingress Controller deployed in the cluster.
 
+## Gateway API
+
+## Network Policy
+A NetworkPolicy in Kubernetes is a resource that controls how pods communicate with each other and with other network endpoints.
+- By default — all pods can talk to each other freely in a Kubernetes cluster.
+- Once you create a NetworkPolicy, traffic is DENIED by default unless explicitly allowed by the policy.
+***Basic Structure:***
+- Pod selector → which pods the policy applies to
+- Ingress rules → who can send traffic to those pods
+- Egress rules → who those pods can send traffic to
+
+```yaml
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-frontend-to-backend
+spec:
+  podSelector:
+    matchLabels:
+      app: backend     # Policy applies to backend pods
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              app: frontend   # Only frontend pods can access backend
+      ports:
+        - protocol: TCP
+          port: 80
+```
+- This policy applies to pods labeled app=backend.
+- Only pods labeled app=frontend are allowed to connect to them on port 80.
+- All other pods are blocked.
