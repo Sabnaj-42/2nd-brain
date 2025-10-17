@@ -257,6 +257,8 @@ Pods (port 8080)
 
 ```
 ***Note:*** LoadBalancer service Only works in cloud environments that support external load balancers.<br>
+
+
 ** NodePort Service is an extension of ClusterIP service <br>
 ** LoadBalancer Service is an extension of NodePort Service
 
