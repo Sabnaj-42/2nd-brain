@@ -32,7 +32,7 @@ Both share:
 
 ## Service
 In Kubernetes, a Service is an abstraction that defines a stable network endpoint (IP address and DNS name) to access a group of Pods running the same application. Expose Pods (your applicaiton) to other parts of the cluster or to the outside world. Provides a fixed IP and DNS name, even if underlying Pods change. 
-``` 
+``` yaml
 apiVersion: v1
 kind: Service
 metadata:
@@ -55,6 +55,98 @@ Types of Service:
 4. ExternalName: Maps the Service to an external DNS name - Outside service (DNS only)
 
 ### Cluster Ip Service:
+## Kubernetes Example: Ingress + Service + Deployment
+
+Below is a complete YAML example showing how Ingress, Service, and Deployment work together in Kubernetes:
+
+```yaml
+# ---------------------------------------------
+# 1️⃣ Deployment: Runs the application Pods
+# ---------------------------------------------
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: myapp-deployment
+  labels:
+    app: myapp
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: myapp               # Matches Pod label
+  template:
+    metadata:
+      labels:
+        app: myapp             # Pod label
+    spec:
+      containers:
+        - name: myapp-container
+          image: nginx           # Example application
+          ports:
+            - containerPort: 8080  # Application listens on 8080 inside the Pod
+
+---
+# ---------------------------------------------
+# 2️⃣ Service: Exposes the Pods inside cluster
+# ---------------------------------------------
+apiVersion: v1
+kind: Service
+metadata:
+  name: myapp-service
+  labels:
+    app: myapp
+spec:
+  selector:
+    app: myapp                 # Matches Deployment's Pod label
+  ports:
+    - name: http
+      port: 80                   # Service exposed port (ClusterIP port)
+      targetPort: 8080           # Pod's container port
+  type: ClusterIP              # Internal cluster access only
+
+---
+# ---------------------------------------------
+# 3️⃣ Ingress: Exposes the Service externally
+# ---------------------------------------------
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: myapp-ingress
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /
+spec:
+  rules:
+    - host: myapp.example.com     # Replace with your domain
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: myapp-service # Connects to Service name
+                port:
+                  number: 80        # Matches Service's port (not Pod port)
+
+```
+Flow Diagram:
+```
+Client (browser)
+   ↓
+Ingress (port 80)
+   ↓
+Service (port 80 → targetPort 8080)
+   ↓
+Pod (containerPort 8080)
+
+```
+
+Let's assume we have three replica of a pod and they are deploy in three different node. Then each pod will have different IP but the same port number. When client try to access the application, the service will choose a pod randomly using the label selector. In the pod it will select exact container using the port.
+Here is the diagram how it works:
+![Cluster IP Service workflow](../images/ClusterIpService.png)
+
+
+
+
 
 
 
