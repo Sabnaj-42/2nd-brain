@@ -140,7 +140,7 @@ Pod (containerPort 8080)
 
 ```
 
-Let's assume we have three replica of a pod and they are deploy in three different node. Then each pod will have different IP but the same port number. When client try to access the application, the service will choose a pod randomly using the label selector. In the pod it will select exact container using the port.
+Let's assume we have three replica of a pod and they are deploy in three different node. Then each pod will have different IP but the same port number. When client try to access the application, the service will choose a pod randomly using the label selector. In the pod it will select exact container using the port. <br>
 Here is the diagram how it works:
 ![Cluster IP Service workflow](../images/ClusterIpService.png)
 
