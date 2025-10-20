@@ -2,7 +2,7 @@
 - pdf pages: https://www.ibm.com/support/pages/node/627743
 - DB2 sync: https://ibm.github.io/db2-hadr-wiki/hadrSyncMode.html
 - Setting up the HADR configuration for Db2: https://www.ibm.com/docs/en/software-hub/5.1.x?topic=scripts-setting-up-hadr-configuration
-
+- some important files: https://www.dropbox.com/scl/fo/64d3i8fa6uihqjzs7553i/AGzviDu1yQzfhphYaqu2NsE?rlkey=jipqxr3yi51it9m1ax5mc69hn&e=1&dl=0
 
 
 ## DB2 POC
@@ -52,3 +52,58 @@ Procedure:
 2. Copy the database backup image and keystore file in the backup storage area (/mnt/backup/) from the primary database to the standby database or databases by using rsync. <br>
 **Note:** If the backup volume is shared between the primary and standby databases, you can skip this step.
 3. Set up HADR by using the setup_config_hadr script on each standby database pod.
+
+## Nodegroup in DB2
+A nodegroup is basically a logical grouping of one or more database partitions.
+
+Each database partition(or node) is like a separate DB2 process managing a piece of the data.
+- When we create a table, we specify which nodegroup it belongs to.
+- That means DB2 knows which partitions should store and manage that table’s data.
+
+### Data Partitioning
+When you put a table in a multi-partition nodegroup, DB2 splits (partitions) the table’s data across all those nodes using a partitioning key (a column or columns you define).
+This means:
+- Each partition stores a portion of the table’s rows.
+- DB2 automatically routes queries to the correct partitions.
+- It helps with parallel processing and performance for large datasets.
+
+### Why Use Nodegroups?
+1. Performance & Scalability:
+Distribute large tables across multiple nodes for parallel query execution.
+2. Workload Isolation:
+Separate reporting data and transactional data into different nodegroups.
+3. Storage Management:
+Assign specific tables to nodes with more storage or computing power.
+
+***In Summary:***<br>
+***Database Partition(Node):*** A physical or logical DB2 process holding a slice of data<br>
+***NodeGroup:*** A named collection of one or more database partitions<br>
+***Multi-Partition Nodegroup:*** Nodegroup containing 2+ partitions<br>
+***Table-to-Nodegroup Mapping:*** Determines where a table's data physically resides<br>
+
+## DB2 Parallelism
+DB2 can work in a parallel, multi-node environment, database is not confined to a single machine or CPU — it can be split and processed across multiple nodes (servers or processors). Each node handles part of the data and works together to make the whole database faster and more scalable.
+Core Components: Database partition, Node/Nodegroup, Coordinator Node <br>
+***Coordinator Node:*** The partition where a user or application connects. It coordinates the SQL request and gathers results from all nodes.
+
+### Multi-Partition (Parallel) Database
+When you have two or more database partitions, DB2 can distribute data and workload among them.
+```
++-------------+       +-------------+       +-------------+
+| Partition 1 |       | Partition 2 |       | Partition 3 |
+|  Data: A–H  |       |  Data: I–P  |       |  Data: Q–Z  |
++-------------+       +-------------+       +-------------+
+
+```
+- Each partition holds a subset of the table's rows
+- A nodegroup defines which partition the table used
+- DB2 can process queries in parallel, using multiple CPUs/Nodes simultaneously.
+
+### Parallel Query Execution
+When a query runs (e.g., SELECT * FROM customers WHERE region='Asia'):
+1. The application connects to one database partition (the coordinator node).
+2. The coordinator breaks the query into sub-queries — one for each relevant partition.
+3. Each partition executes its part of the query using its local data.
+4. The coordinator combines the results and returns them to the user.<br>
+
+All this is transparent — users write normal SQL and DB2 handles the parallelism automatically.
