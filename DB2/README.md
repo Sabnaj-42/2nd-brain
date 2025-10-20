@@ -3,7 +3,8 @@
 - DB2 sync: https://ibm.github.io/db2-hadr-wiki/hadrSyncMode.html
 - Setting up the HADR configuration for Db2: https://www.ibm.com/docs/en/software-hub/5.1.x?topic=scripts-setting-up-hadr-configuration
 - some important files: https://www.dropbox.com/scl/fo/64d3i8fa6uihqjzs7553i/AGzviDu1yQzfhphYaqu2NsE?rlkey=jipqxr3yi51it9m1ax5mc69hn&e=1&dl=0
-
+- learn MLN: https://www1.columbia.edu/sec/acis/db2/db2d0/db2d006.htm
+- mem-scaling: https://www.ibm.com/docs/en/db2/11.5.x?topic=ad-scaling-up-db2
 
 ## HADR-High Availability Disaster Recovery
 HADR 4 mode: Sync, Nearsync, Async, Supersync
