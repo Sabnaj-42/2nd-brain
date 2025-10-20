@@ -5,9 +5,7 @@
 - some important files: https://www.dropbox.com/scl/fo/64d3i8fa6uihqjzs7553i/AGzviDu1yQzfhphYaqu2NsE?rlkey=jipqxr3yi51it9m1ax5mc69hn&e=1&dl=0
 
 
-## DB2 POC
-
-### HADR-High Availability Disaster Recovery
+## HADR-High Availability Disaster Recovery
 HADR 4 mode: Sync, Nearsync, Async, Supersync
 
 **SYNC :** Highest protection | Slowest performance
