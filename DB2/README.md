@@ -6,8 +6,34 @@
 - learn MLN: https://www1.columbia.edu/sec/acis/db2/db2d0/db2d006.htm
 - mem-scaling: https://www.ibm.com/docs/en/db2/11.5.x?topic=ad-scaling-up-db2
 - pre-requisite of hadr: https://www.ibm.com/docs/en/db2/11.5.x?topic=dhadrh-prerequisites-configuring-hadr
+- deploy db2 wh: https://www.ibm.com/docs/en/db2-warehouse?topic=resource-deploying-db2-warehouse-using-db2uinstance-custom
+- deploy db2: https://www.ibm.com/docs/en/db2/11.5.x?topic=resource-deploying-db2-using-db2ucluster-custom
+- deploying db2 k8s: https://www.linkedin.com/pulse/deploying-db2-ibm-cloud-rashmi-s-pai
+- db2 hadr: https://www.ibm.com/docs/en/db2/11.5.x?topic=server-high-availability-disaster-recovery-hadr
 
 ## HADR-High Availability Disaster Recovery
+HADR (High Availability Disaster Recovery) in Db2 is a built-in feature that provides data protection, high availability, and disaster recovery for your database.<br>
+HADR allows a Db2 database to automatically replicate data changes from a primary database (the main one handling user requests) to one or more(up to 3 standby) standby databases (copies kept in sync).<br>
+If the primary database fails, one of the standby databases can take over and become the new primary — keeping your application online with minimal downtime and little or no data loss.
+1. Primary Database:
+  - Handles all reads and writes operation
+  - continuously sends transaction logs to the standby database
+2. Standby Database
+   - Receives and replays these logs to stay nearly identical to the primary.
+   - Stays ready to take over if the primary fails.
+3. Failover / Takeover
+   - If the primary crashes or becomes unreachable, the standby automatically takes over as the new primary.
+   -  When the old primary comes back online, it can rejoin as a standby (this is called failback).
+
+### key Features:
+1. Replication: Uses transaction logs to keep standby in sync with primary.
+2. Zero or minimal data loss: Depending on synchronization mode (SYNC, NEARSYNC, ASYNC, SUPERASYNC).
+3. Automatic client reroute (ACR): Clients automatically reconnect to the new primary after failover.
+4. Peer Window: Grace period that allows zero data loss even during temporary disconnections.
+5. Up to 3 standbys: One for high availability (local), others for disaster recovery (remote).
+6. Pacemaker Integration: From Db2 11.5.4+, Pacemaker can automate failover decisions.
+
+## HADR Synchronization mode
 HADR 4 mode: Sync, Nearsync, Async, Supersync
 
 **SYNC :** Highest protection | Slowest performance
