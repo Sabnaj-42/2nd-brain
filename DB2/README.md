@@ -10,6 +10,10 @@
 - deploy db2: https://www.ibm.com/docs/en/db2/11.5.x?topic=resource-deploying-db2-using-db2ucluster-custom
 - deploying db2 k8s: https://www.linkedin.com/pulse/deploying-db2-ibm-cloud-rashmi-s-pai
 - db2 hadr: https://www.ibm.com/docs/en/db2/11.5.x?topic=server-high-availability-disaster-recovery-hadr
+- db2 hadr setup not possible issue: https://community.ibm.com/community/user/discussion/need-help-to-set-up-hadr-on-db2-v115-in-docker
+-  https://community.ibm.com/community/user/discussion/how-to-setup-hadr-on-an-already-existing-dockers
+- not completed docker hadr setup: https://freedium.cfd/https://medium.com/@larry.prestosa/db2-hadr-implementation-in-docker-cf0d3a27de16
+- initializing hadr: https://www.ibm.com/docs/en/db2/11.5.x?topic=availability-initializing-hadr
 
 ## HADR-High Availability Disaster Recovery
 HADR (High Availability Disaster Recovery) in Db2 is a built-in feature that provides data protection, high availability, and disaster recovery for your database.<br>
