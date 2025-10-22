@@ -14,7 +14,16 @@
 -  https://community.ibm.com/community/user/discussion/how-to-setup-hadr-on-an-already-existing-dockers
 - not completed docker hadr setup: https://freedium.cfd/https://medium.com/@larry.prestosa/db2-hadr-implementation-in-docker-cf0d3a27de16
 - initializing hadr: https://www.ibm.com/docs/en/db2/11.5.x?topic=availability-initializing-hadr
-
+- hadr multiple standby: https://www.ibm.com/docs/en/db2/11.5.x?topic=solution-hadr-multiple-standby-databases
+- Example: Setting up Db2 HADR in a single OpenShift project: https://www.ibm.com/docs/en/software-hub/5.2.x?topic=suhc-example-setting-up-hadr-in-single-openshift-project
+- data recovery: https://www.ibm.com/docs/en/db2/11.5.x?topic=administration-data-recovery
+- Examples: Takeover in a multiple HADR standby setup: https://www.ibm.com/docs/en/db2/11.5.x?topic=databases-examples-takeover-in-multiple-hadr-standby-setup
+- ibm db2 chart artifacts: https://artifacthub.io/packages/helm/ibm-charts/ibm-db2
+- ibm db2 helm chart: https://github.com/IBM/charts/tree/master/stable/ibm-db2
+- GET DATABASE CONFIGURATION command: https://www.ibm.com/docs/en/db2/11.1.0?topic=commands-get-database-configuration
+- ibm wiki: https://ibm.github.io/db2-hadr-wiki/hadrCommands.html
+- Setting DB2 Configuration Parameters for DB2 HADR Using IBM Tivoli System Automation (TSA) with a Virtual IP Address: https://documentation.commvault.com/11.20/setting_db2_configuration_parameters_for_db2_hadr_using_ibm_tivoli_system_automation_tsa_with_virtual_ip_address.html
+- DB2 AWS: https://docs.aws.amazon.com/prescriptive-guidance/latest/patterns/set-up-disaster-recovery-for-sap-on-ibm-db2-on-aws.html
 ## HADR-High Availability Disaster Recovery
 HADR (High Availability Disaster Recovery) in Db2 is a built-in feature that provides data protection, high availability, and disaster recovery for your database.<br>
 HADR allows a Db2 database to automatically replicate data changes from a primary database (the main one handling user requests) to one or more(up to 3 standby) standby databases (copies kept in sync).<br>
@@ -37,6 +46,9 @@ If the primary database fails, one of the standby databases can take over and be
 5. Up to 3 standbys: One for high availability (local), others for disaster recovery (remote).
 6. Pacemaker Integration: From Db2 11.5.4+, Pacemaker can automate failover decisions.
 
+### HADR multiple standby database
+- IBM Tivoli System Automation for Multiplatforms (SA MP) and Pacemaker automated failover is supported only for the principal standby. You must issue a takeover manually on one of the auxiliary standbys to make one of them the primary.
+- All of the HADR synchronization modes are supported on the principal standby, but the auxiliary standbys can only be in SUPERASYNC mode.
 ## HADR Synchronization mode
 HADR 4 mode: Sync, Nearsync, Async, Supersync
 
