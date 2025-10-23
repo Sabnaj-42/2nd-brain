@@ -37,7 +37,7 @@ If the primary database fails, one of the standby databases can take over and be
 3. Failover / Takeover
    - If the primary crashes or becomes unreachable, the standby automatically takes over as the new primary.
    -  When the old primary comes back online, it can rejoin as a standby (this is called failback).
-
+***Note:*** We can make replica of a specific database in DB2.
 ### key Features:
 1. Replication: Uses transaction logs to keep standby in sync with primary.
 2. Zero or minimal data loss: Depending on synchronization mode (SYNC, NEARSYNC, ASYNC, SUPERASYNC).
