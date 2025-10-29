@@ -39,4 +39,72 @@ Press Tab key to see the available arguments after a command.<br>
 23. export roll=1907042 //set environment variables and make them available to child processes of shell
 24. echo $PATH // show all path variable vlues
 25. which kubectl // show the full path of executable kubectl file (from $PATH variable)
-26. 
+26. file go/   //show the type of go/ file. is it a directory or what kind of file it is
+27. ls -ld go.mod // first character indicate which type of file it is
+
+### System Boot
+28. ls -l /sbin/init   // /sbin/init is the first process started by the Linux kernel during boot — it initializes the system.
+29. systemctl get-default // used on Linux systems with systemd to show the default boot target — that is, what mode or "runlevel" your system boots into by default.
+30. systemctl set-default graphical.target // set the default target graphical. it also can be multi-user.target etc. System will automatically boot into the GUI (desktop environment) on startup.
+
+### Linux root filesystem
+```
+/
+├── bin/                 → Essential user commands
+│   ├── ls
+│   ├── cp
+│   ├── mv
+│   └── bash
+│
+├── boot/                → Bootloader and kernel files
+│   ├── vmlinuz-6.5.0
+│   ├── initrd.img-6.5.0
+│   └── grub/
+│
+├── dev/                 → Device files
+│   ├── sda     (Hard disk)
+│   ├── sda1    (Partition)
+│   ├── null
+│   └── tty
+│
+├── etc/                 → System configuration files
+│   ├── passwd
+│   ├── hostname
+│   ├── fstab
+│   └── ssh/
+│
+├── home/                → User home directories
+│   ├── alice/
+│   └── bob/
+│
+├── lib/                 → Essential shared libraries
+│   ├── libc.so.6
+│   └── systemd/
+│
+├── media/               → Removable media mount points
+│   └── usb/
+│
+├── mnt/                 → Temporary mount point for admin use
+│   └── backup/
+│
+├── opt/                 → Optional add-on applications
+│   └── google/
+│       └── chrome/
+│
+├── tmp/                 → Temporary files (auto-cleared on reboot)
+│   └── temp1234.tmp
+│
+├── usr/                 → User-installed programs and resources
+│   ├── bin/     → Non-essential user commands
+│   ├── lib/     → Libraries for user programs
+│   ├── share/   → Shared data, docs, icons
+│   └── local/   → Locally installed software
+│
+└── var/                 → Variable data (changes frequently)
+    ├── log/     → Log files
+    ├── lib/     → Application data
+    ├── spool/   → Print/mail queues
+    └── cache/   → Cached data
+
+
+```
