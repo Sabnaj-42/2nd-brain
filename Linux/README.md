@@ -1,3 +1,21 @@
+## Kernel+distribution=operating system
+- Linux itself is not an operating system — it’s the kernel.
+- The kernel is the core part of an operating system that talks directly to your computer’s hardware (CPU, memory, disks, etc.) and manages resources.
+- On its own, the Linux kernel isn’t usable — you need additional software, tools, libraries, and a user interface.
+***Linux:*** brain(kernel)
+***Linux Distribution:*** complete body(full operating system). eg: Ubuntu, Fedora, CentOS, Manjaro, Red Hat etc
+
+### Ubuntu:
+Ubuntu is a Linux distribution (a complete operating system built on top of the Linux kernel).
+It includes:
+- the Linux kernel
+- GNU tools and libraries
+- package manager (apt)
+- desktop environment (like GNOME)
+- other software (Firefox, LibreOffice, etc.
+So Ubuntu is one of many operating systems built using the Linux Kernel
+
+
 ## Linux Command
 Two types of command:
 1. Internal or built-in commands: echo, cd, pwd e.t.c
@@ -108,5 +126,23 @@ Press Tab key to see the available arguments after a command.<br>
 
 
 ```
+### Package Managers
+A package manager in Linux is a tool (both command-line and backend system) that:
+- installs, updates, configures, and removes software packages
+- resolves dependencies automatically (installs required libraries or tools)
+- keeps a local database of installed software
+- connects to online repositories to fetch software
 
+Common package managers by Linux Distribution:
+```
+| Distribution               | Package Manager      | Command Examples           |
+| -------------------------- | -------------------- | -------------------------- |
+| **Ubuntu / Debian**        | `apt` or `dpkg`      | `sudo apt install vim`     |
+| **Fedora / RHEL / CentOS** | `dnf` or older `yum` | `sudo dnf install vim`     |
+| **openSUSE**               | `zypper`             | `sudo zypper install vim`  |
+| **Arch Linux / Manjaro**   | `pacman`             | `sudo pacman -S vim`       |
+| **Alpine Linux**           | `apk`                | `sudo apk add vim`         |
+| **Void Linux**             | `xbps-install`       | `sudo xbps-install -S vim` |
+| **Gentoo**                 | `emerge`             | `sudo emerge vim`          |
 
+```
