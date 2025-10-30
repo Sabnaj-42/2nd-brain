@@ -186,3 +186,9 @@ Common package managers by Linux Distribution:
 54. grep -r "third line" /home/sabnaj //search the word "third line" recursively in the /home/sabnaj directory
 55. grep -v "printed" sample.txt //print all the line which doesn't contain printed
 56. grep -w exam example.txt // print those line which contain exam "exam" word. not only pattern of exam
+
+### vi editor
+It has three modes: command mode, insert mode, last line. Command mode is the default mode.
+<br>Type lowercase i to switch insert mode from command mode.
+<br> press "Esc" key to get back into command mode.
+
