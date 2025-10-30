@@ -66,7 +66,7 @@ Press Tab key to see the available arguments after a command.<br>
 30. systemctl set-default graphical.target // set the default target graphical. it also can be multi-user.target etc. System will automatically boot into the GUI (desktop environment) on startup.
 
 ### Linux root filesystem
-```
+``` 
 /
 ├── bin/                 → Essential user commands
 │   ├── ls
@@ -146,3 +146,43 @@ Common package managers by Linux Distribution:
 | **Gentoo**                 | `emerge`             | `sudo emerge vim`          |
 
 ```
+
+### dpkg (debian package manager)
+31. dpkg -i telnet.deb // to install telnet
+32. dpkg -r telnet.deb // to uninstall telnet
+33. dpkg -l telnet // to list the package installed with telnet
+34. dpkg -s telnet // to check the status of the package
+35. dpkg -p <path to file> // to show the details of the package
+
+### apt (higher level package manager of debian - advanced package manager)
+32. sudo apt update //refresh package list
+33. sudo apt upgrade // install available updates
+- apt update → refreshes the catalog with the latest prices and products.
+- apt upgrade → actually buys (downloads and installs) the updated items.
+34. apt install telnet // to install telnet package
+35. apt remove telnet // to remove telnet package
+36. apt search telnet // used to look for the package telnet in a repository
+
+### File related command
+37. du -sk test.img //show the size of a file/directory in kB
+38. du -sh test.go //show the size of a file/directory in MB
+39. ls -lh test.go //show the size and details of file/directory
+40. tar -cf test.tar file1 file2 file3 // Creates a tar archive named test.tar that contains file1, file2, and file3, without compression. -c --> create a new tar file. -f --> name it test.tar
+41. tar -tf test.tar // show the contexts of test.tar archive file
+42. tar -xf test.tar // extract the contexts from the test.tar tar file
+43. bzip2 test.img // compress the test.img file into zip file
+44. bunzip test.img.bz2 // unzip the zip file
+45. gzip test1.img //compress test1.img into zip file
+46. gunzip test1.img.gz //unzip the zip file
+47. xz test2.img //compress the test2.img file into 
+48. unxz test2.img // unzip the zip file
+49. zcat/ bzcat/ xzcat // if we zip our file using these commands we can't unzip them
+
+### Searching files and directories
+50. find /home/sabnaj -name city.txt // Searches recursively inside /home/sabnaj for any file whose name is exactly city.txt, and prints the full path if found.
+51. grep second sample.txt // search the word "second" in sample.txt file. grep command case sensitive
+52. grep -i second sample.txt // -i flag make grep command case insensitive
+53. history | grep kubectl // find the word "kubectl" in the output of history command
+54. grep -r "third line" /home/sabnaj //search the word "third line" recursively in the /home/sabnaj directory
+55. grep -v "printed" sample.txt //print all the line which doesn't contain printed
+56. grep -w exam example.txt // print those line which contain exam "exam" word. not only pattern of exam
