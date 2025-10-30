@@ -3,7 +3,7 @@
 - The kernel is the core part of an operating system that talks directly to your computer’s hardware (CPU, memory, disks, etc.) and manages resources.
 - On its own, the Linux kernel isn’t usable — you need additional software, tools, libraries, and a user interface.
 <br>***Linux:*** brain(kernel)
-***Linux Distribution:*** complete body(full operating system). eg: Ubuntu, Fedora, CentOS, Manjaro, Red Hat etc
+<br>***Linux Distribution:*** complete body(full operating system). eg: Ubuntu, Fedora, CentOS, Manjaro, Red Hat etc
 
 ### Ubuntu:
 Ubuntu is a Linux distribution (a complete operating system built on top of the Linux kernel).
