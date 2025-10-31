@@ -187,8 +187,27 @@ Common package managers by Linux Distribution:
 55. grep -v "printed" sample.txt //print all the line which doesn't contain printed
 56. grep -w exam example.txt // print those line which contain exam "exam" word. not only pattern of exam
 
-### vi editor
+### vim text editor (updated version of vi editor)
+**vim sabnaj.txt** // open file sabnaj.txt(if doesn't exist create a new file in the current directory) in the vim editor<br>
+
 It has three modes: command mode, insert mode, last line. Command mode is the default mode.
 <br>Type lowercase i to switch insert mode from command mode.
 <br> press "Esc" key to get back into command mode.
+<br> press ":" to go into last line mode. 
 
+#### command mode (press 'Esc' key to turn into command line mode)
+57. 'y y' -> copy the line in which the cursor is placed
+58. 'p' -> paste the copied text in the line below the current cursor place
+59. 'x' -> delete the selected character
+60. 'd d' -> delete the line where cursor is placed
+61. 'd 3 d' -> delete the next 3 lines from where the cursor is placed
+62. 'u' -> undo the last change
+63. 'r' -> redo the last change
+
+#### last line mode ( press ':' to turn into last line mode)
+64. ':w' -> save the file
+65. ':q' -> quit the file
+66. ':wq' -> save and quit the file
+67. ':q!' -> quit without confirmation
+
+### Linux networking
