@@ -215,11 +215,12 @@ It has three modes: command mode, insert mode, last line. Command mode is the de
 69. curl https://google.com // curl fetch or send data over the internet using various protocols (like HTTP, HTTPS, FTP, etc.). This command sends an HTTP GET request to https://example.com and displays the response (HTML or other data) in the terminal.
 70. dig www.google.com // show which DNS server was used and what IP was returned
 71. nslookup www.google.com // same as command 70
+72. traceroute 192.168.1.2  // trace the path that packets take from your computer to a destination host or IP address — in this case, 192.168.1.2.
 
 **Hostname:** 
 - A hostname is the unique name assigned to a device (computer, server, or VM) on a network.
 - It helps humans and systems identify machines more easily than using IP addresses.
-72. hostname // shows the current system's hostname
+73. hostname // shows the current system's hostname
  
 - /etc/hostname → contains the hostname string
 - /etc/hosts → maps hostname to IP, e.g.:
@@ -248,4 +249,8 @@ nameserver 1.1.1.1
 - Linux will query these DNS services in order until one responds. It returns the IP address back to the system when it found one
 - If the domain name is not found it return "Temporary failure in name resolution"
 
+### Security and file permission
+74. cat /etc/passwd // contains information about all user accounts on the system 
+75. id // display user and group identity information
+76. su - // switch to another user with a full login shell. Need to provide target user password
 
