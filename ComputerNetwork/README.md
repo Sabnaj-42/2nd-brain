@@ -20,3 +20,6 @@ api.google.com
 5. DNS (Domain Name System):
 A DNS server translates (resolves) a hostname into its corresponding IP address.
 This allows users to access devices or services using easy-to-remember names instead of numerical IP addresses.
+
+### 7 layers OSI-model
+![OSI network layers model](../images/osiModel.png)

@@ -234,6 +234,7 @@ DNS translates human-readable domain names (like www.google.com) into IP address
 - Linux :
     - Check local files (like /etc/hosts)
     - If not found, query DNS servers <br>
+  We can change the order of IP query by editing /etc/nsswitch.conf  "hosts" field files and dns order. <br>
   So Linux first looks for the name in /etc/hosts. If the domain matches here, DNS lookup stops
 - If the name is not found in the /etc/hosts, Linux checks the DNS servers listed in:
  ```
@@ -246,3 +247,5 @@ nameserver 1.1.1.1
 ```
 - Linux will query these DNS services in order until one responds. It returns the IP address back to the system when it found one
 - If the domain name is not found it return "Temporary failure in name resolution"
+
+
