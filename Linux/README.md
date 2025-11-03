@@ -211,3 +211,38 @@ It has three modes: command mode, insert mode, last line. Command mode is the de
 67. ':q!' -> quit without confirmation
 
 ### Linux networking
+68. ping 192.168.1.11 //check network connectivity between your computer and another device with the IP address 192.168.1.11.
+69. curl https://google.com // curl fetch or send data over the internet using various protocols (like HTTP, HTTPS, FTP, etc.). This command sends an HTTP GET request to https://example.com and displays the response (HTML or other data) in the terminal.
+70. dig www.google.com // show which DNS server was used and what IP was returned
+71. nslookup www.google.com // same as command 70
+
+**Hostname:** 
+- A hostname is the unique name assigned to a device (computer, server, or VM) on a network.
+- It helps humans and systems identify machines more easily than using IP addresses.
+72. hostname // shows the current system's hostname
+ 
+- /etc/hostname → contains the hostname string
+- /etc/hosts → maps hostname to IP, e.g.:
+```
+127.0.0.1   localhost
+127.0.1.1   my-computer
+```
+#### DNS (Domain Name System)
+DNS translates human-readable domain names (like www.google.com) into IP addresses (like 142.250.190.4) that computers use to communicate.
+<br>**Lookup flow that happens when a Linux system needs to resolve a somain name:** <br>
+- When we run a command like "ping www.google.com or open a website in a browser, the application ask the C library to resolve the domain name to an IP address
+- Linux :
+    - Check local files (like /etc/hosts)
+    - If not found, query DNS servers <br>
+  So Linux first looks for the name in /etc/hosts. If the domain matches here, DNS lookup stops
+- If the name is not found in the /etc/hosts, Linux checks the DNS servers listed in:
+ ```
+/etc/resolv.conf
+```
+example:
+```
+nameserver 8.8.8.8 // content of /etc/resolv.conf
+nameserver 1.1.1.1
+```
+- Linux will query these DNS services in order until one responds. It returns the IP address back to the system when it found one
+- If the domain name is not found it return "Temporary failure in name resolution"
