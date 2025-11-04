@@ -252,5 +252,61 @@ nameserver 1.1.1.1
 ### Security and file permission
 74. cat /etc/passwd // contains information about all user accounts on the system 
 75. id // display user and group identity information
-76. su - // switch to another user with a full login shell. Need to provide target user password
+76. last // show a list of the most recent user logins on the system.
+77. su - // switch to another user with a full login shell. Need to provide target user password.
+78. su -c "whoami" //(su-switch user) temporarily switches to another user (default root), runs whoami under that user’s identity, then returns to your session. need to provide the password of the target user.
+79.  cat /etc/sudoers // contains the configuration that defines which users or groups can run commands as other users (typically root) using sudo, and what commands they’re allowed to run. 
+80. sudo visudo // use to edit the /etc/sudoers file 
+81. cat /etc/shadow // securely stores user password hashes and password/account policies.
+82. cat /etc/group // lists all groups on the system, their GIDs, and which users belong to each group.
+
+### creating new user and setting password
+83. useradd mmm
+    - Adds a new entry for mmm in /etc/passwd (user account information).
+    - Adds a group named mmm in /etc/group (by default, most distros create a group with the same name).
+    - Creates a home directory /home/mmm if the -m option is used (without it, home may not be created).
+    - Sets default shell for the user (usually /bin/bash).
+    - Updates /etc/shadow with an empty password field (account exists but cannot log in until a password is set).
+
+84. passwd mmm // give the option to set password for user mmm
+85. passwd // give option to set/change password for current logged in user
+86. su - mmm // Switch to user mmm using the password of the user mmm
+87. userdel -r mmm // Delete the user mmm and also home directory and mail or file of mmm user (for  -r flag)
+88. groupadd developer // Creates a new user group named developer. automatically assign group id(GID)
+89. groupadd -g 1011 developer // creates a new user group named developer and assign group id 1011.
+90. groupdel developer // delete the group developer from the system
+
+### File Permission
+91. ls -l text.sh // show the file permissions details for owner(u), group(g) and others(o) in the format ( rwerwerwe )
+**Modifying Permission:** chmod <permissions> file
+**Modifying file ownership:** chown owner:group file
+92. chmod u+rwx test-file // provide full access to owners
+93. chmod ugo+r-x test-file //provide read access to owner, groups and others. Remove execute access
+94. chmod o-rwx test-file // Remove all access for others
+95. chmod u+rwx,g+r-x,o-rwx test-file // full access for owner, add read, remove execute for group and no access for others
+96. chmod 750 test-file // full access for owner, read and execute for group and no access for others
+97. chown mmm:developer test-file // changes owner to bob and group to developer
+98. chown mmm test-file // changes just the owner of the file to mmm, group unchanged
+99. chowng android test-file // change the group for the test-file to the group called android
+
+### SSH(secure shell) and SCP (secure copy protocol)
+**SSH-->** it’s a protocol and command-line tool that lets you securely log into and control a remote Linux machine over a network.
+100. ssh devop01 // connect to a remote system named devop01 using SSH (Secure Shell). need to provide remote systems' username and password
+
+**Set up for passwordless SSH login:** suppose, we want to connect to the remote system "ssh alice@devop01", here alice is the user and devop01 is the system.<br>
+- generate an ssh key pair (on your local machine)
+  ```
+  ssh-keygen #it generate private and public key. private key will be stored in ~/.ssh.id_rsa and public key will be stored in ~/.ssh/id_rsa.pub 
+  ```
+- copy the public key to the remote system
+    ```
+  ssh-copy-id alice@devop01
+  #It copies your public key (id_rsa.pub) to the remote system.
+  #Stores it in /home/alice/.ssh/authorized_keys on devop01.
+  #You’ll be prompted for alice’s password one last time.
+  ```
+- test passwordless login
+**SCP-->** 
+101. scp /home/bob/caleston-code.tar.gz devapp01:/home/bob //securely copy a file from your local system to a remote system using SCP. need to provide remote user password
+  
 
