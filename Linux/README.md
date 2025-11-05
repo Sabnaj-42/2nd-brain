@@ -365,7 +365,7 @@ eg:
     [Service]
     Type=simple
     User=sabnaj
-    WorkingDirectory=/opt/book-server  // project is located here
+    WorkingDirectory=/opt/book-server   #project is located here
     ExecStart=/opt/book-server/start.sh
     Restart=on-failure
     Environment="ENV=production"
@@ -380,9 +380,9 @@ eg:
     ```
 5. Start, test our service manually
      ```
-    sudo systemctl start book-server.service // start service manually 
-    sudo systemctl status book-server.service // check if it's runnig
-    journalctl -u book-server.service -f // view logs (if any output)
+    sudo systemctl start book-server.service  #start service manually 
+    sudo systemctl status book-server.service  #check if it's runnig
+    journalctl -u book-server.service -f  #view logs (if any output)
     
     ```
 6. Enable it to start automatically boot
