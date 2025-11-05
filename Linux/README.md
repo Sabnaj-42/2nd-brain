@@ -328,5 +328,72 @@ eg:
 */5 * * * * /home/user/backup.sh //run a srcipt in every 5 minutes
 
 ```
-  
 
+### systemmd
+- systemd is the init system and service manager used by most modern Linux distributions (like Ubuntu, Debian, CentOS, Fedora, RHEL).
+- It is responsible for booting the system and managing all system services and processes after boot.
+
+#### key components of systemd (init system and service manager)
+1. **systemd:** Runs as PID 1. Initialize the system and manages services
+2. **Units:** The resource systemd manages. Eg:
+   - .service → background service
+   - .socket → network/socket activation
+   - .mount → filesystem mounts
+   - .target → system states (like multi-user.target)
+3. **systemctl:**  Command-line tool to control systemd (start/stop/enable services, check status, reboot, etc.)
+4. **journald:** Systemd’s logging service for system and service logs
+
+#### system boot flow with systemd
+- BIOS/UEFI → bootloader (GRUB) → kernel
+- Kernel starts → systemd (PID 1)
+- systemd reads its configuration → determines default target (like multi-user.target for normal boot)
+- systemd starts all required units (services, mounts, timers) in the proper order
+- System is fully up → services keep running under systemd supervision
+
+### run a project automatically on boot as a systemd service
+1. let's assume our project runs with /opt/book-server/start.sh
+2. create systemd service file
+     ```
+    sudo nano /etc/systemd/system/book-server.service
+    ```
+3. add the following content in the book-server.service file
+    ```
+    [Unit]
+    Description=Project book-server Application Service
+    After=network.target
+    
+    [Service]
+    Type=simple
+    User=sabnaj
+    WorkingDirectory=/opt/book-server  // project is located here
+    ExecStart=/opt/book-server/start.sh
+    Restart=on-failure
+    Environment="ENV=production"
+    
+    [Install]
+    WantedBy=multi-user.target
+    
+     ```
+4. Reload systemd to recognize our new service
+    ```
+    sudo systemctl daemon-reload
+    ```
+5. Start, test our service manually
+     ```
+    sudo systemctl start book-server.service // start service manually 
+    sudo systemctl status book-server.service // check if it's runnig
+    journalctl -u book-server.service -f // view logs (if any output)
+    
+    ```
+6. Enable it to start automatically boot
+     ```
+    sudo systemctl enable book-server.service
+    ```
+#### systemctl command for service management
+1. systemctl start book-server.service     # Start the service immediately
+2. systemctl stop book-server.service      # Stop the service immediately
+3. systemctl restart book-server.service   # Stop and then start the service again (useful after code/config changes)
+4. systemctl reload book-server.service    # Reload the service configuration without stopping it (if supported)
+5. systemctl enable book-server.service    # Enable the service to start automatically at boot
+6. systemctl disable book-server.service   # Disable the service from starting automatically at boot
+7. systemctl status book-server.service    # Show the current status of the service — whether it's active, inactive, or failed, along with recent logs and process details
