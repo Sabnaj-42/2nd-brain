@@ -278,8 +278,8 @@ nameserver 1.1.1.1
 
 ### File Permission
 91. ls -l text.sh // show the file permissions details for owner(u), group(g) and others(o) in the format ( rwerwerwe )
-**Modifying Permission:** chmod <permissions> file
-**Modifying file ownership:** chown owner:group file
+<br>**Modifying Permission:** chmod <permissions> file
+<br>**Modifying file ownership:** chown owner:group file
 92. chmod u+rwx test-file // provide full access to owners
 93. chmod ugo+r-x test-file //provide read access to owner, groups and others. Remove execute access
 94. chmod o-rwx test-file // Remove all access for others
