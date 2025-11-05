@@ -25,7 +25,7 @@ Absolute and relative directory: Absolute directory start from the root where re
 absolute: /home/sabnaj/go/src/
 Relative: go/src/2ndbrain
 
-### Shell command
+## Shell command
 Press Tab key to see the available arguments after a command.<br>
 ***Path Variable:"*** is an environment variable that tells shell where to look for executable programs when a command is typed. 
 - When we type "kubectl" the shell doesn't instantly know what kubectl is.
@@ -60,12 +60,12 @@ Press Tab key to see the available arguments after a command.<br>
 26. file go/   //show the type of go/ file. is it a directory or what kind of file it is
 27. ls -ld go.mod // first character indicate which type of file it is
 
-### System Boot
+## System Boot
 28. ls -l /sbin/init   // /sbin/init is the first process started by the Linux kernel during boot — it initializes the system.
 29. systemctl get-default // used on Linux systems with systemd to show the default boot target — that is, what mode or "runlevel" your system boots into by default.
 30. systemctl set-default graphical.target // set the default target graphical. it also can be multi-user.target etc. System will automatically boot into the GUI (desktop environment) on startup.
 
-### Linux root filesystem
+## Linux root filesystem
 ``` 
 /
 ├── bin/                 → Essential user commands
@@ -126,7 +126,7 @@ Press Tab key to see the available arguments after a command.<br>
 
 
 ```
-### Package Managers
+## Package Managers
 A package manager in Linux is a tool (both command-line and backend system) that:
 - installs, updates, configures, and removes software packages
 - resolves dependencies automatically (installs required libraries or tools)
@@ -163,7 +163,7 @@ Common package managers by Linux Distribution:
 35. apt remove telnet // to remove telnet package
 36. apt search telnet // used to look for the package telnet in a repository
 
-### File related command
+## File related command
 37. du -sk test.img //show the size of a file/directory in kB
 38. du -sh test.go //show the size of a file/directory in MB
 39. ls -lh test.go //show the size and details of file/directory
@@ -187,7 +187,7 @@ Common package managers by Linux Distribution:
 55. grep -v "printed" sample.txt //print all the line which doesn't contain printed
 56. grep -w exam example.txt // print those line which contain exam "exam" word. not only pattern of exam
 
-### vim text editor (updated version of vi editor)
+## vim text editor (updated version of vi editor)
 **vim sabnaj.txt** // open file sabnaj.txt(if doesn't exist create a new file in the current directory) in the vim editor<br>
 
 It has three modes: command mode, insert mode, last line. Command mode is the default mode.
@@ -210,7 +210,7 @@ It has three modes: command mode, insert mode, last line. Command mode is the de
 66. ':wq' -> save and quit the file
 67. ':q!' -> quit without confirmation
 
-### Linux networking
+## Linux networking
 68. ping 192.168.1.11 //check network connectivity between your computer and another device with the IP address 192.168.1.11.
 69. curl https://google.com // curl fetch or send data over the internet using various protocols (like HTTP, HTTPS, FTP, etc.). This command sends an HTTP GET request to https://example.com and displays the response (HTML or other data) in the terminal.
 70. dig www.google.com // show which DNS server was used and what IP was returned
@@ -228,7 +228,7 @@ It has three modes: command mode, insert mode, last line. Command mode is the de
 127.0.0.1   localhost
 127.0.1.1   my-computer
 ```
-#### DNS (Domain Name System)
+### DNS (Domain Name System)
 DNS translates human-readable domain names (like www.google.com) into IP addresses (like 142.250.190.4) that computers use to communicate.
 <br>**Lookup flow that happens when a Linux system needs to resolve a somain name:** <br>
 - When we run a command like "ping www.google.com or open a website in a browser, the application ask the C library to resolve the domain name to an IP address
@@ -249,7 +249,7 @@ nameserver 1.1.1.1
 - Linux will query these DNS services in order until one responds. It returns the IP address back to the system when it found one
 - If the domain name is not found it return "Temporary failure in name resolution"
 
-### Security and file permission
+## Security and file permission
 74. cat /etc/passwd // contains information about all user accounts on the system 
 75. id // display user and group identity information
 76. last // show a list of the most recent user logins on the system.
@@ -289,7 +289,7 @@ nameserver 1.1.1.1
 98. chown mmm test-file // changes just the owner of the file to mmm, group unchanged
 99. chowng android test-file // change the group for the test-file to the group called android
 
-### SSH(secure shell) and SCP (secure copy protocol)
+## SSH(secure shell) and SCP (secure copy protocol)
 **SSH-->** it’s a protocol and command-line tool that lets you securely log into and control a remote Linux machine over a network.
 100. ssh devop01 // connect to a remote system named devop01 using SSH (Secure Shell). need to provide remote systems' username and password
 
@@ -309,7 +309,7 @@ nameserver 1.1.1.1
 **SCP-->** 
 101. scp /home/bob/caleston-code.tar.gz devapp01:/home/bob //securely copy a file from your local system to a remote system using SCP. need to provide remote user password
 
-### Cronjob
+## Cronjob
 a cron job is a scheduled task that runs automatically at specific times or intervals — managed by the cron daemon (crond). Each user (including root) can have their own crontab (cron table) that lists commands to be executed on a schedule. <br>
 
 102. crontab -e // opens crontab file in the default test editor (like vi or nano). we can then add, modify or remove scheduled tasks.
@@ -329,7 +329,7 @@ eg:
 
 ```
 
-### systemmd
+## systemmd
 - systemd is the init system and service manager used by most modern Linux distributions (like Ubuntu, Debian, CentOS, Fedora, RHEL).
 - It is responsible for booting the system and managing all system services and processes after boot.
 
@@ -389,7 +389,7 @@ eg:
      ```
     sudo systemctl enable book-server.service
     ```
-#### systemctl command for service management
+### systemctl command for service management
 1. systemctl start book-server.service     # Start the service immediately
 2. systemctl stop book-server.service      # Stop the service immediately
 3. systemctl restart book-server.service   # Stop and then start the service again (useful after code/config changes)
@@ -397,3 +397,5 @@ eg:
 5. systemctl enable book-server.service    # Enable the service to start automatically at boot
 6. systemctl disable book-server.service   # Disable the service from starting automatically at boot
 7. systemctl status book-server.service    # Show the current status of the service — whether it's active, inactive, or failed, along with recent logs and process details
+
+## Storage in Linux
