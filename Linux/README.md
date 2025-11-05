@@ -308,5 +308,23 @@ nameserver 1.1.1.1
 - test passwordless login
 **SCP-->** 
 101. scp /home/bob/caleston-code.tar.gz devapp01:/home/bob //securely copy a file from your local system to a remote system using SCP. need to provide remote user password
+
+### Cronjob
+a cron job is a scheduled task that runs automatically at specific times or intervals — managed by the cron daemon (crond). Each user (including root) can have their own crontab (cron table) that lists commands to be executed on a schedule.
+102. crontab -e // opens crontab file in the default test editor (like vi or nano). we can then add, modify or remove scheduled tasks.
+**Example of crontab Entry:**
+```
+# ┌───────────── minute (0 - 59)
+# │ ┌───────────── hour (0 - 23)
+# │ │ ┌───────────── day of month (1 - 31)
+# │ │ │ ┌───────────── month (1 - 12)
+# │ │ │ │ ┌───────────── day of week (0 - 6) (Sunday=0 or 7)
+# │ │ │ │ │
+# * * * * *  command_to_run
+eg:
+0 2 * * * /home/user/backup.sh  // run a script every day at 2 AM
+*/5 * * * * /home/user/backup.sh //run a srcipt in every 5 minutes
+
+```
   
 
