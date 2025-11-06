@@ -1,131 +1,148 @@
-## Kernel+distribution=operating system
-- Linux itself is not an operating system — it’s the kernel.
-- The kernel is the core part of an operating system that talks directly to your computer’s hardware (CPU, memory, disks, etc.) and manages resources.
-- On its own, the Linux kernel isn’t usable — you need additional software, tools, libraries, and a user interface.
-<br>***Linux:*** brain(kernel)
-<br>***Linux Distribution:*** complete body(full operating system). eg: Ubuntu, Fedora, CentOS, Manjaro, Red Hat etc
+# Linux Essentials — Notes
 
-### Ubuntu:
-Ubuntu is a Linux distribution (a complete operating system built on top of the Linux kernel).
+---
+
+## Kernel + Distribution = Operating System
+
+- Linux itself is not an operating system — it’s the **kernel**.
+- The **kernel** is the core part of an operating system that communicates directly with your computer’s **hardware** (CPU, memory, disks, etc.) and manages resources.
+- On its own, the Linux kernel isn’t usable — it requires additional software, tools, libraries, and a user interface.
+
+**Analogy:**
+- **Linux:** Brain (Kernel)
+- **Linux Distribution:** Complete body (Full operating system) — e.g., Ubuntu, Fedora, CentOS, Manjaro, Red Hat, etc.
+
+---
+
+## Ubuntu
+
+Ubuntu is a **Linux distribution** (a complete operating system built on top of the Linux kernel).  
 It includes:
-- the Linux kernel
+- The Linux kernel
 - GNU tools and libraries
-- package manager (apt)
-- desktop environment (like GNOME)
-- other software (Firefox, LibreOffice, etc.
-So Ubuntu is one of many operating systems built using the Linux Kernel
+- Package manager (`apt`)
+- Desktop environment (e.g., GNOME)
+- User applications (Firefox, LibreOffice, etc.)
 
+**Conclusion:** Ubuntu is one of many operating systems built using the Linux kernel.
 
-## Linux Command
-Two types of command:
-1. Internal or built-in commands: echo, cd, pwd e.t.c
-2. External command: They are binary program or scripts (mv, date, uptime, cp e.t.c)
+---
 
-**Absolute and relative directory:** Absolute directory start from the root where relative directory start from the present working directory. <br>
-**absolute:** /home/sabnaj/go/src/ <br>
-**Relative:** go/src/2ndbrain
+## Linux Commands
 
-## Shell command
-Press Tab key to see the available arguments after a command.<br>
-***Path Variable:"*** is an environment variable that tells shell where to look for executable programs when a command is typed. 
-- When we type "kubectl" the shell doesn't instantly know what kubectl is.
-- So it checks a list of directories defined in your PATH variable — in order — until it finds an executable file named kubectl.
-- If it doesn't find it in any of those directories, it will show "command not found"
+### Command Types
 
-1. pwd // present directory
-2. ls // list contents of present directory
-3. mkdir Asia // make a new directory named "Asia"
-4. mkdir Asia US // make multiple directory
-5. cd Asia //change directory to Asia
-6. mkdir India/Mumbai  // create directory Mumbai without having going inside the directory India
-7. mkdir -p India/Mumbai  // create the parent directory India then create directory Mumbai under it
-8. cd .. // take to the parent directory of present directory
-9. mv /home/michel/Europe /home/michel/Africa // move the directory Europe into Africa
-10. mv Asia/India/Munbai Asia/India/Mumbai //change the directory name Munbai to Mumbai
-11. cp Asia/India/Mumbai/city.txt Africa/Egypt/Cairo // cp the file city.txt to the folder Cairo
-12. rm Europe/Uk/London/Tottenham.txt // remove the file tottenham.txt
-13. cat name.txt //show the context of the file name.txt
-14. touch roll.txt // create an empty file name roll.txt
-15. ls -a // show the hidden file. startin with '.'. single 
-16. whatis date // provides details about the "date" command
-17. date --help // provide options of date command
-18. apropos echo // show all command within the system that contain "echo" keyword
-19. alias dt=date // after that in each command dt will be interpreted as date
-20. history // show the previous command history
-21. echo $SHELL //print the value of SHELL variable
-22. env // show the values of environment variable (user informations)
-23. export roll=1907042 //set environment variables and make them available to child processes of shell
-24. echo $PATH // show all path variable vlues
-25. which kubectl // show the full path of executable kubectl file (from $PATH variable)
-26. file go/   //show the type of go/ file. is it a directory or what kind of file it is
-27. ls -ld go.mod // first character indicate which type of file it is
+| Type | Description | Examples |
+|------|--------------|-----------|
+| **Internal / Built-in** | Commands built into the shell itself | `echo`, `cd`, `pwd` |
+| **External** | Binary programs or scripts found in system paths | `mv`, `cp`, `date`, `uptime` |
 
-## System Boot
-28. ls -l /sbin/init   // /sbin/init is the first process started by the Linux kernel during boot — it initializes the system.
-29. systemctl get-default // used on Linux systems with systemd to show the default boot target — that is, what mode or "runlevel" your system boots into by default.
-30. systemctl set-default graphical.target // set the default target graphical. it also can be multi-user.target etc. System will automatically boot into the GUI (desktop environment) on startup.
+---
 
-## Linux root filesystem
-``` 
+### Absolute vs Relative Directory
+
+| Type | Description | Example |
+|------|--------------|----------|
+| **Absolute Path** | Starts from the root `/` | `/home/sabnaj/go/src/` |
+| **Relative Path** | Starts from the current working directory | `go/src/2ndbrain` |
+
+---
+
+## Shell Commands
+
+- Press **Tab** to auto-complete or show available arguments after a command.
+- The **PATH variable** is an environment variable that tells the shell where to look for executable programs.
+
+### Example:
+When you type `kubectl`, the shell:
+1. Checks each directory listed in your `$PATH` variable (in order).
+2. Executes the first match it finds.
+3. If not found, shows `command not found`.
+
+---
+
+### Common Shell Commands
+
+| Command | Description |
+|----------|--------------|
+| `pwd` | Show present working directory |
+| `ls` | List directory contents |
+| `mkdir Asia` | Create a new directory named *Asia* |
+| `mkdir Asia US` | Create multiple directories |
+| `cd Asia` | Change to *Asia* directory |
+| `mkdir India/Mumbai` | Try to create *Mumbai* (fails if *India* doesn’t exist) |
+| `mkdir -p India/Mumbai` | Create parent *India* and child *Mumbai* |
+| `cd ..` | Move to parent directory |
+| `mv /home/michel/Europe /home/michel/Africa` | Move *Europe* into *Africa* |
+| `mv Asia/India/Munbai Asia/India/Mumbai` | Rename *Munbai* → *Mumbai* |
+| `cp Asia/India/Mumbai/city.txt Africa/Egypt/Cairo` | Copy *city.txt* to *Cairo* folder |
+| `rm Europe/UK/London/Tottenham.txt` | Delete *Tottenham.txt* file |
+| `cat name.txt` | Display file contents |
+| `touch roll.txt` | Create empty file *roll.txt* |
+| `ls -a` | Show all files (including hidden files `.`) |
+| `whatis date` | Show short info about *date* command |
+| `date --help` | Show available options for *date* command |
+| `apropos echo` | Show all commands related to keyword *echo* |
+| `alias dt=date` | Make `dt` act as `date` command |
+| `history` | Show previously used commands |
+| `echo $SHELL` | Display current shell |
+| `env` | Show environment variables |
+| `export roll=1907042` | Set an environment variable |
+| `echo $PATH` | Show directories in `$PATH` |
+| `which kubectl` | Show full path of an executable |
+| `file go/` | Show file type info |
+| `ls -ld go.mod` | Show file info (type + permissions) |
+
+---
+
+## System Boot and Systemd
+
+| Command | Description |
+|----------|--------------|
+| `ls -l /sbin/init` | `/sbin/init` is the first process started by the Linux kernel (initializes the system). |
+| `systemctl get-default` | Show the default boot target (runlevel). |
+| `systemctl set-default graphical.target` | Set the system to boot into GUI (desktop) by default. |
+| `systemctl set-default multi-user.target` | Set the system to boot into CLI (non-GUI) mode. |
+
+---
+
+## Linux Root Filesystem Hierarchy
+
+```plaintext
 /
-├── bin/                 → Essential user commands
-│   ├── ls
-│   ├── cp
-│   ├── mv
-│   └── bash
+├── bin/      → Essential user commands (ls, cp, mv, bash)
 │
-├── boot/                → Bootloader and kernel files
-│   ├── vmlinuz-6.5.0
-│   ├── initrd.img-6.5.0
-│   └── grub/
+├── boot/     → Bootloader & kernel files (vmlinuz, initrd.img, grub/)
 │
-├── dev/                 → Device files
-│   ├── sda     (Hard disk)
-│   ├── sda1    (Partition)
-│   ├── null
-│   └── tty
+├── dev/      → Device files (sda, sda1, null, tty)
 │
-├── etc/                 → System configuration files
-│   ├── passwd
-│   ├── hostname
-│   ├── fstab
-│   └── ssh/
+├── etc/      → System configuration (passwd, hostname, fstab, ssh/)
 │
-├── home/                → User home directories
-│   ├── alice/
-│   └── bob/
+├── home/     → User home directories (alice/, bob/)
 │
-├── lib/                 → Essential shared libraries
-│   ├── libc.so.6
-│   └── systemd/
+├── lib/      → Shared libraries for binaries (libc.so.6, systemd/)
 │
-├── media/               → Removable media mount points
-│   └── usb/
+├── media/    → Mount points for removable media (usb/)
 │
-├── mnt/                 → Temporary mount point for admin use
-│   └── backup/
+├── mnt/      → Temporary mount point for admins (backup/)
 │
-├── opt/                 → Optional add-on applications
-│   └── google/
-│       └── chrome/
+├── opt/      → Optional/add-on software (google/chrome/)
 │
-├── tmp/                 → Temporary files (auto-cleared on reboot)
-│   └── temp1234.tmp
+├── tmp/      → Temporary files (auto-cleared on reboot)
 │
-├── usr/                 → User-installed programs and resources
-│   ├── bin/     → Non-essential user commands
-│   ├── lib/     → Libraries for user programs
-│   ├── share/   → Shared data, docs, icons
-│   └── local/   → Locally installed software
+├── usr/      → User-installed programs & shared resources
+│   ├── bin/      → Non-essential user commands
+│   ├── lib/      → Libraries for user apps
+│   ├── share/    → Shared docs/icons
+│   └── local/    → Locally installed software
 │
-└── var/                 → Variable data (changes frequently)
-    ├── log/     → Log files
-    ├── lib/     → Application data
+└── var/      → Variable data (changes often)
+    ├── log/     → Logs
+    ├── lib/     → App data
     ├── spool/   → Print/mail queues
     └── cache/   → Cached data
-
-
 ```
+
 ## Package Managers
 A package manager in Linux is a tool (both command-line and backend system) that:
 - installs, updates, configures, and removes software packages
@@ -147,45 +164,92 @@ Common package managers by Linux Distribution:
 
 ```
 
-### dpkg (debian package manager)
-31. dpkg -i telnet.deb // to install telnet
-32. dpkg -r telnet.deb // to uninstall telnet
-33. dpkg -l telnet // to list the package installed with telnet
-34. dpkg -s telnet // to check the status of the package
-35. dpkg -p <path to file> // to show the details of the package
+---
 
-### apt (higher level package manager of debian - advanced package manager)
-32. sudo apt update //refresh package list
-33. sudo apt upgrade // install available updates
-- apt update → refreshes the catalog with the latest prices and products.
-- apt upgrade → actually buys (downloads and installs) the updated items.
-34. apt install telnet // to install telnet package
-35. apt remove telnet // to remove telnet package
-36. apt search telnet // used to look for the package telnet in a repository
+## Package Managers
 
-## File related command
-37. du -sk test.img //show the size of a file/directory in kB
-38. du -sh test.go //show the size of a file/directory in MB
-39. ls -lh test.go //show the size and details of file/directory
-40. tar -cf test.tar file1 file2 file3 // Creates a tar archive named test.tar that contains file1, file2, and file3, without compression. -c --> create a new tar file. -f --> name it test.tar
-41. tar -tf test.tar // show the contexts of test.tar archive file
-42. tar -xf test.tar // extract the contexts from the test.tar tar file
-43. bzip2 test.img // compress the test.img file into zip file
-44. bunzip test.img.bz2 // unzip the zip file
-45. gzip test1.img //compress test1.img into zip file
-46. gunzip test1.img.gz //unzip the zip file
-47. xz test2.img //compress the test2.img file into 
-48. unxz test2.img // unzip the zip file
-49. zcat/ bzcat/ xzcat // if we zip our file using these commands we can't unzip them
+A **package manager** in Linux is a tool (both command-line and backend system) that:
 
-### Searching files and directories
-50. find /home/sabnaj -name city.txt // Searches recursively inside /home/sabnaj for any file whose name is exactly city.txt, and prints the full path if found.
-51. grep second sample.txt // search the word "second" in sample.txt file. grep command case sensitive
-52. grep -i second sample.txt // -i flag make grep command case insensitive
-53. history | grep kubectl // find the word "kubectl" in the output of history command
-54. grep -r "third line" /home/sabnaj //search the word "third line" recursively in the /home/sabnaj directory
-55. grep -v "printed" sample.txt //print all the line which doesn't contain printed
-56. grep -w exam example.txt // print those line which contain exam "exam" word. not only pattern of exam
+- Installs, updates, configures, and removes software packages
+- Resolves dependencies automatically (installs required libraries or tools)
+- Keeps a local database of installed software
+- Connects to online repositories to fetch software
+
+### Common Package Managers by Linux Distribution
+
+| Distribution               | Package Manager      | Example Command           |
+| -------------------------- | -------------------- | -------------------------- |
+| **Ubuntu / Debian**        | `apt`, `dpkg`        | `sudo apt install vim`     |
+| **Fedora / RHEL / CentOS** | `dnf` (or `yum`)     | `sudo dnf install vim`     |
+| **openSUSE**               | `zypper`             | `sudo zypper install vim`  |
+| **Arch Linux / Manjaro**   | `pacman`             | `sudo pacman -S vim`       |
+| **Alpine Linux**           | `apk`                | `sudo apk add vim`         |
+| **Void Linux**             | `xbps-install`       | `sudo xbps-install -S vim` |
+| **Gentoo**                 | `emerge`             | `sudo emerge vim`          |
+
+---
+
+### `dpkg` (Debian Package Manager)
+
+| Command | Description |
+|----------|-------------|
+| `dpkg -i telnet.deb` | Install the package file `telnet.deb` |
+| `dpkg -r telnet` | Remove the installed `telnet` package |
+| `dpkg -l telnet` | List all installed packages related to `telnet` |
+| `dpkg -s telnet` | Show detailed status of the `telnet` package |
+| `dpkg -p <path>` | Show package details for the specified file |
+
+---
+
+### `apt` (Advanced Package Tool)
+
+| Command | Description |
+|----------|-------------|
+| `sudo apt update` | Refresh local package list from repositories |
+| `sudo apt upgrade` | Install available updates |
+| `sudo apt install telnet` | Install the `telnet` package |
+| `sudo apt remove telnet` | Remove the `telnet` package |
+| `apt search telnet` | Search for `telnet` in repositories |
+
+**Tip:**
+- `apt update` → refreshes the catalog (like checking product prices)
+- `apt upgrade` → installs updated packages (like actually buying the items)
+
+---
+
+## File-Related Commands
+
+| Command | Description |
+|----------|-------------|
+| `du -sk test.img` | Show the size of a file/directory in KB |
+| `du -sh test.go` | Show the size in human-readable format (MB, GB, etc.) |
+| `ls -lh test.go` | Display file size and details |
+| `tar -cf test.tar file1 file2 file3` | Create a tar archive (no compression) |
+| `tar -tf test.tar` | List the contents of `test.tar` |
+| `tar -xf test.tar` | Extract the contents of `test.tar` |
+| `bzip2 test.img` | Compress `test.img` using bzip2 |
+| `bunzip2 test.img.bz2` | Decompress bzip2 archive |
+| `gzip test1.img` | Compress using gzip |
+| `gunzip test1.img.gz` | Decompress gzip archive |
+| `xz test2.img` | Compress using xz |
+| `unxz test2.img.xz` | Decompress xz archive |
+| `zcat` / `bzcat` / `xzcat` | View compressed files without extracting |
+
+---
+
+## Searching Files and Directories
+
+| Command | Description |
+|----------|-------------|
+| `find /home/sabnaj -name city.txt` | Search recursively for file `city.txt` |
+| `grep second sample.txt` | Search for “second” in `sample.txt` (case-sensitive) |
+| `grep -i second sample.txt` | Case-insensitive search |
+| `history | grep kubectl` | Search command history for “kubectl” |
+| `grep -r "third line" /home/sabnaj` | Recursive search in directory |
+| `grep -v "printed" sample.txt` | Show lines that do **not** contain “printed” |
+| `grep -w exam example.txt` | Match only the whole word “exam” |
+
+---
 
 ## vim text editor (updated version of vi editor)
 **vim sabnaj.txt** // open file sabnaj.txt(if doesn't exist create a new file in the current directory) in the vim editor<br>
@@ -195,35 +259,54 @@ It has three modes: command mode, insert mode, last line. Command mode is the de
 <br> press "Esc" key to get back into command mode.
 <br> press ":" to go into last line mode. 
 
-#### command mode (press 'Esc' key to turn into command line mode)
-57. 'y y' -> copy the line in which the cursor is placed
-58. 'p' -> paste the copied text in the line below the current cursor place
-59. 'x' -> delete the selected character
-60. 'd d' -> delete the line where cursor is placed
-61. 'd 3 d' -> delete the next 3 lines from where the cursor is placed
-62. 'u' -> undo the last change
-63. 'r' -> redo the last change
+### Command Mode (Press `Esc` to enter)
 
-#### last line mode ( press ':' to turn into last line mode)
-64. ':w' -> save the file
-65. ':q' -> quit the file
-66. ':wq' -> save and quit the file
-67. ':q!' -> quit without confirmation
+| Command | Description |
+|---------|-------------|
+| `yy` | Copy the line where the cursor is placed |
+| `p` | Paste the copied text below the current line |
+| `x` | Delete the character under the cursor |
+| `dd` | Delete the current line |
+| `d3d` | Delete the next 3 lines from the cursor position |
+| `u` | Undo the last change |
+| `r` | Redo the last undone change |
 
-## Linux networking
-68. ping 192.168.1.11 //check network connectivity between your computer and another device with the IP address 192.168.1.11.
-69. curl https://google.com // curl fetch or send data over the internet using various protocols (like HTTP, HTTPS, FTP, etc.). This command sends an HTTP GET request to https://example.com and displays the response (HTML or other data) in the terminal.
-70. dig www.google.com // show which DNS server was used and what IP was returned
-71. nslookup www.google.com // same as command 70
-72. traceroute 192.168.1.2  // trace the path that packets take from your computer to a destination host or IP address — in this case, 192.168.1.2.
+### Last Line Mode (Press `:` to enter)
 
-**Hostname:** 
-- A hostname is the unique name assigned to a device (computer, server, or VM) on a network.
-- It helps humans and systems identify machines more easily than using IP addresses.
-73. hostname // shows the current system's hostname
- 
-- /etc/hostname → contains the hostname string
-- /etc/hosts → maps hostname to IP, e.g.:
+| Command | Description |
+|---------|-------------|
+| `:w` | Save the file |
+| `:q` | Quit the file |
+| `:wq` | Save and quit the file |
+| `:q!` | Quit without saving changes |
+
+---
+
+## Linux Networking
+
+| Command | Description |
+|---------|-------------|
+| `ping 192.168.1.11` | Check network connectivity between your computer and another device |
+| `curl https://google.com` | Fetch or send data over the internet (HTTP/HTTPS/FTP) and display response in terminal |
+| `dig www.google.com` | Show which DNS server was used and the IP returned |
+| `nslookup www.google.com` | Alternative to `dig` for DNS lookup |
+| `traceroute 192.168.1.2` | Trace the path packets take to a destination host/IP |
+
+---
+
+### Hostname
+
+A hostname is a unique name assigned to a device (computer, server, or VM) on a network. It helps humans and systems identify machines more easily than using IP addresses.
+
+| Command | Description |
+|---------|-------------|
+| `hostname` | Display the current system's hostname |
+
+**Configuration Files:**
+- `/etc/hostname` → Contains the hostname string
+- `/etc/hosts` → Maps hostname to IP addresses
+
+**Example `/etc/hosts`:**
 ```
 127.0.0.1   localhost
 127.0.1.1   my-computer
@@ -249,46 +332,64 @@ nameserver 1.1.1.1
 - Linux will query these DNS services in order until one responds. It returns the IP address back to the system when it found one
 - If the domain name is not found it return "Temporary failure in name resolution"
 
-## Security and file permission
-74. cat /etc/passwd // contains information about all user accounts on the system 
-75. id // display user and group identity information
-76. last // show a list of the most recent user logins on the system.
-77. su - // switch to another user with a full login shell. Need to provide target user password.
-78. su -c "whoami" //(su-switch user) temporarily switches to another user (default root), runs whoami under that user’s identity, then returns to your session. need to provide the password of the target user.
-79.  cat /etc/sudoers // contains the configuration that defines which users or groups can run commands as other users (typically root) using sudo, and what commands they’re allowed to run. 
-80. sudo visudo // use to edit the /etc/sudoers file 
-81. cat /etc/shadow // securely stores user password hashes and password/account policies.
-82. cat /etc/group // lists all groups on the system, their GIDs, and which users belong to each group.
+## Security and File Permissions
 
-### creating new user and setting password
-83. useradd mmm
-    - Adds a new entry for mmm in /etc/passwd (user account information).
-    - Adds a group named mmm in /etc/group (by default, most distros create a group with the same name).
-    - Creates a home directory /home/mmm if the -m option is used (without it, home may not be created).
-    - Sets default shell for the user (usually /bin/bash).
-    - Updates /etc/shadow with an empty password field (account exists but cannot log in until a password is set).
+Linux provides commands to manage users, groups, and file permissions. Here are essential commands:
 
-84. passwd mmm // give the option to set password for user mmm
-85. passwd // give option to set/change password for current logged in user
-86. su - mmm // Switch to user mmm using the password of the user mmm
-87. userdel -r mmm // Delete the user mmm and also home directory and mail or file of mmm user (for  -r flag)
-88. groupadd developer // Creates a new user group named developer. automatically assign group id(GID)
-89. groupadd -g 1011 developer // creates a new user group named developer and assign group id 1011.
-90. groupdel developer // delete the group developer from the system
+### User and System Information
 
-### File Permission
-91. ls -l text.sh // show the file permissions details for owner(u), group(g) and others(o) in the format ( rwerwerwe )
-<br>**Modifying Permission:** chmod <permissions> file
-<br>**Modifying file ownership:** chown owner:group file
-92. chmod u+rwx test-file // provide full access to owners
-93. chmod ugo+r-x test-file //provide read access to owner, groups and others. Remove execute access
-94. chmod o-rwx test-file // Remove all access for others
-95. chmod u+rwx,g+r-x,o-rwx test-file // full access for owner, add read, remove execute for group and no access for others
-96. chmod 750 test-file // full access for owner, read and execute for group and no access for others
-97. chown mmm:developer test-file // changes owner to bob and group to developer
-98. chown mmm test-file // changes just the owner of the file to mmm, group unchanged
-99. chowng android test-file // change the group for the test-file to the group called android
+| Command | Description |
+|---------|-------------|
+| `cat /etc/passwd` | Contains information about all user accounts on the system |
+| `id` | Display user and group identity information |
+| `last` | Show a list of the most recent user logins on the system |
+| `su -` | Switch to another user with a full login shell (requires target user password) |
+| `su -c "whoami"` | Temporarily switch to another user (default root), run a command (`whoami`) and return to current session |
+| `cat /etc/sudoers` | Contains configuration defining which users/groups can run commands with `sudo` |
+| `sudo visudo` | Edit `/etc/sudoers` safely |
+| `cat /etc/shadow` | Securely stores user password hashes and account policies |
+| `cat /etc/group` | Lists all groups, their GIDs, and member users |
 
+---
+
+### Creating Users and Managing Passwords
+
+| Command | Description |
+|---------|-------------|
+| `useradd mmm` | Add a new user `mmm`:<br>- Entry added in `/etc/passwd`<br>- Group `mmm` added in `/etc/group`<br>- Home directory `/home/mmm` created if `-m` option used<br>- Default shell set (usually `/bin/bash`)<br>- `/etc/shadow` updated with empty password |
+| `passwd mmm` | Set a password for user `mmm` |
+| `passwd` | Change password for the current logged-in user |
+| `su - mmm` | Switch to user `mmm` using their password |
+| `userdel -r mmm` | Delete user `mmm` and remove home directory, mail, and files (`-r` flag) |
+
+---
+
+### Group Management
+
+| Command | Description |
+|---------|-------------|
+| `groupadd developer` | Create a new group named `developer` with automatically assigned GID |
+| `groupadd -g 1011 developer` | Create a group `developer` with specific GID `1011` |
+| `groupdel developer` | Delete the group `developer` from the system |
+
+
+## File Permissions
+
+Linux file permissions control access for owner, group, and others.
+
+| Command | Description |
+|---------|-------------|
+| `ls -l text.sh` | Show file permission details for owner (u), group (g), and others (o) in the format `rwxrwxrwx` |
+| `chmod u+rwx test-file` | Provide full access to the owner |
+| `chmod ugo+r-x test-file` | Provide read access to owner, group, others; remove execute permission |
+| `chmod o-rwx test-file` | Remove all access for others |
+| `chmod u+rwx,g+r-x,o-rwx test-file` | Full access for owner, read and remove execute for group, no access for others |
+| `chmod 750 test-file` | Full access for owner, read & execute for group, no access for others |
+| `chown mmm:developer test-file` | Change owner to `mmm` and group to `developer` |
+| `chown mmm test-file` | Change owner to `mmm`, keep group unchanged |
+| `chown :android test-file` | Change group to `android`, owner unchanged |
+
+---
 ## SSH(secure shell) and SCP (secure copy protocol)
 **SSH-->** it’s a protocol and command-line tool that lets you securely log into and control a remote Linux machine over a network.
 100. ssh devop01 // connect to a remote system named devop01 using SSH (Secure Shell). need to provide remote systems' username and password
@@ -329,26 +430,32 @@ eg:
 
 ```
 
-## systemmd
-- systemd is the init system and service manager used by most modern Linux distributions (like Ubuntu, Debian, CentOS, Fedora, RHEL).
-- It is responsible for booting the system and managing all system services and processes after boot.
+## systemd
 
-#### key components of systemd (init system and service manager)
-1. **systemd:** Runs as PID 1. Initialize the system and manages services
-2. **Units:** The resource systemd manages. Eg:
-   - .service → background service
-   - .socket → network/socket activation
-   - .mount → filesystem mounts
-   - .target → system states (like multi-user.target)
-3. **systemctl:**  Command-line tool to control systemd (start/stop/enable services, check status, reboot, etc.)
-4. **journald:** Systemd’s logging service for system and service logs
+`systemd` is the init system and service manager used by most modern Linux distributions (like Ubuntu, Debian, CentOS, Fedora, RHEL).  
+It is responsible for booting the system and managing all system services and processes after boot.
 
-#### system boot flow with systemd
-- BIOS/UEFI → bootloader (GRUB) → kernel
-- Kernel starts → systemd (PID 1)
-- systemd reads its configuration → determines default target (like multi-user.target for normal boot)
-- systemd starts all required units (services, mounts, timers) in the proper order
-- System is fully up → services keep running under systemd supervision
+---
+
+### Key Components of systemd
+
+| Component | Description |
+|-----------|-------------|
+| `systemd` | Runs as PID 1. Initializes the system and manages services |
+| Units | Resources that systemd manages. Examples: <br>• `.service` → background service <br>• `.socket` → network/socket activation <br>• `.mount` → filesystem mounts <br>• `.target` → system states (like `multi-user.target`) |
+| `systemctl` | Command-line tool to control systemd (start/stop/enable services, check status, reboot, etc.) |
+| `journald` | systemd’s logging service for system and service logs |
+
+---
+
+### System Boot Flow with systemd
+
+1. BIOS/UEFI → bootloader (GRUB) → kernel
+2. Kernel starts → systemd (PID 1)
+3. systemd reads its configuration → determines default target (like `multi-user.target` for normal boot)
+4. systemd starts all required units (services, mounts, timers) in the proper order
+5. System is fully up → services keep running under systemd supervision
+
 
 ### run a project automatically on boot as a systemd service
 1. let's assume our project runs with /opt/book-server/start.sh
@@ -389,14 +496,19 @@ eg:
      ```bash
     sudo systemctl enable book-server.service
     ```
-### systemctl command for service management
-1. systemctl start book-server.service     # Start the service immediately
-2. systemctl stop book-server.service      # Stop the service immediately
-3. systemctl restart book-server.service   # Stop and then start the service again (useful after code/config changes)
-4. systemctl reload book-server.service    # Reload the service configuration without stopping it (if supported)
-5. systemctl enable book-server.service    # Enable the service to start automatically at boot
-6. systemctl disable book-server.service   # Disable the service from starting automatically at boot
-7. systemctl status book-server.service    # Show the current status of the service — whether it's active, inactive, or failed, along with recent logs and process details
+### systemctl Command for Service Management
+
+`systemctl` is the primary command-line tool to manage systemd services on modern Linux distributions.
+
+| Command | Description |
+|---------|-------------|
+| `systemctl start book-server.service` | Start the service immediately |
+| `systemctl stop book-server.service` | Stop the service immediately |
+| `systemctl restart book-server.service` | Stop and then start the service again (useful after code/config changes) |
+| `systemctl reload book-server.service` | Reload the service configuration without stopping it (if supported) |
+| `systemctl enable book-server.service` | Enable the service to start automatically at boot |
+| `systemctl disable book-server.service` | Disable the service from starting automatically at boot |
+| `systemctl status book-server.service` | Show the current status of the service — active, inactive, or failed, along with recent logs and process details |
 
 ## Storage in Linux
 ### Disk partition
@@ -411,17 +523,19 @@ eg:
     /var	Logs, databases, and variable data
     swap	Used as virtual memory when RAM is full
     ```
-- Command for disk partitioning:
-- Command	Description:
-1. lsblk	#Lists all block devices and their mount points
-2. fdisk /dev/sdX	#CLI tool for partitioning (for MBR disks)
-3. gdisk /dev/sdX	#CLI tool for partitioning (for GPT disks)
-4. parted /dev/sdX	#More flexible partition tool
-5. lsblk -f	#Shows filesystem types and mount points
-6. blkid	#Lists block devices with UUID and filesystem info
-7. df -h	#Shows disk space usage for mounted filesystems
-8. mkfs.ext4 /dev/sdXn	#Creates a filesystem (e.g., ext4) on a partition <br>
-   **(replace /dev/sdX with your actual disk, like /dev/sda)**
+## Disk Partitioning and Filesystem Commands
+
+| Command | Description |
+|---------|-------------|
+| `lsblk` | Lists all block devices and their mount points |
+| `fdisk /dev/sdX` | CLI tool for partitioning MBR disks |
+| `gdisk /dev/sdX` | CLI tool for partitioning GPT disks |
+| `parted /dev/sdX` | Flexible partitioning tool supporting both MBR and GPT |
+| `lsblk -f` | Shows filesystem types, UUIDs, and mount points |
+| `blkid` | Lists block devices with UUID and filesystem information |
+| `df -h` | Displays disk space usage for all mounted filesystems in human-readable format |
+| `mkfs.ext4 /dev/sdXn` | Creates an ext4 filesystem on a partition <br>**Note:** Replace `/dev/sdXn` with your actual partition, e.g., `/dev/sda1` |
+
 
 ### Example workflow: Create and Mount a Partition
 ```bash
