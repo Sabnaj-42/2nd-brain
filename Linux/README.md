@@ -22,7 +22,7 @@ Two types of command:
 2. External command: They are binary program or scripts (mv, date, uptime, cp e.t.c)
 
 Absolute and relative directory: Absolute directory start from the root where relative directory start from the present working directory. <br>
-absolute: /home/sabnaj/go/src/
+absolute: /home/sabnaj/go/src/ <br>
 Relative: go/src/2ndbrain
 
 ## Shell command
