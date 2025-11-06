@@ -353,7 +353,7 @@ eg:
 ### run a project automatically on boot as a systemd service
 1. let's assume our project runs with /opt/book-server/start.sh
 2. create systemd service file
-     ```
+     ```bash
     sudo nano /etc/systemd/system/book-server.service
     ```
 3. add the following content in the book-server.service file
@@ -375,18 +375,18 @@ eg:
     
      ```
 4. Reload systemd to recognize our new service
-    ```
+    ```bash
     sudo systemctl daemon-reload
     ```
 5. Start, test our service manually
-     ```
+     ```bash
     sudo systemctl start book-server.service  #start service manually 
     sudo systemctl status book-server.service  #check if it's runnig
     journalctl -u book-server.service -f  #view logs (if any output)
     
     ```
 6. Enable it to start automatically boot
-     ```
+     ```bash
     sudo systemctl enable book-server.service
     ```
 ### systemctl command for service management
@@ -399,3 +399,62 @@ eg:
 7. systemctl status book-server.service    # Show the current status of the service — whether it's active, inactive, or failed, along with recent logs and process details
 
 ## Storage in Linux
+### Disk partition
+- disk partitioning means dividing a physical hard drive (or SSD) into smaller, logical sections called partitions — each of which can be used to store data, install operating systems, or manage filesystems separately.
+- Each partition  has its own filesystem and can be mounted to a directory (like /, /home, /boot, etc).
+- Common partition types:
+     ```
+    Partition	Purpose
+    / (root)	Contains the core system files (mandatory)
+    /boot	Contains bootloader and kernel files
+    /home	Stores user files and settings
+    /var	Logs, databases, and variable data
+    swap	Used as virtual memory when RAM is full
+    ```
+- Command for disk partitioning:
+- Command	Description:
+1. lsblk	#Lists all block devices and their mount points
+2. fdisk /dev/sdX	#CLI tool for partitioning (for MBR disks)
+3. gdisk /dev/sdX	#CLI tool for partitioning (for GPT disks)
+4. parted /dev/sdX	#More flexible partition tool
+5. lsblk -f	#Shows filesystem types and mount points
+6. blkid	#Lists block devices with UUID and filesystem info
+7. df -h	#Shows disk space usage for mounted filesystems
+8. mkfs.ext4 /dev/sdXn	#Creates a filesystem (e.g., ext4) on a partition <br>
+   **(replace /dev/sdX with your actual disk, like /dev/sda)**
+
+### Example workflow: Create and Mount a Partition
+```bash
+# Step 1: List all disks
+lsblk
+
+# Step 2: Start partitioning the disk
+sudo fdisk /dev/sda
+
+# Inside fdisk:
+#   n → new partition
+#   p → primary
+#   1 → partition number
+#   <Enter> for default first and last sector
+#   w → write changes and exit
+
+# Step 3: Create a filesystem
+sudo mkfs.ext4 /dev/sda1
+
+# Step 4: Create a mount point
+sudo mkdir /mnt/data
+
+# Step 5: Mount the partition
+sudo mount /dev/sda1 /mnt/data
+
+# Step 6: (Optional) Add to /etc/fstab for auto-mount at boot
+
+```
+**Viewing partition information:**
+
+```bash
+sudo fdisk -l      # Detailed partition info
+lsblk -f           # Filesystem and mount details
+df -h              # Disk usage
+
+```
