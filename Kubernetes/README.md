@@ -344,3 +344,165 @@ spec:
 - This policy applies to pods labeled app=backend.
 - Only pods labeled app=frontend are allowed to connect to them on port 80.
 - All other pods are blocked.
+
+
+## Admission Controller
+- In Kubernetes, an admission controller is like a gatekeeper.
+- Whenever someone tries to create, update, or delete something in the cluster (like a Pod or Deployment), the gatekeeper checks the request before it’s saved.
+
+- If this gatekeeper is built using your own code running as a web service, it’s called an Admission Webhook.
+- That means Kubernetes sends the request to your service first, so your program can check it, change it, or even reject it before it’s stored in the cluster etcd storage.
+
+
+## Kubebuilder
+- Kubebuilder is a framework for building Kubernetes APIs (custom controllers and CRDs) using the Go programming language.<br>
+- It is built on top of controller-runtime and helps scaffold and manage:
+    - Custom Resource Definition (CRDs)
+    - Controller and reconcilers
+    - Webhook
+    - Deepcopy and client code generation<br>
+  
+**Kubebuilder project structure:**
+```bash
+demo/
+├── Makefile
+├── PROJECT
+├── go.mod
+├── go.sum
+├── main.go
+│
+├── api/
+│   └── v1/
+│       ├── foo_types.go
+│       ├── groupversion_info.go
+│       └── zz_generated.deepcopy.go
+│
+├── controllers/
+│   └── foo_controller.go
+│
+└── config/
+    ├── crd/
+    │   └── bases/
+    │       └── apps.mydomain.com_foos.yaml
+    ├── default/
+    ├── manager/
+    ├── rbac/
+    ├── samples/
+    │   └── apps_v1_foo.yaml
+    └── webhook/
+
+
+```
+1. kubebuilder init --domain=my.com --repo=example.com/demo  
+    - This command initializes a new Kubebuilder project — i.e., it sets up the basic folder structure, configuration files, and boilerplate code needed to start building a Kubernetes controller/operator.
+    - --domain my.com  --> defines the API group domain for CRDs. my.com becomes the suffix for API groups: apps.my.com/v1alpha1
+    - --repo=example.com/demo  --> Used in go.mod and import path throughout the codebase
+    - Lets assume, we ran the command in "Kubebuilder" directory. Whats get generated:
+   ```bash
+    Kubebuilder/
+    ├── Dockerfile                    # Container image build instructions
+    ├── Makefile                      # Common development tasks
+    ├── PROJECT                       # Kubebuilder project metadata
+    ├── go.mod                        # Go module definition
+    ├── main.go                       # Operator entry point
+    ├── config/                       # Kubernetes manifests for deployment
+    │   ├── rbac/                     # Role-based access control
+    │   ├── manager/                  # Controller manager deployment
+    │   ├── prometheus/               # ServiceMonitor for metrics
+    │   └── default/                  # Kustomize base
+    ├── hack/                         # Utility scripts
+    │   └── boilerplate.go.txt        # License headers
+    └── .gitignore
+
+   ```
+   2. kubebuilder create api --group apps --version v1alpha1 --kind BookServer
+       - Create API/Controller
+         - --group apps
+            - Defines the API group: apps.my.domain (combines with your domain from init)
+            - Groups related APIs together (e.g., apps, batch, storage)
+         - --version v1alpha1
+            - Sets the API version for your resource
+            - v1alpha1 = first alpha version (indicates it's experimental and may change)
+         - --kind BookServer
+            - The resource type name (like Pod, Deployment, Service)
+            - Your users will create BookServer resources
+       <br>**What gets generated:**
+       ```bash
+       ├── api/v1alpha1/
+       │   ├── bookserver_types.go      # CRD structure (Spec, Status)
+       │   ├── bookserver_webhook.go    # Validation/mutation webhooks
+       │   └── groupversion_info.go     # API registration
+       ├── controllers/
+       │   └── bookserver_controller.go # Reconciliation logic
+       ├── config/crd/
+       │   └── bases/
+       │       └── apps.my.domain_bookservers.yaml  # Generated CRD manifest
+       ├── config/rbac/
+       │   ├── bookserver_editor_role.yaml
+       │   ├── bookserver_viewer_role.yaml
+       │   └── role.yaml                 # Controller permissions
+       └── config/samples/
+       └── apps_v1alpha1_bookserver.yaml        # Example resource
+      ```
+**Next steps:**
+1. Define your API in api/v1alpha1/bookserver_types.go (add fields to BookServerSpec and BookServerStatus)
+2. Generate CRD manifests
+   ```bash
+    make manifests
+   ```
+3. Implement controller logic in controllers/bookserver_controller.go (the Reconcile() method)
+4. Install CRD and run
+     ```bash
+      make install run 
+    ```
+
+### Steps of running kubebuilder project by pushing controller image into docker hub
+1. Implement logic into api/v1/types.go and controllers/controller.go file
+2. Generate code and manifests
+ ```bash
+  make manifests
+  ```
+3. Install CRDs into the cluster 
+  ```bash
+  make install 
+  ```
+4. Build and push the operator image
+  ```bash
+ make docker-build IMG=<your-dockerhub-username>/<image-name>:<tag>
+ make docker-push IMG=<your-dockerhub-username>/<image-name>:<tag>
+  ```
+5. Update image reference in the deployment
+   - config/manager/manger.yaml -> spec.image field
+6. Deploy the controller manager
+    ```bash
+     make deploy IMG=<your-dockerhub-username>/<image-name>:<tag>
+    ```
+7. create and apply custom resource(create an object)
+  ```bash
+ kubectl apply -f bookserver.yaml
+  ```
+
+### Run the kubebuilder project without pushing the controller image into docker hub
+1. kind create cluster --name demo
+2. Build operator image locally
+   ```bash
+   make docker-build IMG=sabnaj/booksever:v1.0.0
+   ```
+3. Load the image into kind
+ ```bash
+ kind load docker-image sabnaj/booksever:v1.0.0 --name demo
+ ```
+4. install CRDs
+  ```bash
+  make install
+  ```
+5. Deploy the controller using local image
+  ```bash
+  make deploy IMG=sabnaj/bookserver:v1.0.0
+  ```
+6. Apply custom resource (object)
+   ```bash
+   kubectl apply -f apps_bookserver.yaml
+   ```
+
+   
