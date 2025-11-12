@@ -397,7 +397,8 @@ demo/
     - This command initializes a new Kubebuilder project — i.e., it sets up the basic folder structure, configuration files, and boilerplate code needed to start building a Kubernetes controller/operator.
     - --domain my.com  --> defines the API group domain for CRDs. my.com becomes the suffix for API groups: apps.my.com/v1alpha1
     - --repo=example.com/demo  --> Used in go.mod and import path throughout the codebase
-    - Lets assume, we ran the command in "Kubebuilder" directory. Whats get generated:
+    - Lets assume, we ran the command in "Kubebuilder" directory. <br>
+**Whats get generated:**
    ```bash
     Kubebuilder/
     ├── Dockerfile                    # Container image build instructions
@@ -425,8 +426,8 @@ demo/
          - v1alpha1 = first alpha version (indicates it's experimental and may change)
       - --kind BookServer
          - The resource type name (like Pod, Deployment, Service)
-         - Your users will create BookServer resources
-<br>**What gets generated:**
+         - Your users will create BookServer resources <br>
+**What gets generated:**
     ```bash
     ├── api/v1alpha1/
     │   ├── bookserver_types.go      # CRD structure (Spec, Status)
