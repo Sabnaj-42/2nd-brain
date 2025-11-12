@@ -415,35 +415,35 @@ demo/
     └── .gitignore
 
    ```
-   2. kubebuilder create api --group apps --version v1alpha1 --kind BookServer
-       - Create API/Controller
-         - --group apps
-            - Defines the API group: apps.my.domain (combines with your domain from init)
-            - Groups related APIs together (e.g., apps, batch, storage)
-         - --version v1alpha1
-            - Sets the API version for your resource
-            - v1alpha1 = first alpha version (indicates it's experimental and may change)
-         - --kind BookServer
-            - The resource type name (like Pod, Deployment, Service)
-            - Your users will create BookServer resources
-       <br>**What gets generated:**
-       ```bash
-       ├── api/v1alpha1/
-       │   ├── bookserver_types.go      # CRD structure (Spec, Status)
-       │   ├── bookserver_webhook.go    # Validation/mutation webhooks
-       │   └── groupversion_info.go     # API registration
-       ├── controllers/
-       │   └── bookserver_controller.go # Reconciliation logic
-       ├── config/crd/
-       │   └── bases/
-       │       └── apps.my.domain_bookservers.yaml  # Generated CRD manifest
-       ├── config/rbac/
-       │   ├── bookserver_editor_role.yaml
-       │   ├── bookserver_viewer_role.yaml
-       │   └── role.yaml                 # Controller permissions
-       └── config/samples/
-       └── apps_v1alpha1_bookserver.yaml        # Example resource
-      ```
+2. kubebuilder create api --group apps --version v1alpha1 --kind BookServer
+    - Create API/Controller
+      - --group apps
+         - Defines the API group: apps.my.domain (combines with your domain from init)
+         - Groups related APIs together (e.g., apps, batch, storage)
+      - --version v1alpha1
+         - Sets the API version for your resource
+         - v1alpha1 = first alpha version (indicates it's experimental and may change)
+      - --kind BookServer
+         - The resource type name (like Pod, Deployment, Service)
+         - Your users will create BookServer resources
+    <br>**What gets generated:**
+    ```bash
+    ├── api/v1alpha1/
+    │   ├── bookserver_types.go      # CRD structure (Spec, Status)
+    │   ├── bookserver_webhook.go    # Validation/mutation webhooks
+    │   └── groupversion_info.go     # API registration
+    ├── controllers/
+    │   └── bookserver_controller.go # Reconciliation logic
+    ├── config/crd/
+    │   └── bases/
+    │       └── apps.my.domain_bookservers.yaml  # Generated CRD manifest
+    ├── config/rbac/
+    │   ├── bookserver_editor_role.yaml
+    │   ├── bookserver_viewer_role.yaml
+    │   └── role.yaml                 # Controller permissions
+    └── config/samples/
+    └── apps_v1alpha1_bookserver.yaml        # Example resource
+   ```
 **Next steps:**
 1. Define your API in api/v1alpha1/bookserver_types.go (add fields to BookServerSpec and BookServerStatus)
 2. Generate CRD manifests
