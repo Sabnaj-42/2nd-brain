@@ -426,7 +426,7 @@ demo/
       - --kind BookServer
          - The resource type name (like Pod, Deployment, Service)
          - Your users will create BookServer resources
-    <br>**What gets generated:**
+<br>**What gets generated:**
     ```bash
     ├── api/v1alpha1/
     │   ├── bookserver_types.go      # CRD structure (Spec, Status)
