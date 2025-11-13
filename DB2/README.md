@@ -39,12 +39,12 @@ If the primary database fails, one of the standby databases can take over and be
    -  When the old primary comes back online, it can rejoin as a standby (this is called failback).
 <br>***Note:*** We can make replica of a specific database in DB2.
 ### key Features:
-1. Replication: Uses transaction logs to keep standby in sync with primary.
-2. Zero or minimal data loss: Depending on synchronization mode (SYNC, NEARSYNC, ASYNC, SUPERASYNC).
-3. Automatic client reroute (ACR): Clients automatically reconnect to the new primary after failover.
-4. Peer Window: Grace period that allows zero data loss even during temporary disconnections.
-5. Up to 3 standbys: One for high availability (local), others for disaster recovery (remote).
-6. Pacemaker Integration: From Db2 11.5.4+, Pacemaker can automate failover decisions.
+1. **Replication:** Uses transaction logs to keep standby in sync with primary.
+2. **Zero or minimal data loss:** Depending on synchronization mode (SYNC, NEARSYNC, ASYNC, SUPERASYNC).
+3. **Automatic client reroute (ACR):** Clients automatically reconnect to the new primary after failover.
+4. **Peer Window:** Grace period that allows zero data loss even during temporary disconnections.
+5. **Up to 3 standbys:** One for high availability (local), others for disaster recovery (remote).
+6. **Pacemaker Integration:** From Db2 11.5.4+, Pacemaker can automate failover decisions.
 
 ### HADR multiple standby database
 - IBM Tivoli System Automation for Multiplatforms (SA MP) and Pacemaker automated failover is supported only for the principal standby. You must issue a takeover manually on one of the auxiliary standbys to make one of them the primary.
