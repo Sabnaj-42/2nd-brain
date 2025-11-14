@@ -484,26 +484,32 @@ demo/
   ```
 
 ### Run the kubebuilder project without pushing the controller image into docker hub
-1. kind create cluster --name demo
-2. Build operator image locally
+1. Complete writing types go and controller
+2. Run belows commands
    ```bash
-   make docker-build IMG=sabnaj/booksever:v1.0.0
+   make manifests  #generate CRDs and rbac
+   make install    #apply crd to your cluseter
+   make run        #run the controller locally
    ```
-3. Load the image into kind
+3. Build docker image of the CRD project
  ```bash
- kind load docker-image sabnaj/booksever:v1.0.0 --name demo
+  make docker-build 
  ```
-4. install CRDs
+4. Load the image to kind cluster
   ```bash
-  make install
+  kind load docker-image sabnaj/db2-controller:latest   #value for IMG variable is set in Makefile as: sabnaj/db2-controller:latest
   ```
-5. Deploy the controller using local image
+5. 
   ```bash
-  make deploy IMG=sabnaj/bookserver:v1.0.0
+  make manifests
   ```
-6. Apply custom resource (object)
+6. Run the controller/operator in the cluster
    ```bash
-   kubectl apply -f apps_bookserver.yaml
+   make deploy
    ```
-
+7. Create an object of this crd type (let's assume "db2-obj.yaml)
+8. Apply the object into the cluster
+  ```bash
+  kubctl apply -f db2-obj.yaml
+  ```
    
