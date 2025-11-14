@@ -149,3 +149,19 @@ When a query runs (e.g., SELECT * FROM customers WHERE region='Asia'):
 4. The coordinator combines the results and returns them to the user.<br>
 
 All this is transparent — users write normal SQL and DB2 handles the parallelism automatically.
+
+## Pacemaker
+In IBM Db2 HADR (High Availability Disaster Recovery), Pacemaker is an open-source cluster manager that provides automatic failover and high availability capabilities. It essentially automates the disaster recovery process that HADR alone cannot perform.
+<br> **What pacemaker does:**
+1. Automates HADR Faileover
+   - HADR by itself is only a replication technology—it has no built-in failure detection or automatic takeover . A manual takeover requires DBA intervention.
+   - Pacemaker continuously monitors the health of primary and standby database instances 
+   - When the primary database fails (e.g., process crash, VM halt), Pacemaker automatically initiates an HADR takeover by the standby server
+2. Manages Virtual IP (VIP) Address
+   - Pacemaker maintains a single VIP address that clients use to connect to the database, regardless of which node is primary
+   - During failover, it automatically transfers the VIP to the new primary server, enabling seamless client reconnections (especially when combined with Automatic Client Reroute - ACR) 
+3. Prevents Split-Brain scenarios
+   - Pacemaker uses quorum mechanisms (including QDevice) and fencing to ensure only one primary exists .
+   - If both nodes somehow become primary, Pacemaker detects and resolves this "dual-primary" condition .
+4. Replace legacy TSAMP technology
+   - Pacemaker is the modern replacement for Tivoli System Automation for Multiplatforms (TSAMP) . It offers simpler configuration and management compared to TSAMP.
