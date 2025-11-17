@@ -24,6 +24,7 @@
 - ibm wiki: https://ibm.github.io/db2-hadr-wiki/hadrCommands.html
 - Setting DB2 Configuration Parameters for DB2 HADR Using IBM Tivoli System Automation (TSA) with a Virtual IP Address: https://documentation.commvault.com/11.20/setting_db2_configuration_parameters_for_db2_hadr_using_ibm_tivoli_system_automation_tsa_with_virtual_ip_address.html
 - DB2 AWS: https://docs.aws.amazon.com/prescriptive-guidance/latest/patterns/set-up-disaster-recovery-for-sap-on-ibm-db2-on-aws.html
+- Backing up and restoring: https://www.ibm.com/docs/en/db2/11.5.x?topic=ad-backing-up-restoring-db2
 ## HADR-High Availability Disaster Recovery
 HADR (High Availability Disaster Recovery) in Db2 is a built-in feature that provides data protection, high availability, and disaster recovery for your database.<br>
 HADR allows a Db2 database to automatically replicate data changes from a primary database (the main one handling user requests) to one or more(up to 3 standby) standby databases (copies kept in sync).<br>
@@ -165,3 +166,82 @@ In IBM Db2 HADR (High Availability Disaster Recovery), Pacemaker is an open-sour
    - If both nodes somehow become primary, Pacemaker detects and resolves this "dual-primary" condition .
 4. Replace legacy TSAMP technology
    - Pacemaker is the modern replacement for Tivoli System Automation for Multiplatforms (TSAMP) . It offers simpler configuration and management compared to TSAMP.
+
+## DB2 backup and restoring
+### DB2 backup
+A backup creates a copy of your entire database or individual table spaces at a specific point in time. This copy can be used to rebuild the database if it becomes corrupted, damaged, or if you need to revert to a previous state.<br>
+**Backup Types:** 
+1. **Full Backup:** Copies the entire database 
+  ```bash
+   db2 backup db <dbname> to <path>
+  ```
+2. **Incremental Backup:** Only changes since the last backup
+3. **Delta Backup:** Only changes since the last full backup
+
+**Backup Modes:**
+1. **Offline Backup:** Database must be inaccessible to users during backup
+2. **Online Backup:** Database remains available during backup, but requires subsequent log files to make the data consistent (for production)
+
+### DB2 restoring
+Restore rebuilds a damaged or corrupted database from a backup image. The restored database returns to the exact state it was in when the backup was created .<br> DB2 supports two primary recovery methods:
+1. **Version Recovery:** Restores the database to the state captured in a backup image. All transactions after the backup are lost. This method uses circular logging (default) and requires regular full backups
+2. **Rollforward Recovery:** Restores from backup, then applies transaction log files to recover the database to its most recent state or a specific point in time. Requires archive logging enabled
+
+### DB2 Online Full Backup — Command Sequence with Comments
+```bash
+su - db2inst1                 # Switch to DB2 instance owner (must run DB2 commands)
+
+. ~/sqllib/db2profile         # Load DB2 environment variables (PATH, DB2INSTANCE, etc.) .Replace the directory with the db2profile actual path
+db2start                      # Start the DB2 instance
+db2 connect to testdb         # Connect to your database (replace testdb with your DB name)
+
+db2 get db cfg for testdb | grep -i LOG     # Check database logging settings (required for online backup)
+
+db2 update db cfg for testdb using LOGARCHMETH1 LOGRETAIN   # Enable archive logging mode (required for on line backup)
+                                                             # LOGRETAIN = required for online full backup
+
+db2stop                      # Restart DB2 to apply logging configuration
+db2start
+
+mkdir -p /backup/db2         # Create backup directory (must exist before backup)
+
+db2 backup db testdb online to /backup/db2 compress include logs   # Take ONLINE full backup with logs
+                                                                   # compress = reduces size
+                                                                   # include logs = needed for recovery
+
+db2 list history backup all for testdb      # Show backup history with timestamps
+
+db2ckbkp /backup/db2/<backup_timestamp>.001 # Verify the backup image validity
+                                            # Replace <backup_timestamp> with the actual timestamp file
+
+db2 disconnect testdb          # Disconnect from the database (cleanup step)
+
+```
+
+### DB2 Restore Commands — With Comments (Assuming database is testdb and backup is in /backup/db2)
+```bash
+su - db2inst1                 # Switch to DB2 instance owner (required for DB2 admin commands)
+
+. ~/sqllib/db2profile         # Load DB2 environment variables (PATH, DB2INSTANCE, etc.). Replace the path with the actual db2profile path
+
+db2stop                        # Stop the database instance before restore (optional but safe)
+
+db2 restore db testdb from /backup/db2 taken at <backup_timestamp>   # Restore the database from backup
+                                                                     # Replace <backup_timestamp> with actual backup timestamp
+                                                                     # Example timestamp from `list history backup all`
+
+db2 connect to testdb          # Connect to the restored database
+
+db2 rollforward db testdb to end of logs and complete  # Apply transaction logs to bring DB to consistent state
+                                                         # 'end of logs' = recover to latest committed state
+                                                         # 'complete' = finalize restore
+
+db2 list db directory           # Verify database is restored and visible
+
+db2 list history backup all for testdb    # Optional: verify backup history for restored database
+
+db2 connect reset               # Disconnect from database after restore
+
+db2start                        # Start the DB2 instance (if it was stopped)
+
+```
