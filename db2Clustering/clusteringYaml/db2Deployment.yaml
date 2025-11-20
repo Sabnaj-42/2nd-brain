@@ -16,7 +16,7 @@ spec:
     spec:
       containers:
         - name: db2
-          image: ibmcom/db2
+          image: ibmcom/db2:11.5.8.0
           ports:
             - containerPort: 50000
           securityContext:

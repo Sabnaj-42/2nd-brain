@@ -1,3 +1,30 @@
+## Running db2 image in a pod and creating db2 database
+1.  ```bash
+    kubectl exec -it -n db2-system db2-5555b95bfc-ds4n8 -- bash su - db2inst1
+    ```
+- kubectl exec -it -n db2-system-test db2-5555b95bfc-ds4n8 --> start an interactive terminal in the db2-system namespace and db2-5555b95bfc-ds4n8 pod. DB2 docker image is running in this pod
+- -- bash  --> start a bash shell in the pod
+- su - db2inst1 --> Switch user into db2inst1. db2inst1 is the default user of db2
+2. ```bash
+   find / -name db2profile 2>/dev/null
+   ```
+    - Find the file named db2profile. Start finding from rood directory. 2>/dev/null --> ignore all permission denied files.
+    - db2profile holds all necessary environment variables for db2 command
+3. Lets assume our db2profile file is located at "/opt/ibm/db2/V11.5/cfg/db2profile"
+   ```bash
+   . /opt/ibm/db2/V11.5/cfg/db2profile
+   ```
+Load all DB2 environment variables from db2profile into my current shell session so I can use DB2 commands.
+4. ```bash
+   su - db2inst1 #switch to db2 instance user
+   ```
+5. ```bash 
+   db2 create database abc #create a db2 database named "abc"
+   ```
+6. ```bash
+   db2 connect to abc  #connect to the database abc 
+   ```
+
 ## DB2 HADR configuration commands
 ```bash
 # 1. Display all database configuration parameters for the database named 'abc'
@@ -22,7 +49,7 @@ db_name=abc
 # ================================
 
 # Set log archiving method (required for HADR)
-db2 UPDATE DB CFG FOR $db_name USING LOGARCHMETH1 "DISK:/shared-logs/" #DISK:/shared-logs directory must exist or created. (pvc mounted path)
+db2 UPDATE DB CFG FOR $db_name USING LOGARCHMETH1 "DISK:/shared-logs/" #DISK:/shared-logs directory must exist or created. (pvc mounted path can be used)
 
 # Log index build operations for safe replication
 db2 UPDATE DB CFG FOR $db_name USING LOGINDEXBUILD ON
@@ -79,4 +106,101 @@ db2 BACKUP DATABASE $db_name TO "/shared-backups/" COMPRESS
 # Start HADR (only after standby is fully configured and in PEER_SYNC mode)
 db2 START HADR ON DB $db_name AS PRIMARY
 
+```
+
+### Configuration on Standby
+```bash
+db_name=abc
+
+# ===========================================
+# STANDBY POD HADR CONFIGURATION SCRIPT
+# ===========================================
+# EXECUTE AFTER PRIMARY BACKUP IS COMPLETE AND ACCESSIBLE
+
+# ================================
+# 0. Set DB2 Registry Variables
+# ================================
+# Enable read-only access on standby (Hot Standby)
+db2set DB2_HADR_ROS=ON
+
+# Set default isolation level to Uncommitted Read for standby connections
+db2set DB2_STANDBY_ISO=UR
+
+# Apply registry changes (requires instance restart if not already set)
+# db2stop force
+# db2start
+
+# ================================
+# 1. Verify and Prepare Environment
+# ================================
+# Check for existing databases (abc should NOT exist before restore)
+db2 LIST DATABASE DIRECTORY
+
+# IMPORTANT: DO NOT run "db2 CREATE DATABASE" on standby.
+# The standby MUST be created by restoring the primary's backup.
+
+# Ensure primary's backup is accessible at the shared location
+# Backup from primary should be at: /shared-backups/
+
+# ================================
+# 2. Restore Database from Primary Backup
+# ================================
+# Restore database from the shared backup location
+# Replace WITH <timestamp> if multiple backups exist
+db2 RESTORE DATABASE $db_name FROM "/shared-backups/" REPLACE HISTORY FILE WITHOUT PROMPTING
+
+# ================================
+# 3. Configure HADR Parameters on Standby
+# ================================
+# Log index build operations (must match primary)
+db2 UPDATE DB CFG FOR $db_name USING LOGINDEXBUILD ON
+
+# Automatic index recovery (must match primary)
+db2 UPDATE DB CFG FOR $db_name USING INDEXREC RESTART
+
+# Standby HADR local host (this pod's hostname)
+db2 UPDATE DB CFG FOR $db_name USING HADR_LOCAL_HOST db2-5f989464fb-5prh2.db2-service.db2-system-test.svc.cluster.local
+
+# Standby HADR listener port (must match primary's HADR_REMOTE_SVC)
+db2 UPDATE DB CFG FOR $db_name USING HADR_LOCAL_SVC 55000
+
+# Primary database hostname (remote host)
+db2 UPDATE DB CFG FOR $db_name USING HADR_REMOTE_HOST db2-5f989464fb-cnvct.db2-service.db2-system-test.svc.cluster.local
+
+# Primary HADR port (must match primary's HADR_LOCAL_SVC) 
+db2 UPDATE DB CFG FOR $db_name USING HADR_REMOTE_SVC 55000
+
+# Remote instance name on primary
+db2 UPDATE DB CFG FOR $db_name USING HADR_REMOTE_INST db2inst1
+
+# Synchronization mode (must match primary)
+db2 UPDATE DB CFG FOR $db_name USING HADR_SYNCMODE NEARSYNC
+
+# Replay delay (0 = no delay, recommended for immediate failover)
+db2 UPDATE DB CFG FOR $db_name USING HADR_REPLAY_DELAY 0
+
+# HADR timeout (should match primary)
+db2 UPDATE DB CFG FOR $db_name USING HADR_TIMEOUT 120
+
+# Log archiving method (must match primary)
+db2 UPDATE DB CFG FOR $db_name USING LOGARCHMETH1 "DISK:/shared-logs/"
+
+# ================================
+# 4. Start HADR on Standby
+# ================================
+# Start HADR in standby role (ALWAYS start standby before primary)
+db2 START HADR ON DATABASE $db_name AS STANDBY
+
+# Verify standby status
+db2pd -db $db_name -hadr
+
+# ================================
+# 5. Startup Sequence Reminder
+# ================================
+# AFTER standby shows PEER or REMOTE_CATCHUP state,
+# return to PRIMARY pod and execute:
+# db2 START HADR ON DB HADRDB AS PRIMARY
+#
+# Monitor both servers:
+# db2pd -db abc -hadr
 ```
