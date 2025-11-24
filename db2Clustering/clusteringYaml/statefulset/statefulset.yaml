@@ -26,6 +26,8 @@ spec:
                 secretKeyRef:
                   name: db2-secrets
                   key: DB2INST1_PASSWORD
+            - name: LICENSE
+              value: "accept"
           volumeMounts:
             - name: db2-data
               mountPath: /database
@@ -37,4 +39,4 @@ spec:
         resources:
           requests:
             storage: 5Gi
-        storageClassName: standard
+        storageClassName: local-path
