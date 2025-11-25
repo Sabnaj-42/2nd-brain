@@ -29,7 +29,7 @@ This allows users to access devices or services using easy-to-remember names ins
 2. click virtual machines 
    - select create ( upper right corner)
    - provide namesapce, name (vm name), CPU (how many cores), memory (RAM), volume (disk), SSH key (my pc is connected with my github using a ssh key. this ssh should be placed in ssh key field. my pc can access the vm till the ssh key of my pc and the github ssh key same.)
-   - To see the ssh key of my pc: 
+   - To see the ssh public key of my pc: 
     ```bash
    cat ~/.ssh/id_rsa.pub #this key and my github ssh key same
     ``` 
@@ -37,7 +37,7 @@ This allows users to access devices or services using easy-to-remember names ins
 ```bash
 ssh ubuntu@<my_vm_account_ip> #give access to my vm 
 ```
-4. Switch to root user and create k3s cluster(for single node)
+4. Switch to root user and install k3s cluster inside the VM(for single node)
 ```bash
 sudo su
 [ "$(id -u)" -ne 0 ] && echo "Switching to root..." && sudo su - || true
@@ -110,9 +110,9 @@ curl https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | bash
 5. exit
 6. From my pc bash terminal open k3s.yaml
 ```bash
-vim ~/k3s.yaml # now replace the server IP with my vm IP address. If writing access denied give access using-> chmod 777 k3s.yaml
+vim ~/k3s.yaml # now replace the server IP with my vm IP address. If writing access denied give access using-> chmod 600 k3s.yaml
 ```
-7. Each time when runnig a new terminal export kubeconfig using the value k3s.yaml
+7. Each time when running a new terminal export kubeconfig using the value k3s.yaml
 ```bash
 export KUBECONFIG=$HOME/k3s.yaml // if we want to run cluster in my pc instead of vm just set the KUBECONFIG value empty. like-> export KUBECONFIG=
 ```
