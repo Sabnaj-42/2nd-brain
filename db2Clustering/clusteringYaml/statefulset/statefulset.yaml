@@ -16,7 +16,10 @@ spec:
     spec:
       containers:
         - name: db2
+          securityContext:
+            privileged: true
           image: ibmcom/db2:11.5.8.0
+          imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 50000
               name: db2-port
@@ -31,6 +34,12 @@ spec:
           volumeMounts:
             - name: db2-data
               mountPath: /database
+            - name: db2-backup
+              mountPath: /database/backup  # shared backup folder
+      volumes:
+        - name: db2-backup
+          persistentVolumeClaim:
+            claimName: db2-backup
   volumeClaimTemplates:
     - metadata:
         name: db2-data
@@ -40,3 +49,4 @@ spec:
           requests:
             storage: 5Gi
         storageClassName: local-path
+
