@@ -175,8 +175,8 @@ A backup creates a copy of your entire database or individual table spaces at a 
   ```bash
    db2 backup db <dbname> to <path>
   ```
-2. **Incremental Backup:** Only changes since the last backup
-3. **Delta Backup:** Only changes since the last full backup
+2. **Incremental Backup:** All changes since last Full backup
+3. **Delta Backup:** Changes since any previous backup (full, incremental, or delta)
 
 **Backup Modes:**
 1. **Offline Backup:** Database must be inaccessible to users during backup
@@ -245,3 +245,18 @@ db2 connect reset               # Disconnect from database after restore
 db2start                        # Start the DB2 instance (if it was stopped)
 
 ```
+## Snapshot Backup
+**Snapshot Backup:** An instant, point-in-time copy of your database created by the storage system, not by copying data through the database engine. It uses metadata pointers instead of full data duplication. <br>
+**How it works:**
+1. **Quiesce:** Db2 pauses writes for ~10 seconds to ensure consistency
+2. **Capture:** Storage system captures metadata pointers to data blocks (instant)
+3. **Resume:** Normal operations continue immediately
+4. **Copy-on-Write:** Original blocks are preserved when changed, maintaining the snapshot view
+### Snapshot backup in db2
+Snapshot backup works only when:
+1. Your database is encrypted, and
+2. You are using Db2's own built-in (IBM) encryption libraries
+  – either
+    - the normal encryption library, or
+    - the combined encryption + compression library.
+<br> Snapshot backup does not work when you configured a non-IBM(third-party) encryption library for backups.
