@@ -215,3 +215,4 @@ db2pd -db $db_name -hadr
 # Monitor both servers:
 # db2pd -db abc -hadr
 ```
+
