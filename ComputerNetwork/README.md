@@ -117,3 +117,5 @@ vim ~/k3s.yaml # now replace the server IP with my vm IP address. If writing acc
 export KUBECONFIG=$HOME/k3s.yaml // if we want to run cluster in my pc instead of vm just set the KUBECONFIG value empty. like-> export KUBECONFIG=
 ```
 
+## Netcat (nc)
+Netcat (nc) in Linux is a simple but powerful command-line tool used for reading and writing data across network connections using TCP or UDP.
