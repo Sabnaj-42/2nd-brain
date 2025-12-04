@@ -214,5 +214,10 @@ db2pd -db $db_name -hadr
 #
 # Monitor both servers:
 # db2pd -db abc -hadr
+# ================================
+#Stop HADR in database abc
+# ================================
+#db2 deactivate database abc
+#db2 stop hadr on database abc
 ```
 
