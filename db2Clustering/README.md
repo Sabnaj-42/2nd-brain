@@ -221,3 +221,17 @@ db2pd -db $db_name -hadr
 #db2 stop hadr on database abc
 ```
 
+## Command for taking backup using pipeline and cat it in another terminal
+1. Create pipe and Start Backup (will block)
+```bash
+kubectl exec -it db2-0 -n db2-system -- su - db2inst1 -c "
+  mkfifo /tmp/db2backup.pipe && \
+  db2 backup database abc to /tmp/db2backup.pipe"
+```
+2. Stream backup to local machine
+```bash
+# Option A: Save uncompressed locally
+kubectl exec db2-0 -n db2-system -- su - db2inst1 -c "cat /tmp/db2backup.pipe" 
+# Option B: Compress on-the-fly (smaller file, recommended)
+kubectl exec db2-0 -n db2-system -- su - db2inst1 -c "cat /tmp/db2backup.pipe" | gzip > ./abc_backup.img.gz
+```
