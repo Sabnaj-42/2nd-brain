@@ -222,16 +222,26 @@ db2pd -db $db_name -hadr
 ```
 
 ## Command for taking backup using pipeline and cat it in another terminal
+
 1. Create pipe and Start Backup (will block)
 ```bash
 kubectl exec -it db2-0 -n db2-system -- su - db2inst1 -c "
   mkfifo /tmp/db2backup.pipe && \
   db2 backup database abc to /tmp/db2backup.pipe"
 ```
-2. Stream backup to local machine
+2. Store backup from pipe into standby pod (Open another terminal and run the below's command)
 ```bash
-# Option A: Save uncompressed locally
-kubectl exec db2-0 -n db2-system -- su - db2inst1 -c "cat /tmp/db2backup.pipe" 
-# Option B: Compress on-the-fly (smaller file, recommended)
-kubectl exec db2-0 -n db2-system -- su - db2inst1 -c "cat /tmp/db2backup.pipe" | gzip > ./abc_backup.img.gz
+kubectl exec db2-0 -n db2-system -- \
+  su - db2inst1 -c "cat /tmp/db2backup.pipe" \
+| kubectl exec -i db2-1 -n db2-system -- \
+  su - db2inst1 -c "cat > /tmp/backup/abc.img"
+```
+3. Create a new pipe in the standby pod( let's assume "mkfifo mypipe"). cat the backed up store file into the pipe mypipe. Then restore the database from the pipe. (Run the below's command in the standby pod)
+```bash
+mkfifo mypipe
+cat  /tmp/backup/abc.img > mypipe
+#open another terminal in standby pod. and run the below's commands
+readlink -f mypipe #give absolute path of mypipe. Let's assume the absoluete path is "/database/config/db2inst1/mypipe"
+db2 restore database abc from /database/config/db2inst1/mypipe
+
 ```
