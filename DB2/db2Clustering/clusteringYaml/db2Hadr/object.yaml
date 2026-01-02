@@ -1,0 +1,46 @@
+apiVersion: kubedb.com/v1alpha2
+kind: DB2
+metadata:
+  name: my-db2-instance  # This name is used as the lookup key in HADR config
+  namespace: production
+spec:
+  version: "11.5.8.0"  # DB2 version
+  replicas: 1
+  storageType: Durable
+
+  storage:
+    storageClassName: "fast-ssd"
+    accessModes:
+      - ReadWriteOnce
+    resources:
+      requests:
+        storage: 100Gi
+
+  authSecret:
+    name: db2-auth  # Contains db2inst1 user credentials
+
+  podTemplate:
+    spec:
+      resources:
+        requests:
+          cpu: 2
+          memory: 8Gi
+        limits:
+          cpu: 4
+          memory: 16Gi
+
+  # Reference to HADR configuration (Secret or ConfigMap)
+  hadrConfig:
+    - name: db2-hadr-config  # References the resource below
+
+  serviceTemplates:
+    - alias: primary
+      metadata:
+        labels:
+          role: db2-primary
+      spec:
+        type: LoadBalancer
+        ports:
+          - name: db2-sql
+            port: 50000
+            targetPort: 50000

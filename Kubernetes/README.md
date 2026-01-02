@@ -664,3 +664,18 @@ T+16s  StatefulSet Controller: Creates Pod db2-1 (if replicas > 1)
 T+30s  All pods ready. Application can connect to db2-0.db2-service.db2-system.svc.cluster.local
 
 ```
+
+## Marshal and Unmarshal in Go
+- In Go, "marshalling" is the process of converting a Go data structure (like a struct or map) into a format that can be easily stored or transmitted, such as JSON or yaml.
+- "Unmarshalling" is the reverse process, where you take data in a specific format (like JSON or yaml) and convert it back into a Go data structure.
+ 
+***NB***: Unmarshaling is how Kubernetes transforms your YAML files into the Go objects that controllers actually work with.
+
+ ```
+    # When you apply YAML, the API server:
+    1. Unmarshals YAML → Go struct
+    2. Validates against OpenAPI schema (generated from your markers)
+    3. Marshals back to JSON for storage in etcd
+    4. Controller unmarshals from etcd when reconciling.
+    
+ ```
