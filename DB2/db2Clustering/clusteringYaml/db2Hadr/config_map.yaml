@@ -1,0 +1,14 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: hadr-config  # Must match hadrConfig.name
+  namespace: demo
+data:
+    my-db2-instance: |
+      primary: 1
+      standby: 2
+      serviceTemplates:
+        - alias: primary
+          spec:
+            type: LoadBalancer
+    
