@@ -5,8 +5,8 @@ metadata:
   namespace: demo
 data:
     my-db2-instance: |
-      primary: 1
-      standby: 2
+      primary: 0
+      standby: 1
       serviceTemplates:
         - alias: primary
           spec:

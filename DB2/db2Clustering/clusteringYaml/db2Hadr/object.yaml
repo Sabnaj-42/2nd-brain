@@ -4,25 +4,37 @@ metadata:
   name: my-db2
   namespace: demo
 spec:
+  version: 11.5.8.0
+  storageType: Durable
   deletionPolicy: Delete
+  replicas: 2
+
+  storage:
+    accessModes:
+      - ReadWriteOnce
+    resources:
+      requests:
+        storage: 5Gi
+
   podTemplate:
     spec:
+      imagePullSecrets:
+        - name: my-registry-secret
+
       containers:
         - name: db2
           resources:
             requests:
               cpu: 500m
               memory: 2Gi
+
+      volumes:
+        - name: backup-scripts
+          configMap:
+            name: db2-hadr-scripts
+
       podPlacementPolicy:
         name: default
-  replicas: 1
-  storage:
-    accessModes:
-      - ReadWriteOnce
-    resources:
-      requests:
-        storage: 1G
-  storageType: Durable
-  version: 11.5.8.0
+
   hadrConfig:
     name: hadr-config
