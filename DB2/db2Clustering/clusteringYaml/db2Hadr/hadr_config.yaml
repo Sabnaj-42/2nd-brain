@@ -46,7 +46,6 @@ data:
     
     echo "Restarting database to apply changes..."
     run_db2_cmd "db2 deactivate db $DB_NAME" || true
-    run_db2_cmd "db2 activate db $DB_NAME"
     run_db2_cmd "db2 BACKUP DATABASE $DB_NAME TO $BACKUP_PATH"
     
     

@@ -4,7 +4,7 @@ metadata:
   name: hadr-config  # Must match hadrConfig.name
   namespace: demo
 data:
-    my-db2-instance: |
+    hadrdb: |
       primary: 0
       standby: 1
       serviceTemplates:
