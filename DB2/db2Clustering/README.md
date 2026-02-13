@@ -245,3 +245,19 @@ readlink -f mypipe #give absolute path of mypipe. Let's assume the absoluete pat
 db2 restore database abc from /database/config/db2inst1/mypipe
 
 ```
+### Backup resotre by copying in local machine
+1. Backup database in primary pod
+```bash
+db2 backup db ABC to /database/backup compress
+```
+2. Copy primay pod to local machine , then local machine to standby pod
+```bash
+kubectl exec -n demo my-db2-0 -- \
+        cat /database/backup/ABC.0.db2inst1.DBPART000.20260213082632.001 \
+      | kubectl exec -i -n demo my-db2-2 -- \
+        tee /database/backup/ABC.0.db2inst1.DBPART000.20260213082632.001 > /dev/null
+```
+3. Restore database in standby pod
+```bash
+db2 restore database ABC from /database/backup taken at 20260213082632
+```
