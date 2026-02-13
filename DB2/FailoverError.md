@@ -12,7 +12,7 @@
 After that I have deleted primary pod. and tried to failover in standby by force
 
 ***After Deleting the primary pod hadr config in standby Pod***
-![After Deleting the primary pod hadr config in standby Pod](../images/afterDeletieng PrimaryPod.png)
+![After Deleting the primary pod hadr config in standby Pod](../images/afterDeletiengPrimaryPod.png)
 
 Now I am trying to failover in standby by force<br>
 ***command:***
