@@ -8,8 +8,8 @@
 2. ```bash
    find / -name db2profile 2>/dev/null
    ```
-    - Find the file named db2profile. Start finding from rood directory. 2>/dev/null --> ignore all permission denied files.
-    - db2profile holds all necessary environment variables for db2 command
+   - Find the file named db2profile. Start finding from rood directory. 2>/dev/null --> ignore all permission denied files.
+   - db2profile holds all necessary environment variables for db2 command
 3. Lets assume our db2profile file is located at "/opt/ibm/db2/V11.5/cfg/db2profile"
    ```bash
    . /opt/ibm/db2/V11.5/cfg/db2profile
@@ -221,30 +221,144 @@ db2pd -db $db_name -hadr
 #db2 stop hadr on database abc
 ```
 
+## To failover from standby to primary
+### on standby pod
+```bash
+db2 takeover HADR ON DATABASE $db_name
+```
+
 ## Command for taking backup using pipeline and cat it in another terminal
 
-1. Create pipe and Start Backup (will block)
+1. Create pipe and Start restore from it (will block) -- in standby pod
 ```bash
-kubectl exec -it db2-0 -n db2-system -- su - db2inst1 -c "
-  mkfifo /tmp/db2backup.pipe && \
-  db2 backup database abc to /tmp/db2backup.pipe"
+  mkfifo /tmp/db2backup.pipe 
+  db2 restore database abc from /tmp/db2backup.pipe
 ```
-2. Store backup from pipe into standby pod (Open another terminal and run the below's command)
+2. Create pipe and start taking backup into this pipe -- in Primary pod
 ```bash
-kubectl exec db2-0 -n db2-system -- \
-  su - db2inst1 -c "cat /tmp/db2backup.pipe" \
-| kubectl exec -i db2-1 -n db2-system -- \
-  su - db2inst1 -c "cat > /tmp/backup/abc.img"
+mkfifo /tmp/db2backup.pipe
+db2 backup database abc to /tmp/db2backup.pipe
 ```
-3. Create a new pipe in the standby pod( let's assume "mkfifo mypipe"). cat the backed up store file into the pipe mypipe. Then restore the database from the pipe. (Run the below's command in the standby pod)
+3. Stream data from primary pod pipe and write it into standby pod pipe -- in another terminal
 ```bash
-mkfifo mypipe
-cat  /tmp/backup/abc.img > mypipe
-#open another terminal in standby pod. and run the below's commands
-readlink -f mypipe #give absolute path of mypipe. Let's assume the absoluete path is "/database/config/db2inst1/mypipe"
-db2 restore database abc from /database/config/db2inst1/mypipe
+kubectl exec my-db2-0 -n demo -- \
+              su - db2inst1 -c "cat /tmp/db2backup.pipe" \
+            | kubectl exec -i my-db2-1 -n demo -- \
+              su - db2inst1 -c "cat > /tmp/db2backup.pipe"
+```
+
+### create table in db2 database and ins
+```bashert 
+# Then run commands
+db2 connect to YOUR_DB_NAME
+
+db2 "CREATE TABLE test_table (
+    col1 INTEGER,
+    col2 VARCHAR(50),
+    col3 TIMESTAMP DEFAULT CURRENT TIMESTAMP
+)"
+
+db2 "INSERT INTO test_table (col1, col2) VALUES (1, 'test data')"
+
+db2 "SELECT * FROM test_table"
+```
+
+
+## 3 Replica
+### On Primary pod
+```bash
+db2set DB2_STANDBY_ISO=UR
+db2set DB2_HADR_ROS=ON
+db_name=abc
+db2 LIST DATABASE DIRECTORY # list databases
+db2 CREATE DATABASE $db_name # (IF NOT EXISTS ANY db)
+
+host=my-db2-0.my-db2-pods.demo.svc.cluster.local
+
+db2 UPDATE DB CFG FOR $db_name USING LOGINDEXBUILD     ON
+db2 UPDATE DB CFG FOR $db_name USING INDEXREC          RESTART
+db2 UPDATE DB CFG FOR $db_name USING HADR_LOCAL_HOST   $host
+db2 UPDATE DB CFG FOR $db_name USING HADR_LOCAL_SVC    55005
+db2 UPDATE DB CFG FOR $db_name USING HADR_REMOTE_HOST  my-db2-1.my-db2-pods.demo.svc.cluster.local
+db2 UPDATE DB CFG FOR $db_name USING HADR_REMOTE_SVC   55005
+db2 UPDATE DB CFG FOR $db_name USING HADR_REMOTE_INST  db2inst1
+db2 UPDATE DB CFG FOR $db_name USING HADR_TARGET_LIST  "my-db2-1.my-db2-pods.demo.svc.cluster.local:55005|my-db2-2.my-db2-pods.demo.svc.cluster.local:55005"
+db2 UPDATE DB CFG FOR $db_name USING HADR_SYNCMODE     NEARSYNC
+db2 UPDATE DB CFG FOR $db_name USING HADR_REPLAY_DELAY 0
+db2 UPDATE DB CFG FOR $db_name USING HADR_TIMEOUT      120
+db2 UPDATE DB CFG FOR $db_name USING LOGARCHMETH1      "DISK:/shared"
+
+db2 BACKUP DATABASE $db_name TO "/tmp" compress # I have use pipe to backup and restore database
+
+db2 terminate
+
+# Activate database again
+db2 activate db $db_name
+
+
+# ================================
+# 4. Start HADR on primary
+# ================================
+
+# Start HADR (only after standby is fully configured and in PEER_SYNC mode)
+# At first start HADR on all standby pod  and then start HADR on primary pod
+db2 START HADR ON DB $db_name AS PRIMARY
+```
+### On Principal Standby pod
+```bash
+db2set DB2_STANDBY_ISO=UR
+db2set DB2_HADR_ROS=ON
+db_name=abc
+db2 LIST DATABASE DIRECTORY # list databases
+db2 CREATE DATABASE $db_name # (IF NOT EXISTS ANY db)
+
+host=my-db2-1.my-db2-pods.demo.svc.cluster.local
+db2 RESTORE DB $db_name FROM /tmp REPLACE HISTORY FILE WITHOUT PROMPTING
+
+db2 UPDATE DB CFG FOR $db_name USING LOGINDEXBUILD     ON
+db2 UPDATE DB CFG FOR $db_name USING INDEXREC          RESTART
+db2 UPDATE DB CFG FOR $db_name USING HADR_LOCAL_HOST   $host
+db2 UPDATE DB CFG FOR $db_name USING HADR_LOCAL_SVC    55005
+db2 UPDATE DB CFG FOR $db_name USING HADR_REMOTE_HOST  my-db2-0.my-db2-pods.demo.svc.cluster.local
+db2 UPDATE DB CFG FOR $db_name USING HADR_REMOTE_SVC   55005
+db2 UPDATE DB CFG FOR $db_name USING HADR_TARGET_LIST  "my-db2-0.my-db2-pods.demo.svc.cluster.local:55005|my-db2-2.my-db2-pods.demo.svc.cluster.local:55005"
+db2 UPDATE DB CFG FOR $db_name USING HADR_REMOTE_INST  db2inst1
+db2 UPDATE DB CFG FOR $db_name USING HADR_SYNCMODE     NEARSYNC
+db2 UPDATE DB CFG FOR $db_name USING HADR_REPLAY_DELAY 0 
+db2 UPDATE DB CFG FOR $db_name USING HADR_TIMEOUT      120
+db2 UPDATE DB CFG FOR $db_name USING LOGARCHMETH1      "DISK:/shared"
+
+db2 START HADR ON DATABASE $db_name AS STANDBY
+```
+
+### On Auxiliary Standby pod
+```bash
+db2set DB2_STANDBY_ISO=UR
+db2set DB2_HADR_ROS=ON
+db_name=abc
+db2 LIST DATABASE DIRECTORY # list databases
+db2 CREATE DATABASE $db_name # (IF NOT EXISTS ANY db)
+
+host=my-db2-2.my-db2-pods.demo.svc.cluster.local
+db2 RESTORE DB $db_name FROM /tmp REPLACE HISTORY FILE WITHOUT PROMPTING
+
+db2 UPDATE DB CFG FOR $db_name USING LOGINDEXBUILD     ON
+db2 UPDATE DB CFG FOR $db_name USING INDEXREC          RESTART
+db2 UPDATE DB CFG FOR $db_name USING HADR_LOCAL_HOST   $host
+db2 UPDATE DB CFG FOR $db_name USING HADR_LOCAL_SVC    55005
+db2 UPDATE DB CFG FOR $db_name USING HADR_REMOTE_HOST  my-db2-0.my-db2-pods.demo.svc.cluster.local
+db2 UPDATE DB CFG FOR $db_name USING HADR_REMOTE_SVC   55005
+db2 UPDATE DB CFG FOR $db_name USING HADR_TARGET_LIST  "my-db2-0.my-db2-pods.demo.svc.cluster.local:55005|my-db2-1.my-db2-pods.demo.svc.cluster.local:55005"
+db2 UPDATE DB CFG FOR $db_name USING HADR_REMOTE_INST  db2inst1
+db2 UPDATE DB CFG FOR $db_name USING HADR_SYNCMODE     SUPERASYNC
+db2 UPDATE DB CFG FOR $db_name USING HADR_REPLAY_DELAY 0 
+db2 UPDATE DB CFG FOR $db_name USING HADR_TIMEOUT      120
+db2 UPDATE DB CFG FOR $db_name USING LOGARCHMETH1      "DISK:/shared"
+
+db2 START HADR ON DATABASE $db_name AS STANDBY
 
 ```
+
 ### Backup resotre by copying in local machine
 1. Backup database in primary pod
 ```bash
