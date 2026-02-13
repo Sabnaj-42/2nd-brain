@@ -1,0 +1,67 @@
+2026/02/08 19:37:55 ✓ DB2 health checker initialized
+2026/02/08 19:37:55 Health check service listening on port 8080
+I0208 19:44:48.203875       1 hadr.go:146] Initiating HADR setup for database HADRDB with primary pod my-db2-0 and standby pod my-db2-1 on port 55000
+I0208 19:44:48.203895       1 hadr.go:147] Starting HADR setup workflow for database HADRDB
+[STDOUT] Creating database HADRDB...
+[EXEC] db2 create database HADRDB
+[STDOUT] DB20000I  The CREATE DATABASE command completed successfully.
+I0208 19:51:01.944341       1 db_helper.go:120] Database 'HADRDB' created successfully
+I0208 19:51:01.944367       1 hadr.go:206] Database 'HADRDB' created successfully
+[STDOUT] [2026-02-08 19:51:01] Setting up HADR for DB: HADRDB
+Local host: my-db2-0.my-db2-pods.demo.svc.cluster.local
+Remote host: my-db2-1.my-db2-pods.demo.svc.cluster.local
+Configuring HADR parameters...
+[EXEC] db2 UPDATE DB CFG FOR HADRDB USING LOGARCHMETH1 "DISK:/shared"
+[STDOUT] DB20000I  The UPDATE DATABASE CONFIGURATION command completed successfully.
+[STDOUT] [EXEC] db2 UPDATE DB CFG FOR HADRDB USING LOGINDEXBUILD ON
+[STDOUT] DB20000I  The UPDATE DATABASE CONFIGURATION command completed successfully.
+[STDOUT] [EXEC] db2 UPDATE DB CFG FOR HADRDB USING INDEXREC RESTART
+[STDOUT] DB20000I  The UPDATE DATABASE CONFIGURATION command completed successfully.
+[STDOUT] [EXEC] db2 UPDATE DB CFG FOR HADRDB USING HADR_LOCAL_HOST my-db2-0.my-db2-pods.demo.svc.cluster.local
+[STDOUT] DB20000I  The UPDATE DATABASE CONFIGURATION command completed successfully.
+[STDOUT] [EXEC] db2 UPDATE DB CFG FOR HADRDB USING HADR_LOCAL_SVC 55000
+[STDOUT] DB20000I  The UPDATE DATABASE CONFIGURATION command completed successfully.
+[STDOUT] [EXEC] db2 UPDATE DB CFG FOR HADRDB USING HADR_REMOTE_HOST my-db2-1.my-db2-pods.demo.svc.cluster.local
+[STDOUT] DB20000I  The UPDATE DATABASE CONFIGURATION command completed successfully.
+[STDOUT] [EXEC] db2 UPDATE DB CFG FOR HADRDB USING HADR_REMOTE_SVC 55000
+[STDOUT] DB20000I  The UPDATE DATABASE CONFIGURATION command completed successfully.
+[STDOUT] [EXEC] db2 UPDATE DB CFG FOR HADRDB USING HADR_REMOTE_INST db2inst1
+[STDOUT] DB20000I  The UPDATE DATABASE CONFIGURATION command completed successfully.
+[STDOUT] [EXEC] db2 UPDATE DB CFG FOR HADRDB USING HADR_SYNCMODE NEARSYNC
+[STDOUT] DB20000I  The UPDATE DATABASE CONFIGURATION command completed successfully.
+[STDOUT] [EXEC] db2 UPDATE DB CFG FOR HADRDB USING HADR_TIMEOUT 120
+[STDOUT] DB20000I  The UPDATE DATABASE CONFIGURATION command completed successfully.
+[STDOUT] Restarting database to apply changes...
+[EXEC] db2 deactivate db HADRDB
+[STDOUT] DB20000I  The DEACTIVATE DATABASE command completed successfully.
+[STDOUT] [SUCCESS] HADR configuration completed for HADRDB
+I0208 19:51:20.592202       1 db_helper.go:152] HADR configured on primary successfully
+I0208 19:51:20.592221       1 hadr.go:228] HADR configuration on primary completed successfully
+
+Backup successful. The timestamp for this backup image is : 20260208195128
+
+SQL2538N  Unexpected End of File of Backup Image reached on media 
+"/tmp/db2backup.pipe".
+E0208 19:52:53.473146       1 db_helper.go:266] Restore error from my-db2-0 to my-db2-1: restore failed: command terminated with exit code 4
+E0208 19:52:53.544197       1 hadr.go:168] Failed to restore to standby for HADRDB: restore to standby failed: restore failed: command terminated with exit code 4
+I0208 19:53:00.725586       1 hadr.go:146] Initiating HADR setup for database HADRDB with primary pod my-db2-0 and standby pod my-db2-1 on port 55000
+I0208 19:53:00.725599       1 hadr.go:147] Starting HADR setup workflow for database HADRDB
+[STDOUT] Creating database HADRDB...
+[EXEC] db2 create database HADRDB
+[STDOUT] SQL1005N  The database alias "HADRDB" already exists in either the local 
+database directory or system database directory.
+E0208 19:53:02.257739       1 hadr.go:152] Failed to create database HADRDB: in pod 0: error: database creation failed: database creation failed: command terminated with exit code 4
+I0208 19:53:24.918479       1 hadr.go:146] Initiating HADR setup for database HADRDB with primary pod my-db2-0 and standby pod my-db2-1 on port 55000
+I0208 19:53:24.918494       1 hadr.go:147] Starting HADR setup workflow for database HADRDB
+[STDOUT] Creating database HADRDB...
+[EXEC] db2 create database HADRDB
+[STDOUT] SQL1005N  The database alias "HADRDB" already exists in either the local 
+database directory or system database directory.
+E0208 19:53:26.490074       1 hadr.go:152] Failed to create database HADRDB: in pod 0: error: database creation failed: database creation failed: command terminated with exit code 4
+I0208 19:53:48.820427       1 hadr.go:146] Initiating HADR setup for database HADRDB with primary pod my-db2-0 and standby pod my-db2-1 on port 55000
+I0208 19:53:48.820441       1 hadr.go:147] Starting HADR setup workflow for database HADRDB
+[STDOUT] Creating database HADRDB...
+[EXEC] db2 create database HADRDB
+[STDOUT] SQL1005N  The database alias "HADRDB" already exists in either the local 
+database directory or system database directory.
+E0208 19:53:50.386971       1 hadr.go:152] Failed to create database HADRDB: in pod 0: error: database creation failed: database creation failed: command terminated with exit code 4

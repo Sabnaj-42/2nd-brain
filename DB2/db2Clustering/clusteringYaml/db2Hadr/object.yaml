@@ -7,7 +7,7 @@ spec:
   version: 11.5.8.0
   storageType: Durable
   deletionPolicy: Delete
-  replicas: 2
+  replicas: 3
 
   storage:
     accessModes:
@@ -31,7 +31,7 @@ spec:
       volumes:
         - name: backup-scripts
           configMap:
-            name: db2-hadr-scripts
+            name: hadr-config
 
       podPlacementPolicy:
         name: default
