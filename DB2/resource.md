@@ -1,4 +1,4 @@
-## DB2 Resources Link
+## DB2 Clustering Resources Link
 - pdf pages: https://www.ibm.com/support/pages/node/627743
 - DB2 sync: https://ibm.github.io/db2-hadr-wiki/hadrSyncMode.html
 - Setting up the HADR configuration for Db2: https://www.ibm.com/docs/en/software-hub/5.1.x?topic=scripts-setting-up-hadr-configuration
@@ -26,3 +26,8 @@
 - DB2 AWS: https://docs.aws.amazon.com/prescriptive-guidance/latest/patterns/set-up-disaster-recovery-for-sap-on-ibm-db2-on-aws.html
 - Backing up and restoring: https://www.ibm.com/docs/en/db2/11.5.x?topic=ad-backing-up-restoring-db2
 - Takeover in a multiple HADR standby setup : https://www.ibm.com/docs/en/db2/11.5.x?topic=databases-examples-takeover-in-multiple-hadr-standby-setup
+
+
+### DB2 Monitoring Resources Link
+- Monitoring: https://www.ibm.com/docs/en/b2b-integrator/6.2.0?topic=monitoring-db2
+- Prometheus: https://www.ibm.com/docs/en/instana-observability/1.0.308?topic=apis-prometheus
