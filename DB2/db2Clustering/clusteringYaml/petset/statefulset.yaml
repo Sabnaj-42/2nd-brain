@@ -2,10 +2,10 @@ apiVersion: apps/v1
 kind: StatefulSet
 metadata:
   name: db2
-  namespace: db2-system
+  namespace: demo
 spec:
-  serviceName: "db2"
-  replicas: 2
+  serviceName: "my-db2-svc"
+  replicas: 3
   selector:
     matchLabels:
       app: db2
@@ -24,22 +24,12 @@ spec:
             - containerPort: 50000
               name: db2-port
           env:
-            - name: DB2INST1_PASSWORD
-              valueFrom:
-                secretKeyRef:
-                  name: db2-secrets
-                  key: DB2INST1_PASSWORD
             - name: LICENSE
               value: "accept"
+
           volumeMounts:
             - name: db2-data
               mountPath: /database
-            - name: db2-backup
-              mountPath: /database/backup  # shared backup folder
-      volumes:
-        - name: db2-backup
-          persistentVolumeClaim:
-            claimName: db2-backup
   volumeClaimTemplates:
     - metadata:
         name: db2-data

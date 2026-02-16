@@ -1,13 +1,13 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: db2
-  namespace: db2-system
+  name: my-db2-svc
+  namespace: demo
   labels:
     app: db2
 spec:
   ports:
-    - port: 50000
+    - port: 50010
       name: db2-port
   clusterIP: None   # Headless service, required for StatefulSet
   selector:
