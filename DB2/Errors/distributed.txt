@@ -1,0 +1,15 @@
+## on standby:
+
+[db2inst1@db2-1 /]$ db2 takeover HADR ON DATABASE $db_name  by force
+               SQL0902C  A system error occurred. Subsequent SQL statements cannot be
+               processed. IBM software support reason code: "".
+
+Error: PID     : 15117                TID : 131076227852032 PROC : db2sysc 0
+       INSTANCE: db2inst1             NODE : 000            DB   : ABC
+       APPHDL  : 0-18                 APPID: *LOCAL.db2inst1.260217125439
+       AUTHID  : DB2INST1             HOSTNAME: db2-1
+       EDUID   : 323                  EDUNAME: db2agent (ABC) 0
+       FUNCTION: DB2 UDB, data protection services, sqlpterm, probe:3500
+       MESSAGE : ZRC=0x8010006D=-2146434963=SQLP_RC_CA_BUILT
+                 "SQLCA has been built and saved in component specific control block."
+       DATA #1 : Sqlcode, PD_TYPE_SQLCODE, 4 bytes

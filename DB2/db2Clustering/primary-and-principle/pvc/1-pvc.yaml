@@ -1,12 +1,11 @@
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
-  name: db2-data
-  namespace: demo
+  name: 1-db2-pvc
 spec:
   accessModes:
     - ReadWriteOnce
   resources:
     requests:
-      storage: 5Gi
-  storageClassName: local-path
+      storage: 10Gi
+  storageClassName: standard   # change based on your cluster
