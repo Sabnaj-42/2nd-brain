@@ -26,7 +26,7 @@
 - DB2 AWS: https://docs.aws.amazon.com/prescriptive-guidance/latest/patterns/set-up-disaster-recovery-for-sap-on-ibm-db2-on-aws.html
 - Backing up and restoring: https://www.ibm.com/docs/en/db2/11.5.x?topic=ad-backing-up-restoring-db2
 - Takeover in a multiple HADR standby setup : https://www.ibm.com/docs/en/db2/11.5.x?topic=databases-examples-takeover-in-multiple-hadr-standby-setup
-
+- HADR takeover (important): https://ibm.github.io/db2-hadr-wiki/hadrTakeover.html
 
 ### DB2 Monitoring Resources Link
 - Monitoring: https://www.ibm.com/docs/en/b2b-integrator/6.2.0?topic=monitoring-db2
