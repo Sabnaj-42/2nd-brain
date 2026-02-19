@@ -1,3 +1,4 @@
+## For 3 Pods
 ### Primary Pod
 ```bash
 db2 create db abc
@@ -113,15 +114,11 @@ db2 terminate
 db2stop
 db2start
 db2 STOP HADR ON DATABASE abc
+db2 rollforward db abc stop
 db2 activate db abc
 db2 UPDATE DB CFG FOR $db_name USING HADR_TARGET_LIST  "db2-0.my-db2-svc.demo.svc.cluster.local:55006"
 db2 UPDATE DB CFG FOR $db_name USING HADR_REMOTE_HOST  db2-0.my-db2-svc.demo.svc.cluster.local
 db2 start hadr on db abc as primary
-```
-
-### How to activate primary pod db when it come back after down as primary (No takeover is done in standby):
-```bash
-db2 activate db abc
 ```
 
 ### What need to do when the failed primary come back(takeover is done in standby):
@@ -131,3 +128,65 @@ db2 activate db abc
 - Restore backup in the failed primary
 - Run all configuration commands in it to make it standby
 - Also add its hostname in new primary pod target lists
+
+---- command----
+```bash
+# down pod
+db2 stop hadr on db abc
+db2 drop db abc
+
+
+db2 BACKUP DATABASE $db_name online TO "/database/config/db2inst1/backup" #online backup in primary pod
+db2 restore db abc from /database/config/db2inst1/backup/ taken at 20260219053836
+db2 start hadr on db abc as standby
+db2 activate db abc
+
+
+# After that in new primary pod: (update target list with new standby host) and restart hadr as primary
+db2 UPDATE DB CFG FOR $db_name USING HADR_TARGET_LIST  "db2-2.my-db2-svc.demo.svc.cluster.local:55006|db2-0.my-db2-svc.demo.svc.cluster.local:55006"
+db2 deactivate db abc
+db2 terminate
+db2stop
+db2start
+db2 STOP HADR ON DATABASE abc
+db2 activate db abc
+db2 start hadr on db abc as primary
+
+```
+
+### How to activate primary pod db when it come back after down as primary (No takeover is done in standby):
+```bash
+db2 activate db abc
+```
+
+## For 2 Pods
+
+***primary pod is down:***
+```bash
+# In standby Pod
+db2 stop hadr on db abc
+db2 activate db abc 
+db2 connect to abc # Now this standby pod is writeable
+
+
+
+# When old primary come back:
+db2 stop hadr on db abc
+# take backup from standby pod and restore in old primary pod
+db2 BACKUP DATABASE $db_name online TO "/database/config/db2inst1/backup" compress   #standby pod
+#restore to old primary pod
+db2 restore db abc from /database/config/db2inst1/backup/ taken at <time_stamp>
+#in standby pod
+db2 rollforward db abc stop
+db2 start hadr on db abc as primary
+db2 activate db abc 
+
+#in old primary pod
+db2 deactivate db abc
+db2 terminate
+db2stop
+db2start
+db2 activate db abc
+db2 start hadr on db abc as primary
+
+```
