@@ -163,30 +163,36 @@ db2 activate db abc
 
 ***primary pod is down:***
 ```bash
-# In standby Pod
-db2 stop hadr on db abc
-db2 activate db abc 
-db2 connect to abc # Now this standby pod is writeable
+# In standby Pod (After peer window time):
+db2 deactivate db abc
+db2 terminate
+db2stop
+db2start
+db2 STOP HADR ON DATABASE abc
+db2 rollforward db abc stop
+db2 activate db abc
 
 
 
 # When old primary come back:
 db2 stop hadr on db abc
+db2 drop db abc
 # take backup from standby pod and restore in old primary pod
 db2 BACKUP DATABASE $db_name online TO "/database/config/db2inst1/backup" compress   #standby pod
 #restore to old primary pod
 db2 restore db abc from /database/config/db2inst1/backup/ taken at <time_stamp>
-#in standby pod
-db2 rollforward db abc stop
-db2 start hadr on db abc as primary
-db2 activate db abc 
 
-#in old primary pod
-db2 deactivate db abc
-db2 terminate
-db2stop
-db2start
-db2 activate db abc
+#in old primary pod 
+db2 UPDATE DB CFG FOR $db_name USING HADR_LOCAL_HOST  db2-1.my-db2-svc.demo.svc.cluster.local
+db2 UPDATE DB CFG FOR $db_name USING HADR_REMOTE_HOST  db2-0.my-db2-svc.demo.svc.cluster.local
+db2 start hadr on db abc as standby
+
+
+#in old standby pod
 db2 start hadr on db abc as primary
+
+
+
+
 
 ```
