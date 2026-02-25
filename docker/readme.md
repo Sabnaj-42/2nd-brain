@@ -56,3 +56,13 @@ docker logs <container_id/name>
 ```bash
 docker run -d <image_name>:<tag> # it will run the container in background and return the container id
 ```
+12. To start interactive terminal in the cntainer:
+```bash
+docker run -it <container_id/name> # it will start an interactive terminal session inside the container
+```
+13. To map a port from the local machine to the container:
+```bash
+docker run -p <host_port>:<container_port> <image_name>:<tag> # it will map the host_port on the local machine to the container_port inside the container
+# Example: docker run -p 8080:80 nginx:latest # it will map port 8080 on the local machine to port 80 inside the container running nginx
+# User can access the nginx server running inside the container by navigating to http://localhost:8080 in their web browser
+```
