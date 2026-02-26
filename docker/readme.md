@@ -65,4 +65,18 @@ docker run -it <container_id/name> # it will start an interactive terminal sessi
 docker run -p <host_port>:<container_port> <image_name>:<tag> # it will map the host_port on the local machine to the container_port inside the container
 # Example: docker run -p 8080:80 nginx:latest # it will map port 8080 on the local machine to port 80 inside the container running nginx
 # User can access the nginx server running inside the container by navigating to http://localhost:8080 in their web browser
+# To connect from the outside of the local machine, user can use the IP address of the local machine instead of localhost, for example: 192.168.0.102:8080 (192.168.0.102 is wifi ip)
+```
+14. To start interactive terminal while running the conatiner:
+```bash
+docker run -it <image_name>:<tag> # it will start the container and open an interactive terminal session inside the container
+```
+15. To map volume from local machine to the container: (when the conatiner id deleted the data will be lost, to avoid that we can use volume mapping to persist the data)
+```bash
+docker run -v <host_directory>:<container_directory> <image_name>:<tag> # it will map the host_directory(my pc directory) on the local machine to the container_directory inside the container
+# Example: docker run -v /home/user/data:/data nginx:latest # it will map the /home/user/data directory on the local machine to the /data directory inside the container running nginx  
+```
+16. To show the time continiously in the terminal:
+```bash
+docker run timer # it will show the time in the terminal every second
 ```
