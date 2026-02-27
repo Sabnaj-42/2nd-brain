@@ -29,7 +29,7 @@ spec:
               memory: 2Gi
 
       volumes:
-        - name: backup-scripts
+        - name: config-map
           configMap:
             name: hadr-config
 
