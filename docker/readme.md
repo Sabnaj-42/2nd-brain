@@ -110,11 +110,13 @@ docker build -t <image_name>:<tag> . # it will build the image using the Dockerf
 docker run -e DB_HOST=localhost -e DB_PORT=5432 <image_name>:<tag> # it will set the environment variables DB_HOST and DB_PORT inside the container
 ```
 ### Entrypoint vs CMD in Dockerfile:
-- `ENTRYPOINT` and `CMD` are both used to specify the command that will be executed when a container is run from the image, but they have different purposes:
-- `ENTRYPOINT` is used to specify the main command that will always be executed when the container starts. It is typically used for the primary application or service that the container is meant to run. The command specified in `ENTRYPOINT` will be executed regardless of any additional command-line arguments provided when running the container.
-- `CMD` is used to provide default arguments for the command specified in `ENTRYPOINT`. It is typically used to specify default options or parameters for the main command. If you provide additional command-line arguments when running the container, they will override the default arguments specified in `CMD`.
-- If both `ENTRYPOINT` and `CMD` are specified in a Dockerfile, the command specified in `ENTRYPOINT` will be executed with the arguments provided in `CMD` as default. If you run the container without providing any additional command-line arguments, the command specified in `ENTRYPOINT` will be executed with the default arguments from `CMD`. If you provide additional command-line arguments when running the container, those arguments will override the default arguments from `CMD`, but the command specified in `ENTRYPOINT` will still be executed.
-- If only `CMD` is specified in a Dockerfile without an `ENTRYPOINT`, then the command specified in `CMD` will be executed when the container starts, and any additional command-line arguments provided when running the container will override the default command specified in `CMD`. In this case, the container will not have a fixed main command, and the behavior will depend on the command-line arguments provided when running the container. If you run the container without providing any additional command-line arguments, the command specified in `CMD` will be executed as the default command for the container. If you provide additional command-line arguments when running the container, those arguments will override the default command specified in `CMD`, and the container will execute the command you provided instead.
+
+| | `ENTRYPOINT` | `CMD` |
+|---|---|---|
+| **Purpose** | Fixed main command, always runs | Default arguments or default command |
+| **Overridable?** | Only with `--entrypoint` flag | Yes, by passing args at `docker run` |
+| **Used together** | Defines the executable | Provides default args to `ENTRYPOINT` |
+| **Used alone** | Container always runs that command | Acts as the default command, fully replaceable |
 Example:
 ```Dockerfile
 FROM ubuntu
@@ -146,8 +148,6 @@ COPY . .
 ```Dockerfile
 FROM ubuntu
 LABEL maintainer="John Doe"
-LABEL version="1.0"
-LABEL description="This is a sample Docker image for demonstration purposes."
 ```
 22. ARG is used to define build-time variables in a Dockerfile. These variables can be passed during the build process and can be used to customize the image based on different build configurations. Unlike environment variables defined with `ENV`, which are available at runtime, `ARG` variables are only available during the build stage and cannot be accessed after the image is built. For example:
 ```Dockerfile
