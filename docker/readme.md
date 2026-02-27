@@ -1,8 +1,20 @@
 ## Docker
-### Definition: 
+
+### Definition
 Docker is an open-source platform that automates the deployment, scaling, and management of applications using containerization. Think of it as a way to package your application and all its dependencies (code, runtime, libraries, system tools) into a standardized unit called a container.
 
-***Core Concepts:***
+---
+
+### Table of Contents
+1. [Core Concepts](#core-concepts)
+2. [Docker Commands](#docker-commands)
+3. [How to Create Your Own Docker Image](#how-to-create-your-own-docker-image)
+4. [Dockerfile Instructions](#dockerfile-instructions)
+5. [Docker Compose](#docker-compose)
+
+---
+
+### Core Concepts
 
 | Concept        | Description |
 |----------------|-------------|
@@ -12,105 +24,155 @@ Docker is an open-source platform that automates the deployment, scaling, and ma
 | Docker Hub     | A cloud-based registry service for sharing container images |
 | Docker Compose | A tool to define and run multi-container apps using a `docker-compose.yml` YAML file |
 
-### Docker Commands: 
-1. To show all running containers:
+---
+
+### Docker Commands
+
+#### Container Management
+1. Show all **running** containers:
 ```bash
 docker ps
 ```
-2. To show all running and stopped containers:
+2. Show **all** containers (running + stopped):
 ```bash
 docker ps -a
 ```
-3. To stop a running container:
+3. Stop a running container:
 ```bash
 docker stop <container_id>
 ```
-4. To remove a container:
+4. Remove a container:
 ```bash
 docker rm <container_id>
 ```
-5. To see available images:
-```bash 
+5. Run a container in **detached** (background) mode:
+```bash
+docker run -d <image_name>:<tag>
+```
+6. Start an **interactive terminal** in a new container:
+```bash
+docker run -it <image_name>:<tag>
+```
+7. Execute a command inside a **running** container:
+```bash
+docker exec -it <container_id> bash
+# Example: read a file inside the container
+docker exec <container_id> cat /etc/hosts
+```
+8. Inspect container details (IP, mounts, env vars, etc.):
+```bash
+docker inspect <container_id>
+```
+9. Follow container logs:
+```bash
+docker logs -f <container_id>
+```
+10. Map a host port to a container port:
+```bash
+docker run -p <host_port>:<container_port> <image_name>:<tag>
+# Example: access nginx on http://localhost:8080
+docker run -p 8080:80 nginx:latest
+```
+11. Mount a host directory as a volume (persists data beyond container lifecycle):
+```bash
+docker run -v <host_directory>:<container_directory> <image_name>:<tag>
+# Example:
+docker run -v /home/user/data:/data nginx:latest
+```
+12. Pass environment variables at runtime:
+```bash
+docker run -e DB_HOST=localhost -e DB_PORT=5432 <image_name>:<tag>
+```
+
+#### Image Management
+13. List local images:
+```bash
 docker images
 ```
-6. To remove an image:
-```bash
-docker rmi <image_id>  #delete all dependant containers to remove image
-```
-7. To pull an image from Docker Hub:
+14. Pull an image from Docker Hub:
 ```bash
 docker pull <image_name>:<tag>
 ```
-8. To execute a command inside a running container:
+15. Build an image from a Dockerfile:
 ```bash
-docker exec  <container_id> cat /etc/hosts # it will show the content of /etc/hosts file inside the container
+docker build -t <image_name>:<tag> .
+# Force a clean rebuild (ignore cache):
+docker build --no-cache -t <image_name>:<tag> .
 ```
-9. To see the details of a docker container:
+16. Tag an image (e.g. before pushing to a registry):
 ```bash
-docker inspect <container_id/name>
+docker tag <image_id> <registry>/<image_name>:<tag>
 ```
-10. To see the logs of a container:
+17. Push an image to Docker Hub:
 ```bash
-docker logs <container_id/name>
+docker push <image_name>:<tag>
 ```
-11. To run in detached mode:
+18. Remove an image (remove dependent containers first):
 ```bash
-docker run -d <image_name>:<tag> # it will run the container in background and return the container id
+docker rmi <image_id>
 ```
-12. To start interactive terminal in the cntainer:
+
+#### Cleanup
+19. Remove all stopped containers, unused images, networks, and build cache:
 ```bash
-docker run -it <container_id/name> # it will start an interactive terminal session inside the container
+docker system prune -a
 ```
-13. To map a port from the local machine to the container:
+
+#### Networking
+20. List networks:
 ```bash
-docker run -p <host_port>:<container_port> <image_name>:<tag> # it will map the host_port on the local machine to the container_port inside the container
-# Example: docker run -p 8080:80 nginx:latest # it will map port 8080 on the local machine to port 80 inside the container running nginx
-# User can access the nginx server running inside the container by navigating to http://localhost:8080 in their web browser
-# To connect from the outside of the local machine, user can use the IP address of the local machine instead of localhost, for example: 192.168.0.102:8080 (192.168.0.102 is wifi ip)
+docker network ls
 ```
-14. To start interactive terminal while running the conatiner:
+21. Create a user-defined network (preferred over legacy `--link`):
 ```bash
-docker run -it <image_name>:<tag> # it will start the container and open an interactive terminal session inside the container
+docker network create <network_name>
+docker run --network <network_name> <image_name>:<tag>
 ```
-15. To map volume from local machine to the container: (when the conatiner id deleted the data will be lost, to avoid that we can use volume mapping to persist the data)
+
+#### Volumes
+22. List volumes:
 ```bash
-docker run -v <host_directory>:<container_directory> <image_name>:<tag> # it will map the host_directory(my pc directory) on the local machine to the container_directory inside the container
-# Example: docker run -v /home/user/data:/data nginx:latest # it will map the /home/user/data directory on the local machine to the /data directory inside the container running nginx  
+docker volume ls
 ```
-16. To show the time continiously in the terminal:
+23. Create a named volume:
 ```bash
-docker run timer # it will show the time in the terminal every second
+docker volume create <volume_name>
+docker run -v <volume_name>:<container_directory> <image_name>:<tag>
 ```
-## How to create own docker image:
-17. Create a Dockerfile with the necessary **instructions** to build your image. For example:
+
+---
+
+### How to Create Your Own Docker Image
+
+Create a `Dockerfile` with build instructions:
 ```Dockerfile
-# start from a base OS or another image
+# Start from a base image
 FROM ubuntu
-# install dependencies
-# RUN command is used to execute commands during the build process of the image. In this example, it updates the package list and installs curl in the image.
-RUN apt-get update && apt-get install -y curl   
-# copy files from local machine to the image
-#It copies all files from the current directory (.) on the local machine to the /opt/source-code directory inside the image.
-COPY . /opt/source-code 
-expose 8080 # it will expose port 8080 from the container to the outside world, so that we can access the application running inside the container on that port.
 
-#Entrypoint is used to specify the command that will be executed when a container is run from the image. In this example, it runs the script located at /opt/source-code/start.sh inside the container.
-ENTRYPOINT ["/opt/source-code/start.sh"]
+# Install dependencies
+RUN apt-get update && apt-get install -y curl
 
+# Set the working directory (created if it doesn't exist — equivalent to cd /app)
+WORKDIR /app
+
+# Copy files from local machine into the image (. . means: local cwd → WORKDIR)
+COPY . .
+
+# Expose a port to the outside world
+EXPOSE 8080
+
+# Command that always runs when the container starts
+ENTRYPOINT ["/app/start.sh"]
+
+# Default arguments passed to ENTRYPOINT (overridable at docker run)
+CMD ["--default-arg"]
 ```
-### Building the image using the Dockerfile:
-18. Build the image using the Dockerfile:
-```bash
-docker build -t <image_name>:<tag> . # it will build the image using the Dockerfile in the current directory (.) and tag it with <image_name>:<tag>
-#docker build the image layer by layer, it will execute each instruction in the Dockerfile and create a new layer for each instruction. If there is any change in the instruction, it will only rebuild that layer and the layers above it, which makes the build process faster.
-```
-### Environment Variables in Docker:
-19. To set environment variables in a Docker container, you can use the `-e` flag with the `docker run` command. For example:
-```bash
-# Environment variables are key-value pairs that can be used to pass configuration information to the container at runtime. 
-docker run -e DB_HOST=localhost -e DB_PORT=5432 <image_name>:<tag> # it will set the environment variables DB_HOST and DB_PORT inside the container
-```
-### Entrypoint vs CMD in Dockerfile:
+
+---
+
+### Dockerfile Instructions
+
+#### ENTRYPOINT vs CMD
 
 | | `ENTRYPOINT` | `CMD` |
 |---|---|---|
@@ -118,77 +180,71 @@ docker run -e DB_HOST=localhost -e DB_PORT=5432 <image_name>:<tag> # it will set
 | **Overridable?** | Only with `--entrypoint` flag | Yes, by passing args at `docker run` |
 | **Used together** | Defines the executable | Provides default args to `ENTRYPOINT` |
 | **Used alone** | Container always runs that command | Acts as the default command, fully replaceable |
-Example:
-```Dockerfile
-FROM ubuntu
-RUN apt-get update && apt-get install -y curl
-COPY . /opt/source-code
-ENTRYPOINT ["/opt/source-code/start.sh"]
-# it will provide a default argument to the start.sh script
-CMD ["--default-arg"]
 
-```
-In this example, when you run the container without providing any additional command-line arguments, it will execute the `start.sh` script with the default argument `--default-arg`. If you run the container with additional command-line arguments, for example:
 ```bash
+# CMD is overridden, ENTRYPOINT still runs:
 docker run <image_name>:<tag> --custom-arg
 ```
-In this case, the `start.sh` script will be executed with the custom argument `--custom-arg`, overriding the default argument specified in `CMD`. However, the `ENTRYPOINT` will still ensure that the `start.sh` script is executed as the main command of the container, regardless of the arguments provided when running the container.
 
-### Working directory in Docker:
-20. To set the working directory in a Docker container, you can use the `WORKDIR` instruction in the Dockerfile. For example:
+#### ENV — Runtime environment variables
 ```Dockerfile
-FROM ubuntu
-# WORKDIR /app creates /app if it doesn’t exist.
-# it will set the working directory to /app inside the container (it is like cd /app in the terminal)
-WORKDIR /app 
+ENV APP_ENV=production
+```
 
-# it will copy all files from the current directory on the local machine to the current working directory (/app) inside the container
-COPY . . 
-```
-21. Label is a key-value pair that can be added to Docker images, containers, or other Docker objects to provide metadata about the object. Labels can be used for various purposes, such as organizing and categorizing Docker objects, providing information about the image or container, or enabling automation and filtering based on specific criteria. Labels are defined in the Dockerfile using the `LABEL` instruction. For example:
+#### ARG — Build-time variables only (not available at runtime)
 ```Dockerfile
-FROM ubuntu
-LABEL maintainer="John Doe"
-```
-22. ARG is used to define build-time variables in a Dockerfile. These variables can be passed during the build process and can be used to customize the image based on different build configurations. Unlike environment variables defined with `ENV`, which are available at runtime, `ARG` variables are only available during the build stage and cannot be accessed after the image is built. For example:
-```Dockerfile
-FROM ubuntu
 ARG APP_VERSION=1.0
-RUN echo "Building version $APP_VERSION of the application"
+RUN echo "Building version $APP_VERSION"
 ```
-In this example, the `APP_VERSION` argument is defined with a default value of `1.0`. During the build process, you can override this value by passing a different value for the `APP_VERSION` argument using the `--build-arg` flag with the `docker build` command. For example:
 ```bash
 docker build --build-arg APP_VERSION=2.0 -t my-app:2.0 .
 ```
-23. link is a legacy feature in Docker that allows you to connect two containers together and enable communication between them. It creates a network connection between the linked containers, allowing them to communicate using their container names as hostnames.
-```bash
-docker run -d --name web nginx:latest #here web is the container name
-docker run -d --name app --link web:web db:latest 
+
+#### LABEL — Metadata key-value pairs
+```Dockerfile
+LABEL maintainer="John Doe" version="1.0"
 ```
-## Docker Compose:
-- Docker Compose is a tool that allows you to define and manage multi-container Docker applications. It uses a YAML file to configure the application's services, networks, and volumes. With Docker Compose, you can easily start, stop, and manage multiple containers as a single application. For example, you can define a web application with a frontend service and a backend service in a `docker-compose.yml` file, and then use the `docker-compose up` command to start both services together. Docker Compose simplifies the process of orchestrating complex applications that require multiple containers to work together.
-- File name docker-compose.yaml
+
+#### .dockerignore
+Exclude files from the build context (like `.gitignore`):
+```
+node_modules
+.git
+*.log
+```
+
+---
+
+### Docker Compose
+
+- Tool to define and run **multi-container** Docker apps via a `docker-compose.yml` YAML file. Manages services, networks, and volumes together. Services communicate using their **service name as hostname**.
+- > **Note:** The `version:` key is deprecated in Compose v2+ and can be omitted.
+
 ```yaml
-version: '3' # specify the version of the Docker Compose file format
-# In version 3 a network is automatically created for the services defined in the file, and all services are connected to that network by default. This allows the services to communicate with each other using their service names as hostnames. For example, if you have a service named "web" and another service named "app", the "app" service can communicate with the "web" service using the hostname "web". 
+# docker-compose.yml
 services:
- web:
-   image: nginx:latest # specify the Docker image to use for the web service
-   ports:
-     - "8080:80" # map port 8080 on the host to port 80 in the container
- app:
-   image: my-app:latest # specify the Docker image to use for the app service
-   environment:
-     username: admin
-     password: secret
-       
-   depends_on:
-     - web # specify that the app service depends on the web service
-   links: # don't need this field in version 3.
-     - web # link the app service to the web service for communication
-   
+  web:
+    image: nginx:latest
+    ports:
+      - "8080:80"
+
+  app:
+    image: my-app:latest
+    environment:
+      username: admin
+      password: secret
+    depends_on:
+      - web
 ```
-24. To start the application defined in the `docker-compose.yml` file, you can use the following command:
-```bash
-docker-compose up -d # it will start the application in detached mode (in the background) and return the container ids of the started services
-```
+
+#### Docker Compose Commands
+
+| Command | Description |
+|---------|-------------|
+| `docker compose up -d` | Start all services in detached mode |
+| `docker compose down` | Stop and remove containers, networks |
+| `docker compose logs -f` | Follow logs for all services |
+| `docker compose ps` | List running services |
+| `docker compose build` | Rebuild service images |
+| `docker compose exec <svc> bash` | Open a shell in a running service |
+
