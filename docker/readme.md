@@ -4,12 +4,13 @@ Docker is an open-source platform that automates the deployment, scaling, and ma
 
 ***Core Concepts:***
 
-| Concept     | Description |
-|-------------|-------------|
-| Container   | A lightweight, standalone, executable package that includes everything needed to run a piece of software |
-| Image       | A read-only template used to create containers (like a blueprint) |
-| Dockerfile  | A text file with instructions to build a Docker image |
-| Docker Hub  | A cloud-based registry service for sharing container images |
+| Concept        | Description |
+|----------------|-------------|
+| Container      | A lightweight, standalone, executable package that includes everything needed to run a piece of software |
+| Image          | A read-only template used to create containers (like a blueprint) |
+| Dockerfile     | A text file with instructions to build a Docker image |
+| Docker Hub     | A cloud-based registry service for sharing container images |
+| Docker Compose | A tool to define and run multi-container apps using a `docker-compose.yml` YAML file |
 
 ### Docker Commands: 
 1. To show all running containers:
