@@ -7,4 +7,6 @@ spec:
     image: sabnaj/db2-coordinator:2Endpoints
   db:
     image: ibmcom/db2:11.5.8.0
+  scripts:
+    image: sabnaj/db2-init:_linux_amd64
   version: "11.5.8.0"
