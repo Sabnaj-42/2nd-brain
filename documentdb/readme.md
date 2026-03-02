@@ -49,11 +49,11 @@ mongosh "mongodb://default_user:documentdb@localhost:10260/?tls=true&tlsAllowInv
 use quickStartDatabase
 db.createCollection("quickStartCollection")
 db.quickStartCollection.insertOne({
-|     name: "John Doe",
-|     email: "john@example.com",
-|     age: 30,
-|     createdAt: new Date()
-| })
+     name: "John Doe",
+     email: "john@example.com",
+     age: 30,
+     createdAt: new Date()
+})
 
 db.quickStartCollection.find() // it will show the inserted document
 
