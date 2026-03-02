@@ -3,8 +3,6 @@ kind: Deployment
 metadata:
   name: documentdb
   namespace: dcdb
-  labels:
-    app: documentdb
 spec:
   replicas: 1
   selector:
@@ -16,10 +14,12 @@ spec:
         app: documentdb
     spec:
       containers:
-        - name: documentdb
-          image: documentdb # Use full image path
+        - name: app
+          image: documentdb
           imagePullPolicy: IfNotPresent
-          # Remove the args section entirely - use env vars instead
+          ports:
+              - containerPort: 10260
+                name: documentdb-port
           env:
             - name: USERNAME
               valueFrom:
@@ -31,12 +31,3 @@ spec:
                 secretKeyRef:
                   name: documentdb-credentials
                   key: password
-          ports:
-            - containerPort: 10260  # Expose the port in the container
-          resources:
-            requests:
-              memory: "512Mi"
-              cpu: "500m"
-            limits:
-              memory: "1Gi"
-              cpu: "1000m"
