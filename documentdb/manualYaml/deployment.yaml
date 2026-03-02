@@ -1,0 +1,42 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: documentdb
+  namespace: dcdb
+  labels:
+    app: documentdb
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: documentdb
+  template:
+    metadata:
+      labels:
+        app: documentdb
+    spec:
+      containers:
+        - name: documentdb
+          image: documentdb # Use full image path
+          imagePullPolicy: IfNotPresent
+          # Remove the args section entirely - use env vars instead
+          env:
+            - name: USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: documentdb-credentials
+                  key: username
+            - name: PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: documentdb-credentials
+                  key: password
+          ports:
+            - containerPort: 10260  # Expose the port in the container
+          resources:
+            requests:
+              memory: "512Mi"
+              cpu: "500m"
+            limits:
+              memory: "1Gi"
+              cpu: "1000m"
