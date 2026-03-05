@@ -8,6 +8,14 @@ spec:
   storageType: Durable
   deletionPolicy: Delete
   replicas: 1
+  podTemplate:
+    spec:
+      containers:
+        - name: documentdb
+          resources:
+            requests:
+              cpu: 500m
+              memory: 2Gi
 
   storage:
     accessModes:

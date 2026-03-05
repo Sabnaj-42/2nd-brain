@@ -1,4 +1,11 @@
-## DocumentDB(NOSQL): 
+## PostgreSQL is running on port 9712 and mongoDB wire protocol is running on port 10260. 
+- Your application connects to port 10260 using MongoDB protocol (wire protocol)
+- The MongoDB Gateway translates MongoDB commands to PostgreSQL
+- The Gateway then talks to PostgreSQL on port 9712 internally
+- PostgreSQL stores the actual data
+- We only expose the MongoDB port (10260) to the outside world, while PostgreSQL remains hidden and secure within the DocumentDB architecture. 
+
+## DocumentDB(NOSQL):
 Fully managed and scalable document database service that supports mongodb workloads. It provides high availability, security, and performance for applications that require flexible schema and rich query capabilities. DocumentDB is designed to handle large volumes of unstructured data and is ideal for use cases such as content management, catalogs, user profiles, and real-time analytics. With DocumentDB, developers can focus on building applications without worrying about database management tasks.
 
 
@@ -40,7 +47,12 @@ Port Note: Port 10260 is used by default in these instructions to avoid conflict
 
 ```bash
 # Connect to the running container to the port, where the document db process is running
-mongosh "mongodb://default_user:documentdb@localhost:10260/?tls=true&tlsAllowInvalidCertificates=true"
+mongosh "mongodb://default_user:1234@localhost:10260/?tls=true&tlsAllowInvalidCertificates=true"
+```
+## connect inside the container by pod exec command and open mongosh shell to insert data
+
+```bash
+ kubectl exec -it documentdb-0 -n demo -- mongosh "mongodb://default_user:1234@localhost:10260/?tls=true&tlsAllowInvalidCertificates=true"
 ```
 ## inside the contianer mongosh shell, create a database and collection, then insert a document
 
@@ -57,4 +69,36 @@ db.quickStartCollection.insertOne({
 
 db.quickStartCollection.find() // it will show the inserted document
 
+```
+
+## Connecting with postgres 
+- Postgres is running on port 9712
+```bash
+kubectl exec -it documentdb-0 -n demo -- psql -U documentdb -d postgres -p 9712
+# now we can run postgres commands
+```
+- create db mydb
+```sql
+CREATE DATABASE mydb;
+```
+- connect to mydb
+```sql
+\c mydb
+```
+- create table users
+```sql
+CREATE TABLE users (
+    id SERIAL PRIMARY KEY,
+    name VARCHAR(100) NOT NULL,
+    email VARCHAR(100) NOT NULL UNIQUE,
+    age INT
+);
+```
+- insert data into users table
+```sql
+INSERT INTO users (name, email, age) VALUES ('John Doe', 'sabnaj.cpm', 30);
+```
+- query data from users table
+```sql
+SELECT * FROM users;
 ```
