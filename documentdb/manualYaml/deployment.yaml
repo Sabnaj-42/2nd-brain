@@ -1,0 +1,33 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: documentdb
+  namespace: dcdb
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: documentdb
+  template:
+    metadata:
+      labels:
+        app: documentdb
+    spec:
+      containers:
+        - name: app
+          image: documentdb
+          imagePullPolicy: IfNotPresent
+          ports:
+              - containerPort: 10260
+                name: documentdb-port
+          env:
+            - name: USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: documentdb-credentials
+                  key: username
+            - name: PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: documentdb-credentials
+                  key: password
