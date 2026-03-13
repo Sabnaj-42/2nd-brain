@@ -1,8 +1,8 @@
 apiVersion: catalog.kubedb.com/v1alpha1
 kind: DocumentDBVersion
 metadata:
-  name: 11.5.8.0
+  name: '17'
 spec:
   db:
     image: ghcr.io/documentdb/documentdb/documentdb-local:latest
-  version: "11.5.8.0"
+  version: '17'
