@@ -1,17 +1,17 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: documentdbdemo
+  name: db
   namespace: dcdb
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: documentdb
+      app: db
   template:
     metadata:
       labels:
-        app: documentdb
+        app: db
     spec:
       containers:
         - name: app
