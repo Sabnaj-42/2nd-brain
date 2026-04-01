@@ -1,7 +1,7 @@
 apiVersion: kubedb.com/v1alpha2
 kind: DocumentDB
 metadata:
-  name: documentdb
+  name: st
   namespace: demo
 spec:
   version: '17'

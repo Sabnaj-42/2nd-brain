@@ -4,7 +4,7 @@ metadata:
   name: documentdb
   namespace: demo
 spec:
-  version: '17'
+  version: '17.0'
   storageType: Durable
   deletionPolicy: Delete
   replicas: 1

@@ -20,6 +20,9 @@ data:
         "CertPath": "/tmp/certs",
         "KeyPath": "/tmp/certs"
       },
+      "AuthenticationOptions": {
+         "RequireAuthentication": false
+      },
       "UseLocalHost": false,
       "DynamicConfigurationFile": "/etc/documentdb/HostConfig.json",
       "DynamicConfigurationRefreshIntervalSecs": 300
@@ -27,5 +30,5 @@ data:
   HostConfig.json: |
     {
       "IsPrimary": "true",
-      "SendShutdownResponses": "true"
+      "SendShutdownResponses": "false"
     }
