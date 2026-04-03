@@ -1,0 +1,25 @@
+apiVersion: kubedb.com/v1alpha2
+kind: DocumentDB
+metadata:
+  name: documentdb-cluster
+  namespace: demo
+spec:
+  version: '17.0'
+  storageType: Durable
+  deletionPolicy: Delete
+  replicas: 3
+  podTemplate:
+    spec:
+      containers:
+        - name: documentdb
+          resources:
+            requests:
+              cpu: 500m
+              memory: 2Gi
+
+  storage:
+    accessModes:
+      - ReadWriteOnce
+    resources:
+      requests:
+        storage: 5Gi

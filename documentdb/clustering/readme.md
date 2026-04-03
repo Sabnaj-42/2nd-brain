@@ -13,3 +13,10 @@ psql -h localhost -p 9712 -U default_user -d postgres -c "\du"
 # documentdb_readonly_role  | Cannot login
 
 ```
+## Raft consensus algorithm
+- Raft is a consensus algorithm designed to manage a replicated log across a cluster of servers.
+- It ensures that all servers in the cluster agree on the same sequence of log entries.
+- Raft achieves consensus through a leader-follower model, where one server is elected as the leader and the others are followers.
+- The leader is responsible for handling client requests, appending log entries, and replicating them to the followers.
+
+
