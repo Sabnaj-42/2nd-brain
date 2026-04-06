@@ -33,8 +33,6 @@
             - standby health check in standby pod
 
 ## How failover works in pg-coordinator:
-## ⚙️ Components
-
 ### 1. Raft Sidecar
 
 Responsible for:
