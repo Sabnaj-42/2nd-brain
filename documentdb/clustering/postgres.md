@@ -54,7 +54,7 @@ Responsible for:
 
 ---
 
-## 🔄 Failover Workflow
+##  Failover Workflow
 
 ### 1. Failure Detection
 
@@ -73,7 +73,7 @@ Responsible for:
 - Nodes exchange **vote requests**
 - A node receiving **majority votes (quorum)** becomes:
 
-👉 **Raft Leader**
+ **Raft Leader**
 
 > This leader is *not yet* the PostgreSQL primary
 
