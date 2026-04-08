@@ -8,3 +8,5 @@ spec:
   version: '17.0'
   scripts:
     image: sabnaj/documentdb-init:_linux_amd64
+
+

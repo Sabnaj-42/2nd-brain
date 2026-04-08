@@ -166,3 +166,6 @@ Once reconfiguration is complete:
 - Raft state converges across all nodes
 
 > Cluster returns to a **consistent and healthy state**
+
+
+## How Raft replicates data in distributed system:

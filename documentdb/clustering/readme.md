@@ -19,4 +19,9 @@ psql -h localhost -p 9712 -U default_user -d postgres -c "\du"
 - Raft achieves consensus through a leader-follower model, where one server is elected as the leader and the others are followers.
 - The leader is responsible for handling client requests, appending log entries, and replicating them to the followers.
 
+## Independent components:
+1. Leader Election
+2. Log Replication
+3. Safety
+4. Membership Changes
 

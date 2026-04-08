@@ -1,8 +1,10 @@
 apiVersion: catalog.kubedb.com/v1alpha1
 kind: DocumentDBVersion
 metadata:
-  name: '17'
+  name: '17.0'
 spec:
   db:
     image: sabnaj/documentdb-local-vim:latest
-  version: '17'
+  version: '17.0'
+  securityContext:
+    runAsUser: 1000
