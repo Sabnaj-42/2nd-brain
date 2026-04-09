@@ -168,4 +168,3 @@ Once reconfiguration is complete:
 > Cluster returns to a **consistent and healthy state**
 
 
-## How Raft replicates data in distributed system:
