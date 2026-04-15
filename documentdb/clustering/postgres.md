@@ -1,4 +1,4 @@
-## Postgres failover:
+## Postgres failover (kubedb coordinator):
 ### To make standby pod new primary:
 - Stop WAL streaming: The standby stops fetching WAL from the old primary.
 - Switch to read-write mode: PostgreSQL allows writes from now on.
@@ -168,3 +168,49 @@ Once reconfiguration is complete:
 > Cluster returns to a **consistent and healthy state**
 
 
+
+
+## Postgres Database:
+1. Connect to porstgres Database:
+```bash
+psql -h localhost -p 9712 -U documentdb -d postgres
+```
+2. Create role with replication privileges:
+```sql
+CREATE ROLE replica_user WITH REPLICATION LOGIN PASSWORD '1234';
+```
+3. Alter role with password:
+```sql
+ALTER ROLE documentdb WITH PASSWORD '1234';
+```
+4See postgres version:
+```sql
+SELECT version();
+```
+5. See postgres role name and roles attributes:
+```sql
+\du
+```
+6. Where the data is streaming from primary:
+```sql
+SELECT client_addr, state FROM pg_stat_replication;
+```
+
+### Postgres Replication: (2 types of Replicaiton)
+1. Physical (streaming) Replication: 
+    - It maintains an exact binary copy of the primary database. 
+    - Replicates the entire database cluster, including all databases, tables, and configurations.
+    - This is typically used for high availability and disaster recovery.
+    - Process:
+        - Primary user need the replication privilige:
+            - ```CREATE ROLE documentdb WITH REPLICATION LOGIN PASSWORD '1234' / ALTER ROLE documentdb WITH REPLICATION LOGIN PASSWORD '1234';```
+        - In primary pg_hba.conf file, add a line to allow replication connections from standby:
+            - host replication documentdb <standby_ip>/32 scram-sha-256
+        - Command for backup: In standby run the command: (before that remove all data in standby data directory and make sure it is empty: ``` rm -rf /var/pv/data/* ``` )
+            - ```PGPASSWORD=1234 pg_basebackup -h <primary host name> -p 9712 -U documentdb -D /var/pv/data -Fp -Xs -P -R```
+        - In standby postgresql.conf file, set the following parameters:
+            - primary_conninfo = 'host=<primary host name> port=9712 user=documentdb'
+2. Logical Replication:
+    - Logical replication copies data changes (rows) instead of raw disk blocks.
+    - Can replicate specific tables.
+    - not whole cluster
