@@ -1,0 +1,48 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: documentdb-gateway
+  namespace: demo
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: documentdb-gateway
+  template:
+    metadata:
+      labels:
+        app: documentdb-gateway
+    spec:
+      containers:
+        - name: gateway
+          image: sabnaj/documentdb-gateway-patched-notls:latest   # Your patched image
+          ports:
+            - containerPort: 27017
+              name: mongo
+          env:
+            - name: RUST_BACKTRACE
+              value: "1"
+          volumeMounts:
+            - name: config
+              mountPath: /etc/documentdb
+          resources:
+            requests:
+              memory: "256Mi"
+              cpu: "250m"
+            limits:
+              memory: "512Mi"
+              cpu: "500m"
+          livenessProbe:
+            tcpSocket:
+              port: 27017
+            initialDelaySeconds: 30
+            periodSeconds: 10
+          readinessProbe:
+            tcpSocket:
+              port: 27017
+            initialDelaySeconds: 10
+            periodSeconds: 5
+      volumes:
+        - name: config
+          configMap:
+            name: documentdb-gateway-config
