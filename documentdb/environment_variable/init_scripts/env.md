@@ -1,0 +1,3 @@
+### rus.sh
+$MAJOR_PG_VERSION
+REMOTE_REPLICA
