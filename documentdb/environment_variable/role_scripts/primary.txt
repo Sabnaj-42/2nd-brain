@@ -1,10 +1,7 @@
 ### start.sh
-$TUNING_ENABLED
-$TUNING_FILE_PATH:-/etc/config/pgtune.conf
 $SHARED_BUFFERS
 $WAL_RETAIN_PARAM
 $WAL_RETAIN_AMOUNT
-$WAL_BACKUP_TYPE
 $CLIENT_AUTH_MODE
 
 export POSTGRES_USER=${POSTGRES_USER:-documentdb} ## are they correct?
