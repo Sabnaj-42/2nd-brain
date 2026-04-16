@@ -1,0 +1,24 @@
+### config_recovery.conf.sh
+$WAL_LIMIT_POLICY
+$CLIENT_AUTH_MODE
+
+### copy_data.sh
+$ROOT_DIR
+$TOTAL_DIR_TO_COPY
+$DATA_DIR
+
+### do_pg_basebackup.sh
+$PGDATA
+$POSTGRES_PASSWORD
+
+### restore.sh
+$WALG_BASE_BACKUP_NAME
+$PITR_LSN
+$PITR_TIME
+$PG_MAJOR
+
+### run.sh
+$PITR_REPLICATION_STRATEGY
+$PITR_RESTORE
+$RECOVERY_DONE_FILE
+

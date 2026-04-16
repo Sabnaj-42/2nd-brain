@@ -1,0 +1,14 @@
+apiVersion: catalog.kubedb.com/v1alpha1
+kind: DocumentDBVersion
+metadata:
+  name: '17.9'
+spec:
+  db:
+    image: sabnaj/documentdb-local-vim:latest
+  version: '17.9'
+  initContainer:
+    image:  sabnaj/documentdb-init:_linux_amd64
+
+
+
+
