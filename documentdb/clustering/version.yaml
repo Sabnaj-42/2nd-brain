@@ -8,7 +8,9 @@ spec:
   version: '17.9'
   initContainer:
     image:  sabnaj/documentdb-init:_linux_amd64
-
+  securityContext:
+    runAsUser: 1000
+ 
 
 
 
