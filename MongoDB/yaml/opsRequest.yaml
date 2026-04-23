@@ -1,0 +1,21 @@
+apiVersion: ops.kubedb.com/v1alpha1
+kind: MongoDBOpsRequest
+metadata:
+  name: mops-reconfigure-standalone
+  namespace: demo
+spec:
+  type: Reconfigure
+  databaseRef:
+    name: mg-standalone
+
+  configuration:
+    standalone:
+      configSecret:
+        name: mg-custom-config
+
+  readinessCriteria:
+    oplogMaxLagSeconds: 20
+    objectsCountDiffPercentage: 10
+
+  timeout: 5m
+  apply: IfReady
