@@ -1,0 +1,19 @@
+from petset:
+
+Readiness Probe:
+          Exec:
+            Command:
+              bash
+              -c
+              set -x; if [[ $(mongosh admin --host=localhost  --quiet --eval "db.adminCommand('ping').ok" ) -eq "1" ]]; then
+          exit 0
+        fi
+        exit 1
+          Failure Threshold:  3
+          Period Seconds:     10
+          Success Threshold:  1
+          Timeout Seconds:    5
+
+>> int this part no credential is used for authentication, but authentication is needed for the dhi.io image, so the readiness probe will always fail.
+
+Thats why the pod is not going to ready state. Though the db is runnig fine.

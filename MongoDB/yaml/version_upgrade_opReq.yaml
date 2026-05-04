@@ -1,0 +1,13 @@
+apiVersion: ops.kubedb.com/v1alpha1
+kind: MongoDBOpsRequest
+metadata:
+  name: mops-upgrade-mg-standalone8010
+  namespace: demo
+spec:
+  type: UpdateVersion
+  databaseRef:
+    name: mg-standalone8010
+  updateVersion:
+    targetVersion: "8.0.17"
+  timeout: 10m
+  apply: IfReady

@@ -214,3 +214,88 @@ SELECT client_addr, state FROM pg_stat_replication;
     - Logical replication copies data changes (rows) instead of raw disk blocks.
     - Can replicate specific tables.
     - not whole cluster
+
+
+## How transaction is saved from memory to disk in postgres:
+1. When a transaction is executed, the page is loaded into memory(RAM) and changed. The page is now dirty page because it is different from the page in disk.
+2. The change is written in RAM(log buffer) and then the change is written to disk in a file called Write Ahead Log(WAL) in every commit(before or after the commit depends on synchronous or asynchronous commit).
+3. The dirty page is written to disk by background process called Checkpointer in every cehckpoint. 
+    - Checkpoint is a point in time when all dirty pages are written to disk and the WAL files are archived.
+    - Checkpoint is triggered by time or by number of WAL files generated. By default, checkpoint is triggered every 5 minutes or when 16 WAL files are generated.
+    - After every checkpoint, the wal files before the checkpoint are archived (if the archiving is enabled) and can be removed from the disk or can be recycled(reuse later). The wal files after the checkpoint are still needed for recovery and replication.
+
+
+<br>FLow Diagram:
+```
+                 ┌────────────────────────────┐
+                 │      TRANSACTION START     │
+                 └─────────────┬──────────────┘
+                               │
+                               ▼
+                 ┌────────────────────────────┐
+                 │  DATA PAGE LOADED TO RAM   │
+                 │  (Shared Buffer Cache)     │
+                 └─────────────┬──────────────┘
+                               │
+                               ▼
+                 ┌────────────────────────────┐
+                 │   PAGE MODIFIED IN MEMORY  │
+                 │   → Dirty Page Created     │
+                 └─────────────┬──────────────┘
+                               │
+                               ▼
+        ┌──────────────────────────────────────────┐
+        │         WAL RECORD CREATED               │
+        │  (Change description/log in RAM buffer)  │
+        └─────────────┬────────────────────────────┘
+                      │
+                      ▼
+        ┌──────────────────────────────────────────┐
+        │   WAL FLUSHED TO DISK (pg_wal files)    │
+        │   ✔ Sync commit: happens now             │
+        │   ✔ Async commit: happens later          │
+        └─────────────┬────────────────────────────┘
+                      │
+                      ▼
+        ┌──────────────────────────────────────────┐
+        │        TRANSACTION COMMIT COMPLETE       │
+        │   (Safe depending on WAL durability)     │
+        └─────────────┬────────────────────────────┘
+                      │
+                      ▼
+        ┌──────────────────────────────────────────┐
+        │        DATA STILL IN MEMORY ONLY         │
+        │        (Not yet written to disk)         │
+        └─────────────┬────────────────────────────┘
+                      │
+                      ▼
+        ┌──────────────────────────────────────────┐
+        │         CHECKPOINTER PROCESS             │
+        │  Flushes dirty pages → Data files (disk) │
+        └─────────────┬────────────────────────────┘
+                      │
+                      ▼
+        ┌──────────────────────────────────────────┐
+        │          DISK STATE UPDATED              │
+        │   Tables + Indexes now consistent        │
+        └─────────────┬────────────────────────────┘
+                      │
+                      ▼
+        ┌──────────────────────────────────────────┐
+        │ WAL CLEANUP / RECYCLING / ARCHIVING      │
+        │ - old WAL reusable or archived           │
+        │ - newer WAL kept for recovery/replica    │
+        └──────────────────────────────────────────┘
+```
+### Postgres Transaction Flow Diagram:
+![PostgreSQL Transaction Flow](../../images/postgresql_transaction_flow_diagram.png)
+
+### Configuration variables for Postgres:
+1. max_wal_size: Maximum size of WAL files before triggering a checkpoint. Default is 1GB.
+2. min_wal_size: Minimum size of WAL files to keep before allowing them to be recycled or removed. Default is 80MB.
+3. wal_keep_size: Amount of WAL files to keep for standby servers. Default is 0 (disabled).
+4. wal_buffers: Amount of memory allocated for WAL buffers in RAM. Default is 16MB.
+5. commit_delay: Time to delay before flushing WAL to disk after a commit. Default is 0 (no delay).
+6. checkpoint_timeout: Time between automatic checkpoints. Default is 5 minutes.
+7. checkpoint_completion_target: Target time to complete a checkpoint as a fraction of checkpoint_timeout. Default is 0.9 (90% of checkpoint_timeout).
+8. pg_control: Small file that stores checkpoint information, including the location of the last checkpoint and the current timeline. It is used during recovery to determine where to start replaying WAL files.
