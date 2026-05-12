@@ -1,13 +1,15 @@
 apiVersion: catalog.kubedb.com/v1alpha1
 kind: DocumentDBVersion
 metadata:
-  name: '17.9'
+  name: 'pg17-0.109.0'
 spec:
   db:
     image: sabnaj/documentdb-local-vim:latest
-  version: '17.9'
   initContainer:
-    image:  sabnaj/documentdb-init:_linux_amd64
+    image: souravbiswassanto/documentdb-init:_linux_amd64
+  coordinator:
+    image: souravbiswassanto/documentdb-coordinator:bootstrap_linux_amd64
+  version: 'pg17-0.109.0'
   securityContext:
     runAsUser: 1000
  

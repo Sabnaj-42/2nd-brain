@@ -1,10 +1,10 @@
 apiVersion: kubedb.com/v1alpha2
 kind: DocumentDB
 metadata:
-  name: docdb
+  name: dcdb
   namespace: demo
 spec:
-  version: '17.9'
+  version: 'pg17-0.109.0'
   storageType: Durable
   deletionPolicy: Delete
   replicas: 2
