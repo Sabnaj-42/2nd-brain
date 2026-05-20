@@ -6,9 +6,9 @@ spec:
   db:
     image: sabnaj/documentdb-local-vim:latest
   initContainer:
-    image: souravbiswassanto/documentdb-init:_linux_amd64
+    image:  sabnaj/documentdb-init:_linux_amd64
   coordinator:
-    image: souravbiswassanto/documentdb-coordinator:bootstrap_linux_amd64
+    image: sabnaj/documentdb-coordinator:bootstrap_linux_amd64
   version: 'pg17-0.109.0'
   securityContext:
     runAsUser: 1000

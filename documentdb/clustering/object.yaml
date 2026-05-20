@@ -7,7 +7,7 @@ spec:
   version: 'pg17-0.109.0'
   storageType: Durable
   deletionPolicy: Delete
-  replicas: 2
+  replicas: 3
   podTemplate:
     spec:
       containers:

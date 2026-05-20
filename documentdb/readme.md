@@ -49,6 +49,11 @@ Port Note: Port 10260 is used by default in these instructions to avoid conflict
 # Connect to the running container to the port, where the document db process is running
 mongosh "mongodb://default_user:1234@localhost:10260/?tls=true&tlsAllowInvalidCertificates=true"
 ```
+## To connect with the standby pod 
+```bash
+mongosh 'mongodb://default_user:d*t1dTkqXR!QLN!o@dcdb.demo.svc:10260/?tls=true&tlsAllowInvalidCertificates=true'
+#dcdb.demo.svc is the service_name.namespace_name.svc
+```
 ## connect inside the container by pod exec command and open mongosh shell to insert data
 
 ```bash
