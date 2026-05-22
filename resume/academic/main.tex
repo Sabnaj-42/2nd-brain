@@ -1,0 +1,300 @@
+\documentclass[letterpaper,11pt]{article}
+
+\usepackage{latexsym}
+\usepackage[empty]{fullpage}
+\usepackage{titlesec}
+\usepackage{marvosym}
+\usepackage[usenames,dvipsnames,svgnames,x11names]{xcolor}
+\usepackage{verbatim}
+\usepackage{enumitem}
+\usepackage[hidelinks]{hyperref}
+\usepackage[english]{babel}
+\usepackage{tabularx}
+\usepackage{fontawesome5}
+\usepackage{multicol}
+\usepackage{graphicx}
+\usepackage{tikz}
+
+\setlength{\multicolsep}{-3.0pt}
+\setlength{\columnsep}{-1pt}
+\input{glyphtounicode}
+
+\definecolor{cvblue}{HTML}{0E5484}
+\definecolor{darkcolor}{HTML}{0F4539}
+\definecolor{cvgreen}{HTML}{3BD80D}
+\definecolor{mycommand}{HTML}{00E278}
+\definecolor{SlateGrey}{HTML}{2E2E2E}
+\definecolor{LightGrey}{HTML}{666666}
+\colorlet{name}{black}
+\colorlet{tagline}{darkcolor}
+\colorlet{heading}{darkcolor}
+\colorlet{headingrule}{cvblue}
+\colorlet{accent}{darkcolor}
+\colorlet{emphasis}{SlateGrey}
+\colorlet{body}{LightGrey}
+
+%----------FONT OPTIONS----------
+\usepackage{CormorantGaramond}
+\usepackage{charter}
+
+% Adjust margins
+\addtolength{\oddsidemargin}{-0.6in}
+\addtolength{\evensidemargin}{-0.5in}
+\addtolength{\textwidth}{1.19in}
+\addtolength{\topmargin}{-.7in}
+\addtolength{\textheight}{1.4in}
+\urlstyle{same}
+
+% Ensure white background and black text
+\pagecolor{white}
+\color{black}
+
+\definecolor{airforceblue}{RGB}{5,150,105}
+
+\raggedbottom
+\raggedright
+\setlength{\tabcolsep}{0in}
+
+% Sections formatting
+\titleformat{\section}{
+  \vspace{-4pt}\scshape\raggedright\large\bfseries
+}{}{0em}{}[\color{black}\titlerule \vspace{-5pt}]
+
+% Ensure that generate pdf is machine readable/ATS parsable
+\pdfgentounicode=1
+
+%-------------------------
+% Custom commands
+\newcommand{\resumeItem}[1]{
+  \item\small{
+    {#1 \vspace{-1pt}}
+  }
+}
+
+\newcommand{\classesList}[4]{
+    \item\small{
+        {#1 #2 #3 #4 \vspace{-2pt}}
+  }
+}
+
+\newcommand{\resumeSubheading}[4]{
+  \vspace{-2pt}\item
+    \begin{tabular*}{1.0\textwidth}[t]{l@{\extracolsep{\fill}}r}
+      \textbf{\large#1} & \textbf{\small #2} \\
+      \textit{\large#3} & \textit{\small #4} \\
+    \end{tabular*}\vspace{-7pt}
+}
+
+\newcommand{\resumeSingleSubheading}[2]{
+  \vspace{-2pt}\item
+    \begin{tabular*}{1.0\textwidth}[t]{l@{\extracolsep{\fill}}r}
+      \textbf{\large#1} & \textbf{\small #2} \\
+    \end{tabular*}\vspace{-7pt}
+}
+
+\newcommand{\resumeSubSubheading}[2]{
+    \item
+    \begin{tabular*}{0.97\textwidth}{l@{\extracolsep{\fill}}r}
+      \textit{\small#1} & \textit{\small #2} \\
+    \end{tabular*}\vspace{-7pt}
+}
+
+\newcommand{\resumeProjectHeading}[2]{
+    \item
+    \begin{tabular*}{1.001\textwidth}{l@{\extracolsep{\fill}}r}
+      \small#1 & \textbf{\small #2}\\
+    \end{tabular*}\vspace{-7pt}
+}
+
+\newcommand{\resumeProjectHeadingWithGithub}[4]{
+    \item
+    \begin{tabular*}{1.001\textwidth}{l@{\extracolsep{\fill}}r}
+      \textbf{\small#1} \href{#2}{\faGithub} & \textbf{\small #3} \\
+      \textit{\small#4} & \\
+    \end{tabular*}\vspace{-7pt}
+}
+
+\newcommand{\resumeSubItem}[1]{\resumeItem{#1}\vspace{-4pt}}
+
+\renewcommand\labelitemi{$\vcenter{\hbox{\tiny$\bullet$}}$}
+\renewcommand\labelitemii{$\vcenter{\hbox{\tiny$\bullet$}}$}
+
+\newcommand{\resumeSubHeadingListStart}{\begin{itemize}[leftmargin=0.0in, label={}]}
+\newcommand{\resumeSubHeadingListEnd}{\end{itemize}}
+\newcommand{\resumeItemListStart}{\begin{itemize}[leftmargin=0.1in]}
+\newcommand{\resumeItemListEnd}{\end{itemize}\vspace{-5pt}}
+
+\newcommand{\sbullet}[1][.5]{\mathbin{\vcenter{\hbox{\scalebox{#1}{$\bullet$}}}}}
+
+%%%%%%  RESUME STARTS HERE  %%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\begin{document}
+%----------HEADING----------
+\begin{flushleft}
+    {\Huge \textbf{Sabnaj Akter}} \\[4pt]
+    {\large Jr. Software Engineer at AppsCode} \\[6pt]
+
+    \faEnvelope \;
+    \href{mailto:sabnajislam786@gmail.com}{sabnajislam786@gmail.com}
+    \quad
+    \faPhone \;
+    \href{tel:+8801777258450}{+88 01777258450}
+    \quad
+    \faGithub \;
+    \href{https://github.com/sabnaj-42/}{GitHub}
+    \quad
+    \faLinkedin \;
+    \href{https://linkedin.com/in/sabnaj-42/}{LinkedIn}
+\end{flushleft}
+
+%-----------Research Interests-----------
+
+\section{\color{black}RESEARCH INTERESTS}
+\begin{itemize}[leftmargin=0in, label={}]
+\small{\item{
+Distributed Systems, Cloud Computing, Cloud-Native Infrastructure, Kubernetes, Database Systems,
+Distributed AI, Natural Language Processing
+}}
+\end{itemize}
+ \vspace{-10pt}
+
+%-----------EDUCATION-----------
+\section{\color{black}EDUCATION}
+  \resumeSubHeadingListStart
+    \resumeSubheading
+      {Khulna University of Engineering \& Technology (KUET)}{Bangladesh}
+      {BSc in Computer Science and Engineering (CGPA: 3.21/4.00)}{Jan 2020 - Apr 2025}
+  \resumeSubHeadingListEnd
+  \vspace{-10pt}
+
+
+ %-----------PUBLICATIONS-----------
+\section{\color{black}PUBLICATIONS}
+  \resumeSubHeadingListStart
+   \resumeSubheading
+       {Conference Paper (In Preparation)}{June 2026}
+       {N-gram Based Bengali Text Compression for Low-Resource Language Processing}{}
+  \resumeSubHeadingListEnd
+\vspace{-12pt}
+
+
+%-----------PROGRAMMING SKILLS-----------
+\section{\color{black}TECHNICAL SKILLS}
+ \begin{itemize}[leftmargin=0in, label={}]
+    \small{\item{
+     \textbf{\normalsize{Languages:}}{ \normalsize{Go, Python, C/C++, Java, SQL, Bash}} \\
+      \vspace{2pt}
+      \textbf{\normalsize{Cloud \& DevOps:}}{ \normalsize{Kubernetes, Docker, Linux}} \\
+     \vspace{2pt}
+     \textbf{\normalsize{Backend:}}{ \normalsize{REST APIs, Kubernetes Operators, Controller Runtime, CRDs}} \\
+    \vspace{2pt}
+     \textbf{\normalsize{Databases:}}{ \normalsize{IBM Db2, PostgreSQL, DocumentDB}} \\
+     \vspace{2pt}
+     \textbf{\normalsize{Tools:}}{ \normalsize{Git, GitHub, LaTeX}} \\
+     \vspace{2pt}
+     \textbf{\normalsize{Research Areas:}}{ \normalsize{Distributed Systems, NLP, Cloud Computing, Distributed AI}}
+     }}
+ \end{itemize}
+
+ \vspace{-16pt}
+
+
+ %-----------EXPERIENCE-----------
+\section{\color{black}WORK EXPERIENCE}
+  \resumeSubHeadingListStart
+    \resumeSubheading
+      {Software Engineer}{2024 - Present}
+      {Cloud-Native Systems Development}{Dhaka, Bangladesh}
+      \resumeItemListStart
+            \resumeItem{\normalsize{Worked on backend and cloud-native systems development using Go, Kubernetes, and Docker.}}
+            \resumeItem{\normalsize{Developed and maintained Kubernetes-based database orchestration systems and distributed infrastructure components.}}
+      \resumeItemListEnd
+  \resumeSubHeadingListEnd
+\vspace{-12pt}
+
+%-----------PROJECTS 1-----------
+\section{\color{black}PROJECTS}
+  \resumeSubHeadingListStart
+    \resumeProjectHeadingWithGithub
+       {Kubernetes Operator for IBM Db2}{https://github.com/your-username/repo-name}{}{Go \,\textbullet\, Kubernetes \,\textbullet\, Controller Runtime \,\textbullet\, CRDs}
+
+       {A Kubernetes operator for managing IBM Db2 database workloads}{}
+      \resumeItemListStart
+          \resumeItem{\normalsize{Developed a Kubernetes operator using Go and controller-runtime.}}
+          \resumeItem{\normalsize{Implemented CRDs, reconciliation logic, and lifecycle automation for stateful database workloads.}}
+      \resumeItemListEnd
+
+    \vspace{10pt}
+
+    \resumeProjectHeadingWithGithub
+       {Kubernetes Operator for DocumentDB}{https://github.com/your-username/repo-name}{}{Go \,\textbullet\, Kubernetes \,\textbullet\, Distributed Infrastructure}
+
+       {A Kubernetes operator for DocumentDB database systems}{}
+      \resumeItemListStart
+          \resumeItem{\normalsize{Built a Kubernetes operator for DocumentDB database systems.}}
+          \resumeItem{\normalsize{Worked on distributed infrastructure automation and cloud-native orchestration.}}
+      \resumeItemListEnd
+ 
+    vspace{10pt}
+
+
+    \resumeProjectHeadingWithGithub
+       {RESTful API Development}{https://github.com/your-username/repo-name}{}{Go \,\textbullet\, Cobra CLI \,\textbullet\, Docker}
+
+       {Backend API development using Go and containerization}{}
+      \resumeItemListStart
+          \resumeItem{\normalsize{Developed RESTful APIs using Go, Cobra CLI, and Docker.}}
+      \resumeItemListEnd
+
+    \resumeProjectHeadingWithGithub
+       {Cat Breed Classification (Course Project)}{https://github.com/your-username/repo-name}{}{Python \,\textbullet\, PyTorch \,\textbullet\, CNN}
+
+       {CNN-based image classifier for multi-class cat breed detection}{}
+      \resumeItemListStart
+          \resumeItem{\normalsize{Built a CNN-based image classifier for multi-class cat breed detection.}}
+          \resumeItem{\normalsize{Trained the model using PyTorch on a dataset of 5000 images.}}
+      \resumeItemListEnd
+
+    \resumeProjectHeadingWithGithub
+       {NLP Research Project}{https://github.com/your-username/repo-name}{}{Python \,\textbullet\, NLP \,\textbullet\, Bengali Language Processing}
+
+       {Research on Bengali text compression using N-gram based language models}{}
+      \resumeItemListStart
+          \resumeItem{\normalsize{Conducted research on Bengali text compression using N-gram based language models.}}
+      \resumeItemListEnd
+  \resumeSubHeadingListEnd
+\vspace{-12pt}
+
+ %-----------ACCOMPLISHMENTS-----------
+\section{\color{black}ACHIEVEMENTS}
+  \resumeSubHeadingListStart
+    \resumeSubheading
+       {Competitive Programming}{}
+       {Expert on Codeforces, 5-star on CodeChef}{}
+      \resumeItemListStart
+          \resumeItem{\normalsize{Codeforces: \href{https://codeforces.com/profile/Sabnaj_423}{\underline{Sabnaj423}} -- Expert (Max Rating: 1602)}}
+          \resumeItem{\normalsize{CodeChef: \href{https://www.codechef.com/users/Sabnaj42}{\underline{Sabnaj42}} -- 5-star (Max Rating: 2022)}}
+      \resumeItemListEnd
+
+    \resumeSubheading
+       {Programming Contest Rankings}{}
+       {Notable rankings in national and regional contests}{}
+      \resumeItemListStart
+          \resumeItem{\normalsize{Ada Lovelace NGPC 2022: Ranked \textbf{10th}}}
+          \resumeItem{\normalsize{National Girls' Programming Contest 2022: Ranked \textbf{8th}}}
+          \resumeItem{\normalsize{Intra KUET Programming Contest 2023: Ranked \textbf{2nd}}}
+          \resumeItem{\normalsize{IUT IUPC 2024: Ranked \textbf{36th}}}
+      \resumeItemListEnd
+  \resumeSubHeadingListEnd
+\vspace{-12pt}
+
+%-----------EXTRA-CURRICULAR ACTIVITIES-----------
+\section{\color{black}EXTRA-CURRICULAR ACTIVITIES}
+  \resumeSubHeadingListStart
+    \resumeSubheading
+       {Vice President}{Feb 2024 - Feb 2025}
+       {Special Group Interested in Programming Contest (SGIPC), KUET}{}
+  \resumeSubHeadingListEnd
+\vspace{-12pt}
+
+\end{document}
