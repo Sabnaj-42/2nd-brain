@@ -6,7 +6,7 @@ metadata:
 spec:
   version: 'pg17-0.109.0'
   storageType: Durable
-  deletionPolicy: Delete
+  deletionPolicy: DoNotTerminate
   replicas: 3
   podTemplate:
     spec:
