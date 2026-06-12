@@ -1,0 +1,14 @@
+apiVersion: catalog.kubedb.com/v1alpha1
+kind: DocumentDBVersion
+metadata:
+  name: 'pg17-0.110.0'
+spec:
+  version: '17.110.0'          # same major (17) ⇒ minor update path
+  db:
+    image: sabnaj/documentdb-local-vim:latest   # same image is fine for plumbing test
+  initContainer:
+    image: sabnaj/documentdb-init:_linux_amd64
+  coordinator:
+    image: sabnaj/documentdb-coordinator:020634d2_linux_amd64
+  securityContext:
+    runAsUser: 1000

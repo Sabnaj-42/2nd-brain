@@ -1,0 +1,14 @@
+apiVersion: catalog.kubedb.com/v1alpha1
+kind: DocumentDBVersion
+metadata:
+  name: 'pg17-0.109.0'
+spec:
+  version: '17.109.0'          # numeric — required by UpdateVersion
+  db:
+    image: sabnaj/documentdb-local-vim:latest
+  initContainer:
+    image: sabnaj/documentdb-init:_linux_amd64
+  coordinator:
+    image: sabnaj/documentdb-coordinator:020634d2_linux_amd64
+  securityContext:
+    runAsUser: 1000

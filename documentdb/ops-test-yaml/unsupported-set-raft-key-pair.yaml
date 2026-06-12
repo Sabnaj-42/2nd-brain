@@ -1,0 +1,12 @@
+apiVersion: ops.kubedb.com/v1alpha1
+kind: DocumentDBOpsRequest
+metadata:
+  name: dcdb-set-raft-key-pair
+  namespace: demo
+spec:
+  type: SetRaftKeyPair
+  databaseRef:
+    name: dcdb
+  setRaftKeyPair:
+    keyPair:
+      k: v

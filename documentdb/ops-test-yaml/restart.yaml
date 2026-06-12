@@ -1,0 +1,6 @@
+apiVersion: ops.kubedb.com/v1alpha1
+kind: DocumentDBOpsRequest
+metadata: { name: dcdb-restart, namespace: demo }
+spec:
+  type: Restart
+  databaseRef: { name: dcdb }

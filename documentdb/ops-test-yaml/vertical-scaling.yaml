@@ -1,0 +1,23 @@
+apiVersion: ops.kubedb.com/v1alpha1
+kind: DocumentDBOpsRequest
+metadata:
+  name: dcdb-vscale
+  namespace: demo
+spec:
+  type: VerticalScaling
+  databaseRef:
+    name: dcdb
+  verticalScaling:
+    documentdb:
+      resources:
+        requests:
+          cpu: 600m
+          memory: 2.5Gi
+        limits:
+          cpu: "1"
+          memory: 2.5Gi
+    coordinator:
+      resources:
+        requests:
+          cpu: 100m
+          memory: 256Mi

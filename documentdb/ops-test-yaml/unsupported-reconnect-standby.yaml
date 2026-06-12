@@ -1,0 +1,9 @@
+apiVersion: ops.kubedb.com/v1alpha1
+kind: DocumentDBOpsRequest
+metadata:
+  name: dcdb-reconnect-standby
+  namespace: demo
+spec:
+  type: ReconnectStandby
+  databaseRef:
+    name: dcdb

@@ -1,0 +1,11 @@
+apiVersion: ops.kubedb.com/v1alpha1
+kind: DocumentDBOpsRequest
+metadata:
+  name: dcdb-hscale-ha
+  namespace: demo
+spec:
+  type: HorizontalScaling
+  databaseRef:
+    name: dcdb
+  horizontalScaling:
+    replicas: 3

@@ -1,0 +1,15 @@
+apiVersion: ops.kubedb.com/v1alpha1
+kind: DocumentDBOpsRequest
+metadata:
+  name: dcdb-vscale-arbiter
+  namespace: demo
+spec:
+  type: VerticalScaling
+  databaseRef:
+    name: dcdb
+  verticalScaling:
+    arbiter:
+      resources:
+        requests:
+          cpu: 100m
+          memory: 128Mi

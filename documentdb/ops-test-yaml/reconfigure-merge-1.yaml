@@ -1,0 +1,13 @@
+apiVersion: ops.kubedb.com/v1alpha1
+kind: DocumentDBOpsRequest
+metadata:
+  name: dcdb-reconfigure-merge-1
+  namespace: demo
+spec:
+  type: Reconfigure
+  databaseRef:
+    name: dcdb
+  configuration:
+    applyConfig:
+      user.conf: |
+        work_mem=8MB

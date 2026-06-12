@@ -1,0 +1,12 @@
+apiVersion: ops.kubedb.com/v1alpha1
+kind: DocumentDBOpsRequest
+metadata:
+  name: dcdb-volume-expansion-arbiter
+  namespace: demo
+spec:
+  type: VolumeExpansion
+  databaseRef:
+    name: dcdb
+  volumeExpansion:
+    mode: Offline
+    arbiter: 2Gi

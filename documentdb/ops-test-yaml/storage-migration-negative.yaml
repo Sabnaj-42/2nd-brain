@@ -1,0 +1,12 @@
+apiVersion: ops.kubedb.com/v1alpha1
+kind: DocumentDBOpsRequest
+metadata:
+  name: dcdb-storage-migration-notimeout
+  namespace: demo
+spec:
+  type: StorageMigration
+  databaseRef:
+    name: dcdb
+  migration:
+    storageClassName: standard-custom
+    oldPVReclaimPolicy: Delete

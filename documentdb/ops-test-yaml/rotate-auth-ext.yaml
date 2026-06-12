@@ -1,0 +1,22 @@
+apiVersion: v1
+kind: Secret
+metadata:
+  name: dcdb-new-auth
+  namespace: demo
+type: kubernetes.io/basic-auth
+stringData:
+  username: documentdb
+  password: NewExternalPass123
+---
+apiVersion: ops.kubedb.com/v1alpha1
+kind: DocumentDBOpsRequest
+metadata:
+  name: dcdb-rotate-auth-ext
+  namespace: demo
+spec:
+  type: RotateAuth
+  databaseRef:
+    name: dcdb
+  authentication:
+    secretRef:
+      name: dcdb-new-auth

@@ -1,12 +1,12 @@
 apiVersion: kubedb.com/v1alpha2
 kind: DocumentDB
 metadata:
-  name: dcodb
+  name: dcdb
   namespace: demo
 spec:
   version: 'pg17-0.109.0'
   storageType: Durable
-  deletionPolicy: Halt
+  deletionPolicy: Delete
   replicas: 3
   podTemplate:
     spec:
@@ -16,8 +16,8 @@ spec:
             requests:
               cpu: 500m
               memory: 2Gi
-
   storage:
+    storageClassName: "standard-custom"
     accessModes:
       - ReadWriteOnce
     resources:

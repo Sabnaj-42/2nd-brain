@@ -1,0 +1,11 @@
+apiVersion: ops.kubedb.com/v1alpha1
+kind: DocumentDBOpsRequest
+metadata:
+  name: dcdb-update-version
+  namespace: demo
+spec:
+  type: UpdateVersion
+  databaseRef:
+    name: dcdb
+  updateVersion:
+    targetVersion: pg17-0.110.0

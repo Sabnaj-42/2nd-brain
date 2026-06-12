@@ -1,0 +1,9 @@
+apiVersion: ops.kubedb.com/v1alpha1
+kind: DocumentDBOpsRequest
+metadata:
+  name: dcdb-force-failover
+  namespace: demo
+spec:
+  type: ForceFailOver
+  databaseRef:
+    name: dcdb

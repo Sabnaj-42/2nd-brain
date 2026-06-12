@@ -1,0 +1,14 @@
+apiVersion: ops.kubedb.com/v1alpha1
+kind: DocumentDBOpsRequest
+metadata:
+  name: dcdb-reconfigure-reload
+  namespace: demo
+spec:
+  type: Reconfigure
+  databaseRef:
+    name: dcdb
+  configuration:
+    restart: "false"
+    applyConfig:
+      user.conf: |
+        log_min_duration_statement=1000
