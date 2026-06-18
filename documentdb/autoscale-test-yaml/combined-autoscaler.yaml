@@ -1,0 +1,36 @@
+# Combined COMPUTE + STORAGE autoscaler in a single DocumentDBAutoscaler.
+# Both loops act independently off the same object. Provision the DB on an
+# expandable SC (object-longhorn.yaml) so the storage half can actually expand.
+apiVersion: autoscaling.kubedb.com/v1alpha1
+kind: DocumentDBAutoscaler
+metadata:
+  name: dcdb-autoscaler
+  namespace: demo
+spec:
+  databaseRef:
+    name: dcdb
+  opsRequestOptions:
+    timeout: 5m
+    apply: IfReady
+  compute:
+    documentdb:
+      trigger: "On"
+      podLifeTimeThreshold: 1m
+      resourceDiffPercentage: 5
+      minAllowed:
+        cpu: 600m
+        memory: 1.5Gi
+      maxAllowed:
+        cpu: "2"
+        memory: 3Gi
+      controlledResources: ["cpu", "memory"]
+      containerControlledValues: "RequestsAndLimits"
+  storage:
+    documentdb:
+      trigger: "On"
+      usageThreshold: 60
+      scalingRules:            # REQUIRED: drives the new size (scalingThreshold is ignored by the controller)
+        - appliesUpto: ""
+          threshold: 50%       # grow capacity by 50%
+      expansionMode: "Online"
+      upperBound: 10Gi

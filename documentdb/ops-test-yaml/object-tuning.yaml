@@ -1,0 +1,39 @@
+# Base DocumentDB provisioned WITH auto-tuning enabled (spec.configuration.tuning).
+# Use this for:
+#   - VerticalScaling tuning regeneration test (vertical-scaling-tuning.yaml) — the
+#     UpdateTuningConfiguration step in vertical_scaling.go only fires when the DB
+#     already has spec.configuration.tuning.
+#   - Reconfigure-on-an-already-tuned DB scenarios.
+# The provisioner renders pgtune.conf into the operator config secret <db>-<uid6>
+# and projects it at /etc/config/pgtune.conf (TUNING_ENABLED=true / TUNING_FILE_PATH env).
+apiVersion: kubedb.com/v1alpha2
+kind: DocumentDB
+metadata:
+  name: dcdb
+  namespace: demo
+spec:
+  version: 'pg17-0.109.0'
+  storageType: Durable
+  deletionPolicy: Delete
+  replicas: 3
+  configuration:
+    tuning:
+      profile: oltp          # web | oltp | dw | mixed | desktop
+      storageType: ssd       # ssd | hdd | san
+      maxConnections: 200
+      disableAutoTune: false
+  podTemplate:
+    spec:
+      containers:
+        - name: documentdb
+          resources:
+            requests:
+              cpu: 500m
+              memory: 2Gi
+  storage:
+    storageClassName: "local-path"
+    accessModes:
+      - ReadWriteOnce
+    resources:
+      requests:
+        storage: 5Gi

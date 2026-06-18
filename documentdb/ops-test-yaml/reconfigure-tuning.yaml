@@ -1,0 +1,19 @@
+# Reconfigure via the structured tuning block (NEW in this branch).
+# The ops handler maps configuration.tuning -> db.spec.configuration.tuning
+# (copyTuningOptions in reconfigure.go), the ReconcileDocumentDBDatabase step
+# regenerates pgtune.conf in the operator config secret, then pods are restarted
+# (default restart: Auto -> True) so the new pgtune.conf is included by postgres.
+apiVersion: ops.kubedb.com/v1alpha1
+kind: DocumentDBOpsRequest
+metadata:
+  name: dcdb-reconfigure-tuning
+  namespace: demo
+spec:
+  type: Reconfigure
+  databaseRef:
+    name: dcdb
+  configuration:
+    tuning:
+      profile: web           # web | oltp | dw | mixed | desktop
+      storageType: ssd       # ssd | hdd | san
+      maxConnections: 300

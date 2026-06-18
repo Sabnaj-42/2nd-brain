@@ -1,0 +1,29 @@
+# VerticalScaling against a DB that has auto-tuning enabled (provision with
+# object-tuning.yaml first). Because db.spec.configuration.tuning is set, the
+# UpdateTuningConfiguration step (vertical_scaling.go) regenerates pgtune.conf
+# from the NEW container resources (2Gi -> 3Gi here) BEFORE the pods are
+# restarted, so memory-derived params (shared_buffers, effective_cache_size, ...)
+# follow the new request.
+apiVersion: ops.kubedb.com/v1alpha1
+kind: DocumentDBOpsRequest
+metadata:
+  name: dcdb-vscale-tuning
+  namespace: demo
+spec:
+  type: VerticalScaling
+  databaseRef:
+    name: dcdb
+  verticalScaling:
+    documentdb:
+      resources:
+        requests:
+          cpu: "1"
+          memory: 3Gi
+        limits:
+          cpu: "1"
+          memory: 3Gi
+    coordinator:
+      resources:
+        requests:
+          cpu: 100m
+          memory: 256Mi

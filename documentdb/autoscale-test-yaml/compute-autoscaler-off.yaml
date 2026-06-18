@@ -1,0 +1,23 @@
+# Negative / disable case: trigger "Off".
+# With trigger Off the controller does NOT ensure a VPA and never creates any
+# VerticalScaling ops request. Use to confirm the autoscaler is dormant when
+# disabled (and to verify flipping On->Off stops further scaling).
+apiVersion: autoscaling.kubedb.com/v1alpha1
+kind: DocumentDBAutoscaler
+metadata:
+  name: dcdb-compute-autoscaler
+  namespace: demo
+spec:
+  databaseRef:
+    name: dcdb
+  compute:
+    documentdb:
+      trigger: "Off"
+      minAllowed:
+        cpu: 600m
+        memory: 1.5Gi
+      maxAllowed:
+        cpu: "2"
+        memory: 3Gi
+      controlledResources: ["cpu", "memory"]
+      containerControlledValues: "RequestsAndLimits"

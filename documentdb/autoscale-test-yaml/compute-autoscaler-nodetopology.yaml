@@ -1,0 +1,33 @@
+# ADVANCED / OPTIONAL: compute autoscaling driven by a NodeTopology (machine
+# profiles). Instead of free-form min/max, the recommendation is snapped to the
+# nearest node group / machine profile defined in a NodeTopology CR, and the
+# resulting VerticalScaling ops carries node-selector/toleration + machine
+# annotations. Requires a NodeTopology object named below to exist in the cluster.
+# Skip unless you have NodeTopology set up; the plain compute-autoscaler.yaml is
+# the primary compute test.
+apiVersion: autoscaling.kubedb.com/v1alpha1
+kind: DocumentDBAutoscaler
+metadata:
+  name: dcdb-compute-nodetopology
+  namespace: demo
+spec:
+  databaseRef:
+    name: dcdb
+  opsRequestOptions:
+    timeout: 5m
+    apply: IfReady
+  compute:
+    nodeTopology:
+      name: <your-nodetopology-name>
+    documentdb:
+      trigger: "On"
+      podLifeTimeThreshold: 1m
+      resourceDiffPercentage: 5
+      minAllowed:
+        cpu: 600m
+        memory: 1.5Gi
+      maxAllowed:
+        cpu: "2"
+        memory: 3Gi
+      controlledResources: ["cpu", "memory"]
+      containerControlledValues: "RequestsAndLimits"

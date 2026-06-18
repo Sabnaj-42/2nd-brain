@@ -1,0 +1,17 @@
+# Reconfigure that turns OFF auto-tuning. With disableAutoTune: true the
+# EnsureConfigSecret step deletes pgtune.conf from the operator config secret
+# (needTuning=false), and the projected /etc/config/pgtune.conf disappears.
+# Run this against a DB that currently has tuning enabled (object-tuning.yaml or
+# after reconfigure-tuning.yaml).
+apiVersion: ops.kubedb.com/v1alpha1
+kind: DocumentDBOpsRequest
+metadata:
+  name: dcdb-reconfigure-tuning-disable
+  namespace: demo
+spec:
+  type: Reconfigure
+  databaseRef:
+    name: dcdb
+  configuration:
+    tuning:
+      disableAutoTune: true

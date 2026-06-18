@@ -1,10 +1,19 @@
 # Testing DocumentDB OpsRequest (real handlers — ported from Postgres)
 
-Targets branch **`add-all-ops-requests`** of `/home/sabnaj/go/src/kubedb.dev/documentdb`.
+Targets branch **`add-reconfigure-ops`** of `/home/sabnaj/go/src/kubedb.dev/documentdb`.
 
-- **Commit under test:** `7a493648b04469956988da7630d2b20969a6b046`
-  ("Add Reconfigure support and align halt/config handling with Postgres")
-- Supersedes the previous scaffolding commit `4346803c` where all 12 handlers were no-op stubs.
+- **Commit under test:** `41aaa7ee1` ("Add tuning config support to Reconfigure and
+  VerticalScaling ops requests"), on top of `d5322e675` ("documentdb-reconfigure (#25)").
+- **What changed since the last run (commit `7a493648b`, see §7a):** Reconfigure now
+  actually *renders and applies* configuration, and both **Reconfigure** and
+  **VerticalScaling** gained a structured **`tuning`** block (pgtune auto-tuning). The two
+  bugs that made 5.5 a FAIL last time are addressed in code (details in §5.5). The previous
+  scaffolding commit `4346803c` (all 12 handlers no-op stubs) and the
+  `add-all-ops-requests` working tree are both superseded by this branch.
+
+> **This update focuses on Reconfigure (§5.5) and VerticalScaling (§5.2)** — the two ops
+> requests fixed/extended in this PR. Other sections carry forward from the 7a493648b run;
+> re-verify them only if you rebuild against this branch.
 
 ---
 
@@ -51,8 +60,26 @@ Concurrent ops requests for the same DB are skipped/requeued every 30s; multiple
 pending **Reconfigure** requests are *merged* — merged-away ones get phase **`Skipped`**
 with a `ConfigurationMerged` event (`reconfigure_merger.go`).
 
+### What's now fixed/added on this branch (was a gap at 7a493648b)
+- **Inline config is now rendered into the pod.** The provisioner (`pkg/controllers/config_secret.go`
+  + `petset.go`, PR #25) creates an operator-managed config secret `<db>-<uid6>` carrying
+  `inline.conf` (from `spec.configuration.inline["user.conf"]`) and `pgtune.conf`, projected
+  read-only at **`/etc/config/`** in the `documentdb` container (projected volume `custom-config`).
+  The init scripts `include_if_exists` these files. This is the counterpart that was entirely
+  missing before (old 5.5 Bug 2).
+- **`Reconfigure.tuning` is now applied.** `DocumentDBConfiguration` gained a `Tuning` field;
+  `copyTuningOptions` (reconfigure.go) maps `spec.configuration.tuning`
+  (`profile`/`maxConnections`/`storageType`/`disableAutoTune`) onto the DB, and
+  `EnsureConfigSecret` regenerates `pgtune.conf` via `pkg/pgtune`. `disableAutoTune: true`
+  deletes `pgtune.conf`.
+- **VerticalScaling regenerates tuning.** When the DB has `spec.configuration.tuning`, a new
+  `UpdateTuningConfiguration` step recomputes `pgtune.conf` from the *new* container resources
+  before the pods restart (vertical_scaling.go).
+- **Reconfigure ordering fixed.** The DB is reconciled (config secret + petset volume rendered)
+  in the `ReconcileDocumentDBDatabase` step **before** `CustomRestart`, so pods come up with the
+  new config already mounted (old 5.5 Bug 1).
+
 ### Known gaps at this commit (don't file these as bugs)
-- `Reconfigure.tuning` is accepted but **not applied** (`DocumentDBConfiguration` has no tuning field yet).
 - Read replicas / arbiter sub-specs are rejected with explicit errors (HorizontalScaling read replicas, VerticalScaling arbiter/readReplicas, VolumeExpansion arbiter).
 - HorizontalScaling to `replicas: 1` is rejected when `db.spec.streamingMode: Synchronous`; `replicas: 0` is rejected.
 - TLS is entirely absent (no cert handling in `manageDocumentDBEvent`).
@@ -151,6 +178,16 @@ kubectl apply -f /home/sabnaj/go/src/kubedb.dev/documentdb/vendor/kubedb.dev/api
 kubectl apply -f /home/sabnaj/go/src/kubedb.dev/documentdb/vendor/kubedb.dev/apimachinery/crds/catalog.kubedb.com_documentdbversions.yaml
 ```
 
+> ⚠️ **Reconfigure tuning needs the branch CRD.** Confirm the installed `documentdbs.kubedb.com`
+> CRD exposes `spec.configuration.tuning` — older installs only have `inline`/`secretName`, and
+> the apiserver then **silently prunes** `configuration.tuning` (Reconfigure with `tuning:` reports
+> Successful but the field never persists; the provisioner deletes the config secret). Check:
+> ```bash
+> kubectl get crd documentdbs.kubedb.com -o jsonpath='{.spec.versions[0].schema.openAPIV3Schema.properties.spec.properties.configuration.properties}' | grep -o tuning
+> ```
+> If empty, re-apply the `kubedb.com_documentdbs.yaml` above (it carries the tuning field). Hit
+> during the 2026-06-18 §5.5(d) run.
+
 Catalog versions — clustering exists now, so **`coordinator` and `initContainer` images
 are required**. Create **two** entries so UpdateVersion has a target. Note `spec.version`
 is parsed by go-version in the UpdateVersion handler, so it must be numeric
@@ -197,7 +234,8 @@ spec:
 ## 4. Apply a base DocumentDB
 
 Most ops are tested against a **3-replica HA** cluster (exercises the raft/leader paths);
-HorizontalScaling standalone→HA additionally needs a **standalone** one.
+HorizontalScaling standalone→HA additionally needs a **standalone** one. The tuning paths
+(§5.2a and §5.5(d)/(e)) need a DB with `spec.configuration.tuning` — use `object-tuning.yaml`.
 
 ```yaml
 apiVersion: kubedb.com/v1alpha2
@@ -279,10 +317,46 @@ spec:
       resources:
         requests: { cpu: 100m, memory: 256Mi }
 ```
+(yaml: `vertical-scaling.yaml`)
 **Expect:** `Successful`; petset + pod containers carry the new resources
 (`kubectl get pod dcdb-0 -n demo -o jsonpath='{.spec.containers[?(@.name=="documentdb")].resources}'`);
 `db.spec.podTemplate` patched; `SHARED_BUFFERS` env recomputed from the new memory request.
-**Negative:** add `arbiter:` or `readReplicas:` → fails with "not supported for DocumentDB".
+**Negative:** add `arbiter:` or `readReplicas:` → fails with "not supported for DocumentDB"
+(yaml: `vertical-scaling-negative.yaml`).
+
+#### 5.2a VerticalScaling with auto-tuning regeneration (NEW on this branch)
+Provision the DB **with tuning enabled** first (`object-tuning.yaml` — sets
+`spec.configuration.tuning.profile: oltp`, memory 2Gi), seed data, then scale up:
+```yaml
+# vertical-scaling-tuning.yaml — documentdb 2Gi -> 3Gi on a tuning-enabled DB
+spec:
+  type: VerticalScaling
+  databaseRef: { name: dcdb }
+  verticalScaling:
+    documentdb:
+      resources:
+        requests: { cpu: "1", memory: 3Gi }
+        limits:   { cpu: "1", memory: 3Gi }
+    coordinator:
+      resources:
+        requests: { cpu: 100m, memory: 256Mi }
+```
+**Why it matters:** when `db.spec.configuration.tuning != nil`, the handler runs the new
+`UpdateTuningConfiguration` step (condition **`UpdateTuningConfiguration`**) which regenerates
+`pgtune.conf` from the *new* resources **before** the pods are restarted, so the
+memory-derived params follow the scaled memory (not just `SHARED_BUFFERS`).
+**Verify:**
+```bash
+# condition present
+kubectl describe documentdbopsrequest -n demo dcdb-vscale-tuning | grep UpdateTuningConfiguration
+# pgtune.conf recomputed in the operator config secret (decode + look at shared_buffers etc.)
+CFG=$(kubectl get documentdb dcdb -n demo -o jsonpath='{.metadata.uid}'); CFG=dcdb-${CFG: -6}
+kubectl get secret -n demo $CFG -o jsonpath='{.data.pgtune\.conf}' | base64 -d
+# same file mounted in the pod, values match the 3Gi tuning
+kubectl exec -n demo dcdb-0 -c documentdb -- cat /etc/config/pgtune.conf
+```
+Expect `Successful`; `effective_cache_size`/`shared_buffers` in `pgtune.conf` larger than the
+2Gi baseline; data intact. (On a non-tuned DB this step is skipped — that's the §5.2 path.)
 
 > #### ✅ 5.2 RESULT — PASS (tested 2026-06-12)
 > - `dcdb-vscale` → `Pending` → `Progressing` → **`Successful`** in ~2.5 min.
@@ -385,13 +459,22 @@ this fails at `isMajorVersionUpgrade` with a version-parse error — that's the 
 >   secret, the FQDN, and major-only `17`.
 > - Recovery: deleted ops request + DB, re-applied `object.yaml`, reseeded data.
 
-### 5.5 Reconfigure — 3 scenarios (new in this commit)
-Config lands in `db.spec.configuration.inline["user.conf"]` (key is `user.conf`, same as Postgres).
+### 5.5 Reconfigure — inline config + structured tuning (rewritten on this branch)
+Two independent config channels, both rendered by the provisioner into the operator config
+secret `<db>-<uid6>` and projected read-only at **`/etc/config/`** in the `documentdb` container:
+
+| Channel | Ops field | DB field | Secret key → mount path |
+|---------|-----------|----------|-------------------------|
+| Inline custom config | `configuration.applyConfig["user.conf"]` / `configSecret` | `spec.configuration.inline["user.conf"]` | `inline.conf` → `/etc/config/inline.conf` |
+| Auto-tuning (pgtune) | `configuration.tuning.*` | `spec.configuration.tuning` | `pgtune.conf` → `/etc/config/pgtune.conf` |
+
+`restart` semantics (`ReconfigureRestartTrue/False/Auto`): `Auto` is promoted to `True`
+(rolling restart). `False` takes the reload path — config secret re-rendered, kubelet remounts
+`/etc/config`, then the handler verifies the mount mtime moved and runs `SELECT pg_reload_conf();`
+on every pod.
+
 ```yaml
-# (a) applyConfig with restart
-apiVersion: ops.kubedb.com/v1alpha1
-kind: DocumentDBOpsRequest
-metadata: { name: dcdb-reconfigure, namespace: demo }
+# (a) applyConfig with restart  (reconfigure-apply.yaml)
 spec:
   type: Reconfigure
   databaseRef: { name: dcdb }
@@ -400,8 +483,7 @@ spec:
       user.conf: |
         max_connections=250
 ---
-# (b) reload-only (no pod restart — verifies pg_reload path; use a reloadable param)
-metadata: { name: dcdb-reconfigure-reload, namespace: demo }
+# (b) reload-only, no pod restart  (reconfigure-reload.yaml)
 spec:
   type: Reconfigure
   databaseRef: { name: dcdb }
@@ -411,49 +493,160 @@ spec:
       user.conf: |
         log_min_duration_statement=1000
 ---
-# (c) removeCustomConfig
-metadata: { name: dcdb-reconfigure-remove, namespace: demo }
+# (c) removeCustomConfig  (reconfigure-remove.yaml)
 spec:
   type: Reconfigure
   databaseRef: { name: dcdb }
   configuration:
     removeCustomConfig: true
+---
+# (d) structured tuning — NEW  (reconfigure-tuning.yaml)
+spec:
+  type: Reconfigure
+  databaseRef: { name: dcdb }
+  configuration:
+    tuning:
+      profile: web          # web | oltp | dw | mixed | desktop
+      storageType: ssd      # ssd | hdd | san
+      maxConnections: 300
+---
+# (e) disable auto-tuning — NEW  (reconfigure-tuning-disable.yaml; run after (d) or on object-tuning.yaml)
+spec:
+  type: Reconfigure
+  databaseRef: { name: dcdb }
+  configuration:
+    tuning:
+      disableAutoTune: true
 ```
 **Verify:**
 ```bash
+# inline path (a): the rendered file is mounted, and the value takes effect
+kubectl exec -n demo dcdb-0 -c documentdb -- cat /etc/config/inline.conf       # max_connections=250
 kubectl exec -n demo dcdb-0 -c documentdb -- env PGPASSWORD=$PASS \
-  psql -U postgres -c "SHOW max_connections;"     # 250 after (a)
-kubectl get documentdb dcdb -n demo -o jsonpath='{.spec.configuration}'  # inline set / cleared
+  psql -U postgres -c "SHOW max_connections;"                                   # 250 after (a)
+kubectl get documentdb dcdb -n demo -o jsonpath='{.spec.configuration}'        # inline / tuning set or cleared
+# operator config secret holds the rendered keys
+CFG=$(kubectl get documentdb dcdb -n demo -o jsonpath='{.metadata.uid}'); CFG=dcdb-${CFG: -6}
+kubectl get secret -n demo $CFG -o jsonpath='{.data}' | jq 'keys'             # ["inline.conf"], +["pgtune.conf"] after (d)
+# tuning path (d): pgtune.conf rendered + mounted
+kubectl exec -n demo dcdb-0 -c documentdb -- cat /etc/config/pgtune.conf
 ```
-For (b): pod `startTime` must NOT change. For (c): `spec.configuration` removed, value back to default.
-**Merger test:** apply two different Reconfigure requests back-to-back → one ends `Successful`
-with the *merged* config, the other ends **`Skipped`** with event `ConfigurationMerged`.
-**Negative:** `spec.configuration` absent → fail ("does not have a configuration").
+- **(a)** `inline.conf` present at `/etc/config`, `SHOW max_connections` = 250, restart happened.
+- **(b)** pod `startTime` must **NOT** change; condition `Reconfigure` via the reload path
+  (`pg_reload_conf`), `log_min_duration_statement` = 1000.
+- **(c)** `spec.configuration` cleared; `inline.conf` key gone from the secret; value back to default.
+- **(d)** `pgtune.conf` appears in the secret and at `/etc/config/pgtune.conf`; `TUNING_ENABLED=true`
+  env on the pod; `db.spec.configuration.tuning` patched.
+- **(e)** `pgtune.conf` key removed from the secret and the mount disappears.
+**Merger test** (`reconfigure-merge-1.yaml` + `reconfigure-merge-2.yaml`): apply two different
+Reconfigure requests back-to-back → the merger creates a **new** `dcdb-rcfg-merged-<ts>` request
+that ends `Successful` carrying the *merged* `user.conf` (`work_mem` + `maintenance_work_mem` both
+present), and **both** originals end **`Skipped`** (skip event: "concurrent DocumentDBOpsRequests
+is not allowed for same database, will retry after 30 seconds"). Verified 2026-06-18 — see §5.5 RETEST.
+**Negative** (`reconfigure-negative.yaml`): `spec.configuration` absent → fail
+("does not have a configuration").
 
-> #### ❌ 5.5 RESULT — FAIL (tested 2026-06-12; only (a) run, (b)/(c)/merger skipped — root cause blocks them)
-> - `dcdb-reconfigure` (applyConfig `max_connections=250`) ended phase **`Successful`** (~5 min,
->   full leader-aware rolling restart of all 3 pods, data intact, DB `Ready`) and
->   `db.spec.configuration.inline["user.conf"]` **was** patched with the inline-config marker block.
-> - **But `SHOW max_connections` = 100 on all 3 pods** — the setting never applied. Silent no-op
->   reported as success.
-> - **Bug 1 — wrong ordering in `pkg/ops/reconfigure.go`:** the flow is
->   `ReconcileDocumentDBDatabase` → `CustomRestart` (all pods restarted) → *then* the final block
->   patches `db.spec.configuration` and resumes. The DB CR is patched **after** the restarts, while
->   the DB is still paused, so nothing re-renders before the pods come up.
-> - **Bug 2 — provisioner never renders `spec.configuration.inline`:** after success there is **no**
->   `user.conf` anywhere in the pod, no config secret/configmap in the namespace, and the petset has
->   no custom-config volume. Even a later manual restart would not apply the config. The Postgres
->   pipeline (inline → rendered config file mounted into the pod) has no DocumentDB counterpart in
->   the provisioner at this commit.
-> - **Bug 3 — status flapping / two status writers:** phase went `Progressing` → **`Successful`**
->   (~05:38, with one set of conditions incl. `Reconfigure=True`, `ResumeDatabase=True`) → **back to
->   `Progressing`** (conditions replaced by the parallel CustomRestart runner's set:
->   `TransferLeader`, `PgCoordinatorStatusPause`, `RestartPrimary`, …) → `Successful` again at the
->   end. The main reconcile and the parallel restart runner overwrite each other's
->   `status.conditions` wholesale; `kubectl -w` watchers see a false early Successful.
-> - (b) reload-only and (c) removeCustomConfig not run — pointless until Bug 2 is fixed (no rendered
->   config to reload/remove). Merger test also skipped.
-> - Recovery: deleted ops request + DB, re-applied `object.yaml`, reseeded data.
+> #### 5.5 STATUS on this branch — bugs addressed in code; needs a cluster retest
+> The 2026-06-12 FAIL (commit `7a493648b`) was: (Bug 1) DB reconciled/restarted before the
+> config was rendered, and (Bug 2) the provisioner had **no** path to render
+> `spec.configuration.inline` into the pod. **Both are fixed on this branch:**
+> - **Bug 2 fixed (PR #25, provisioner):** `pkg/controllers/config_secret.go` +
+>   `petset.go` now create the operator config secret `<db>-<uid6>` (`inline.conf` /
+>   `pgtune.conf`) and project it at `/etc/config/`. `opsReconciler.Reconcile` calls
+>   `EnsureConfigSecret`, so every Reconfigure refreshes it.
+> - **Bug 1 fixed:** in `reconfigure.go` the `ReconcileDocumentDBDatabase` step reconciles the
+>   (in-memory) `dbCopy` — rendering the config secret and the petset's `custom-config` volume —
+>   **before** `CustomRestart`, so pods come up with the new `/etc/config` already mounted. The
+>   final block then patches `db.spec.configuration` and resumes.
+> - **Tuning added (commit 41aaa7ee1):** scenarios (d)/(e) above are new — `copyTuningOptions`
+>   maps `configuration.tuning` onto the DB and `pgtune.conf` is (re)generated / deleted.
+>
+> #### ✅ 5.5 RETEST — cluster run on branch `add-reconfigure-ops` (2026-06-18)
+> Env: fresh 3-replica `dcdb` from `object.yaml` (local-path, pg17-0.109.0), ops-manager image
+> `sabnaj/kubedb-ops-manager:documentdb-ops_linux_amd64`, config secret `dcdb-56ac0f`. Verified via
+> `psql -h localhost -p 9712 -U documentdb -d postgres` (pg_hba trusts localhost).
+>
+> **(a) applyConfig `max_connections=250` (restart) → ✅ PASS** (~4m46s). The old FAIL is gone:
+> - `/etc/config/inline.conf` rendered on **all 3 pods** with `max_connections=250`.
+> - `SHOW max_connections` = **250 on all 3 pods** (was the silent no-op 100 before).
+> - `db.spec.configuration.inline["user.conf"]` patched; config secret `dcdb-56ac0f` carries key
+>   `inline.conf`. Data (`ops_test`) intact; DB `Ready`.
+> - Conditions: full leader-aware rolling restart then `ReconcileDocumentDBDatabase=True`,
+>   `Reconfigure=True`, `Successful=True`.
+>
+> **(b) reload-only `restart:"false"`, `log_min_duration_statement=1000` → ✅ PASS** (~93s):
+> - Pod `startTime` **unchanged** on all 3 pods and `restartCount` stayed 0 — **no restart**.
+> - `SHOW log_min_duration_statement` = `1s` (1000ms) on all pods, applied live.
+> - `max_connections` still 250 (merged: `inline.conf` now holds both keys), data intact.
+> - Conditions show the reload path: `ReconfigureStartTime`, `CheckMountUpdated`, `ReloadConfig`,
+>   `Reconfigure`, `Successful` all True (no `CustomRestart`/leader-transfer conditions).
+>
+> **(c) removeCustomConfig → ✅ PASS** (~4m55s, rolling restart):
+> - `db.spec.configuration` fully cleared; the owned config secret `dcdb-56ac0f` **deleted**
+>   (`NotFound`); the `/etc/config` mount removed from the pods.
+> - `SHOW max_connections` back to default **100** on all pods; data intact.
+>
+> **(d) structured tuning `profile: web, maxConnections: 300, storageType: ssd` → ✅ PASS**
+> (after an environment fix — see ⚠️ below) (~4m41s, rolling restart):
+> - `db.spec.configuration.tuning` persisted = `{maxConnections:300, profile:web, storageType:ssd}`.
+> - Config secret (`dcdb-<uid6>`) carries `pgtune.conf`; mounted at `/etc/config/pgtune.conf`;
+>   `TUNING_ENABLED=true`, `TUNING_FILE_PATH=/etc/config/pgtune.conf` env on the pod.
+> - pgtune output matched inputs: `max_connections = 300`, `shared_buffers = 512MB`,
+>   `effective_cache_size = 1536MB`, `random_page_cost = 1.1` / `effective_io_concurrency = 200`
+>   (ssd), DB Type web, 2 GB RAM, 1 CPU. `SHOW max_connections` = **300**, `SHOW shared_buffers`
+>   = **512MB** on all 3 pods. Data intact.
+>
+> > ⚠️ **Environment gotcha found during (d) — stale CRD prunes `configuration.tuning`.**
+> > First run: the ops request requested tuning correctly and pgtune.conf was rendered/applied,
+> > but `db.spec.configuration` came back **`{}`** — the field was silently dropped. Root cause:
+> > the **installed** `documentdbs.kubedb.com` CRD only had `configuration.{inline,secretName}`
+> > (no `tuning`), so the apiserver **pruned** `spec.configuration.tuning` on write. Because the
+> > DB then had empty configuration, the provisioner's `EnsureConfigSecret` **deleted** the owned
+> > config secret; the pod kept only a now-stale projected copy of `pgtune.conf` (would vanish on
+> > the next restart). **Fix:** re-apply the branch's CRD
+> > (`vendor/kubedb.dev/apimachinery/crds/kubedb.com_documentdbs.yaml` — it *does* contain
+> > `configuration.tuning`), then recreate the DB. After that, tuning persists and the secret is
+> > retained (verified above). This is a §3 setup step (apply CRDs from the vendored apimachinery),
+> > **not** a handler bug — but worth calling out since inline config worked while tuning silently
+> > dropped on the stale CRD.
+>
+> **(e) disableAutoTune: true → ✅ PASS** (~4m42s, run against the tuning-enabled DB from (d)):
+> - `pgtune.conf` removed: config secret `dcdb-132250` **deleted**, `/etc/config` mount gone,
+>   `TUNING_ENABLED` env cleared.
+> - `SHOW max_connections` back to default **100** on all pods (tuning no longer applied).
+> - `db.spec.configuration.tuning` retains the fields with `disableAutoTune: true`
+>   (`{disableAutoTune:true, maxConnections:300, profile:web, storageType:ssd}` — `copyTuningOptions`
+>   merges, so the intent is recorded while auto-tune is off). Data intact.
+>
+> **Merger (`reconfigure-merge-1` work_mem=8MB + `reconfigure-merge-2` maintenance_work_mem=128MB,
+> applied back-to-back) → ✅ PASS.** Actual behaviour differs slightly from the description above:
+> - The merger creates a **brand-new** ops request `dcdb-rcfg-merged-<ts>` (phase `Successful`)
+>   and marks **both** originals `dcdb-reconfigure-merge-1` and `-merge-2` as **`Skipped`**
+>   (not "one wins, one skipped"). Skip event on the originals: *"Skipping … concurrent
+>   DocumentDBOpsRequests is not allowed for same database, will retry after 30 seconds."*
+> - The merged result is correct and verified by pod exec on **all 3 pods** (`dcdb-0/1/2`):
+>   `/etc/config/inline.conf` contains **both** `work_mem=8MB` and `maintenance_work_mem=128MB`, and
+>   the runtime values match (`SHOW work_mem` = 8MB, `SHOW maintenance_work_mem` = 128MB on each pod).
+> - Merged request `dcdb-rcfg-merged-1781768819635` carries condition `MergedFromOps=True` with
+>   message `dcdb-reconfigure-merge-1, dcdb-reconfigure-merge-2`; both originals end `Skipped` with
+>   reason **`ConfigurationMerged`** ("Configuration merged into newly created ops request …") —
+>   confirming the dedicated merger path (`lib/reconfigure_merger.go`) handled it, not the generic
+>   one-op-per-DB serialization guard (whose transient "concurrent … retry after 30s" event also
+>   appears, harmlessly).
+>   → Update the §5.5 "Merger test" prose: losers go `Skipped`, but a new merged request carries
+>   the combined config rather than one of the originals ending `Successful`.
+>
+> **Negative (`reconfigure-negative.yaml`, no `configuration`) → ✅ PASS.** Phase **`Failed`** in
+> ~2s; condition/event message exactly *"documentdb demo/dcdb-reconfigure-empty does not have a
+> configuration"* (`Retry 1/1`, `maxRetries` default). DB untouched, stays `Ready`.
+>
+> **5.5 verdict — ✅ ALL PASS** (a, b, c, d, e, merger, negative) on branch `add-reconfigure-ops`.
+> The 2026-06-12 FAIL is fully resolved: config is now rendered to `/etc/config` and actually takes
+> effect, the reload path works without restart, tuning generates/removes `pgtune.conf`, and the
+> merger combines configs. **One environment prerequisite surfaced:** the cluster's
+> `documentdbs.kubedb.com` CRD must be the branch version (includes `configuration.tuning`),
+> otherwise tuning is silently pruned (see (d) ⚠️). DB healthy and data intact throughout; no
+> status-flapping observed this run.
 
 ### 5.6 RotateAuth — 2 scenarios
 ```yaml
@@ -673,10 +866,11 @@ kubectl delete documentdb dcdb -n demo
 |---|------|--------|-----------|
 | 5.1 | Restart | ✅ PASS | (run previously) |
 | 5.2 | VerticalScaling | ✅ PASS | resources + SHARED_BUFFERS recomputed; negative (arbiter) ✔ |
+| 5.2a | VerticalScaling + tuning | ⏳ NEW (this branch) | `UpdateTuningConfiguration` regenerates `pgtune.conf` from new resources — needs cluster retest |
 | 5.3a-c | HorizontalScaling up/down/HA→standalone | ✅ PASS | raft add/remove, PVC cleanup, leader transfer, slots cleaned |
 | 5.3d | HorizontalScaling standalone→HA | ❌ FAIL | basebackup job execs missing `role_scripts/standby/ha_backup_job.sh`; hangs forever |
 | 5.4 | UpdateVersion (minor) | ❌ FAIL | `updatePetSet` env uses user secret/short host/full version → replica can't rejoin; hangs forever |
-| 5.5 | Reconfigure | ❌ FAIL | reports Successful but config never applied (restart-before-patch + provisioner never renders inline); status flaps |
+| 5.5 | Reconfigure | ✅ PASS (2026-06-18) | retested on `add-reconfigure-ops`: (a) inline applies (max_connections=250), (b) reload no-restart, (c) remove, (d) tuning pgtune.conf, (e) disableAutoTune, merger, negative — all pass. Needs branch CRD (tuning field) or tuning is pruned. |
 | 5.6 | RotateAuth | ✅ FIXED & PASS | originally FAIL (no ALTER ROLE, DB bricked); fixed to rotate **admin** secret + exec ALTER ROLE on primary — both scenarios pass (see 5.6 retest) |
 | 5.7 | VolumeExpansion | ✅ PASS (on longhorn) | 5Gi→10Gi Offline succeeded after installing Longhorn v1.12.0; earlier local-path run validated the failure-rollback path; negative (arbiter) ✔ |
 | 5.8 | StorageMigration | ⚠️ PARTIAL | migration + data OK, but double-promotion during master move leaves dcdb-2 dead (2/3 cluster reported Ready) |
@@ -700,16 +894,27 @@ kubectl delete documentdb dcdb -n demo
    RotateAuth (raft transport + HealthCheck are exempt), but worth knowing when reading logs.
 
 **Remaining open bugs after the fixes: 5.3d (standalone→HA scripts gap), 5.4 (UpdateVersion env),
-5.5 (Reconfigure rendering/ordering), 5.8 (double promotion during master migration).
+5.8 (double promotion during master migration).
+5.5 (Reconfigure rendering/ordering) is now addressed in code on branch `add-reconfigure-ops`
+(provisioner renders `/etc/config` + reconcile-before-restart; tuning added) — pending cluster retest;
 RotateAuth (5.6) is fixed in the documentdb working tree; VolumeExpansion (5.7) was an
 environment limitation, resolved by Longhorn.**
 
 Test yamls for every scenario saved in `2nd-brain/documentdb/ops-test-yaml/` (one file per test,
-incl. `object-standard-custom.yaml` used for 5.7).
+incl. `object-standard-custom.yaml` used for 5.7). **New on this branch:** `object-tuning.yaml`
+(tuning-enabled base DB), `reconfigure-tuning.yaml`, `reconfigure-tuning-disable.yaml`,
+`vertical-scaling-tuning.yaml`.
 
 ---
 
 ## 7. Summary — pass criteria at this commit
+- **Reconfigure (§5.5)** renders config to `/etc/config/{inline.conf,pgtune.conf}` via the operator
+  config secret `<db>-<uid6>`; inline values actually take effect (`SHOW` reflects them); `tuning`
+  generates/removes `pgtune.conf`; `restart:false` uses the `pg_reload_conf` path without changing
+  pod `startTime`; merger losers end `Skipped`.
+- **VerticalScaling (§5.2/5.2a)** carries new resources onto petset+pods, recomputes `SHARED_BUFFERS`,
+  and (when the DB has `spec.configuration.tuning`) regenerates `pgtune.conf` from the new resources
+  via the `UpdateTuningConfiguration` step.
 - 8 types end **`Successful`** with the DB mutated as specified, data intact, DB `Ready` again.
 - 4 types (`ReconfigureTLS`, `ReconnectStandby`, `SetRaftKeyPair`, `ForceFailOver`) end **`Failed`**
   with the "not yet supported" message — that is the correct result.
