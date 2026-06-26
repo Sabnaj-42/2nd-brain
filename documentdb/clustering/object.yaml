@@ -1,7 +1,7 @@
 apiVersion: kubedb.com/v1alpha2
 kind: DocumentDB
 metadata:
-  name: dcodb
+  name: dcdb
   namespace: demo
 spec:
   version: 'pg17-0.109.0'

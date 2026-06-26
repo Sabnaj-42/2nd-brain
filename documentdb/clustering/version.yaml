@@ -1,15 +1,15 @@
 apiVersion: catalog.kubedb.com/v1alpha1
 kind: DocumentDBVersion
 metadata:
-  name: 'pg17-0.109.0'
+  name: 'pg17-0.110.0'
 spec:
   db:
     image: sabnaj/documentdb-local-vim:latest
   initContainer:
-    image:  sabnaj/documentdb-init:_linux_amd64
+    image:  souravbiswassanto/documentdb-init:_linux_amd64
   coordinator:
-    image: sabnaj/documentdb-coordinator:bootstrap_linux_amd64
-  version: 'pg17-0.109.0'
+    image: souravbiswassanto/documentdb-coordinator:fix-pg-rewind_linux_amd64
+  version: 'pg17-0.110.0'
   securityContext:
     runAsUser: 1000
  

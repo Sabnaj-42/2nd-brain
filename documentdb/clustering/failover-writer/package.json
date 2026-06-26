@@ -1,0 +1,8 @@
+{
+  "name": "documentdb-failover-writer",
+  "version": "1.0.0",
+  "description": "Failover-resilient DocumentDB writer comparing persistent vs reconnect-on-error MongoClient strategies",
+  "main": "app.js",
+  "scripts": { "start": "node app.js" },
+  "dependencies": { "mongodb": "^6.8.0" }
+}
