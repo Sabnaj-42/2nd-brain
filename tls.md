@@ -389,6 +389,12 @@ Scheme note: cert-manager types (`cm_api`, `cmmeta`) must be registered in both
 
 ## 10. Checklist: bringing TLS to your DocumentDB operator
 
+> **This is the generic checklist.** For the concrete, file-by-file plan mapped to the
+> *actual* DocumentDB + documentdb-coordinator code, jump to **Section 12** — it tells you
+> exactly which files already exist, which are missing, and what to change. Read Section 12;
+> use this section as the conceptual backbone.
+
+
 Mirror the structure above. Concretely:
 
 ### A. API (in your apimachinery / types)
