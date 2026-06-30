@@ -27,11 +27,11 @@ PostgreSQL to serve over SSL. It supports:
 
 There are two distinct knobs the user controls:
 
-| Field (in `Postgres.spec`) | Type | Meaning |
-|---|---|---|
-| `spec.tls` | `kmapi.TLSConfig` | issuerRef + per-alias certificate customization. **Presence of this turns TLS on.** |
-| `spec.sslMode` | `PostgresSSLMode` | `disable;allow;prefer;require;verify-ca;verify-full` — how strict the server/clients are. |
-| `spec.clientAuthMode` | `PostgresClientAuthMode` | `md5;scram;cert` — how clients authenticate. `cert` = mutual TLS. |
+| Field (in`Postgres.spec`) | Type                       | Meaning                                                                                      |
+| --------------------------- | -------------------------- | -------------------------------------------------------------------------------------------- |
+| `spec.tls`                | `kmapi.TLSConfig`        | issuerRef + per-alias certificate customization.**Presence of this turns TLS on.**     |
+| `spec.sslMode`            | `PostgresSSLMode`        | `disable;allow;prefer;require;verify-ca;verify-full` — how strict the server/clients are. |
+| `spec.clientAuthMode`     | `PostgresClientAuthMode` | `md5;scram;cert` — how clients authenticate. `cert` = mutual TLS.                       |
 
 ---
 
@@ -47,15 +47,18 @@ TLS            *kmapi.TLSConfig       `json:"tls,omitempty"`            // issue
 ```
 
 ### SSL modes (`PostgresSSLMode`)
+
 `disable`, `allow`, `prefer`, `require`, `verify-ca`, `verify-full` — these map 1:1 to
 PostgreSQL's libpq sslmode semantics.
 
 ### Client auth modes (`PostgresClientAuthMode`)
+
 - `md5` — challenge/response (default for PG < 18).
 - `scram` — SCRAM-SHA-256 (requires PG ≥ 11; default for PG ≥ 18).
 - `cert` — client must present a client certificate (`cert clientcert=1`); password not accepted.
 
 ### Certificate aliases (`PostgresCertificateAlias`)
+
 This is the central enum — each alias is one logical certificate the operator manages:
 
 ```go
@@ -73,6 +76,7 @@ PostgresMetricsExporterCert = "metrics-exporter"  // exporter cert
 > certs are managed automatically.
 
 ### `kmapi.TLSConfig` (the reusable building block)
+
 From `vendor/kmodules.xyz/client-go/api/v1/certificates.go`:
 
 ```go
@@ -186,6 +190,7 @@ All of these use `cm_util.CreateOrPatchCertificate(...)` to create/patch a **cer
 named `Secret`. The operator then sets the Postgres CR as **owner** of the secret (for GC).
 
 ### Server certificate — `ensureServerCert` (`pkg/ops/certificates.go`)
+
 - `CommonName = db.ServiceName()`
 - `DNSNames` includes: wildcard governing-service DNS (`*.<gov-svc>.<ns>.svc[.cluster]`),
   the service DNS names (`lib.ServiceDNS`), and `localhost`.
@@ -197,13 +202,16 @@ named `Secret`. The operator then sets the Postgres CR as **owner** of the secre
 - `SecretName = db.GetCertSecretName("server")`.
 
 ### Client certificate — `ensureClientCert(..., alias)` (used for `client` and `metrics-exporter`)
+
 - `CommonName = kubedb.PostgresRootUser` (for client) — i.e. the identity Postgres maps to a role.
 - `Usages = DigitalSignature, KeyEncipherment, ClientAuth`.
 - Optional `AdditionalOutputFormats: CombinedPEM` when `c.pemEncodeCert` is true
   (configurable on the ops Controller) — produces a combined PEM the exporter/clients can use.
 
 ### gRPC PKI — `ensureGrpcTLS` (separate self-signed CA chain)
+
 This is fully operator-managed and independent of the user's issuer:
+
 1. `ensureGrpcCACertificate` — a self-signed **CA** `Certificate` (`IsCA: true`) issued by a
    self-signed `Issuer` (`getOrCreateGrpcIssuer` → creates `SelfSigned` Issuer, then a `CA`
    Issuer backed by the CA secret).
@@ -220,6 +228,7 @@ so the gRPC PKI is only created when DB TLS is on.
 ## 6. How certs get into the pod (provisioner side)
 
 ### Step 1 — wait for the secrets
+
 `pkg/controller/reconciler.go` `ReconcileNodes` calls `RequiredCertSecretNames(db)` and will
 **not** build the PetSet until all required TLS secrets exist (it just drops the object back
 on the queue; the secret-create event re-enqueues it):
@@ -241,9 +250,11 @@ func (r *Reconciler) RequiredCertSecretNames(db *dbapi.Postgres) []string {
 ```
 
 ### Step 2 — mount secrets as volumes
+
 `pkg/controller/petset.go`:
 
 Constants (mount paths and file names):
+
 ```go
 clientTlsVolumeMountPath   = "/certs/client"
 serverTlsVolumeMountPath   = "/certs/server"
@@ -266,7 +277,9 @@ volumes are mounted into the init container, the `postgres` container, and the
 under `PostgresSharedTlsVolumeMountPath`.
 
 ### Step 3 — tell Postgres to use SSL via env vars
+
 The PetSet builder sets:
+
 ```go
 // SSL on/off flag for the container entrypoint/run scripts
 if db.Spec.TLS != nil { env "SSL"="ON" } else { env "SSL"="OFF" }
@@ -279,17 +292,21 @@ if sslMode == "" {
 env "SSL_MODE" = sslMode
 env "CLIENT_AUTH_MODE" = clientAuthMode  // default md5
 ```
+
 The init-container/run scripts (from the `postgres-init-docker` image) read these env vars and
 the mounted certs to write `postgresql.conf` (`ssl=on`, `ssl_cert_file`, `ssl_key_file`,
 `ssl_ca_file`) and `pg_hba.conf` (md5 / scram-sha-256 / cert auth rules).
 
 ### Step 4 — exporter connection string
+
 For the monitoring exporter, the connection string is assembled with sslmode and, when
 `verify-ca`/`verify-full`, `sslrootcert=.../exporter/ca.crt`; when `clientAuthMode=cert`,
 also `sslcert=.../exporter/tls.crt sslkey=.../exporter/tls.key`.
 
 ### Step 5 — AppBinding (so clients/backup tools know how to connect)
+
 `pkg/controller/appbinding.go` writes the connection info:
+
 ```go
 in.Spec.ClientConfig.Service.Query = fmt.Sprintf("sslmode=%s", db.Spec.SSLMode)
 in.Spec.ClientConfig.InsecureSkipTLSVerify = false
@@ -300,6 +317,7 @@ if db.Spec.TLS != nil {
 ```
 
 ### Remote replica
+
 A remote-replica pod consumes its *source's* `TLSSecret` (`upsertRemoteReplicaTLSVolume`)
 mounted at `/certs/remote`, and uses `SOURCE_SSL` / `SOURCE_SSL_MODE` env vars to connect
 upstream over TLS.
@@ -332,6 +350,7 @@ Defaults (`SetDefaults`/`SetTLSDefaults`): when `TLS != nil` and `sslMode == ""`
 `pkg/ops/reconfigure_tls.go` implements the `PostgresOpsRequest` type `ReconfigureTLS`.
 
 Ops API type (`PostgresTLSSpec`):
+
 ```go
 type PostgresTLSSpec struct {
     TLSSpec        `json:",inline"`   // embeds kmapi.TLSConfig + RotateCertificates + Remove
@@ -345,6 +364,7 @@ type PostgresTLSSpec struct {
 ```
 
 The reconcile algorithm:
+
 1. Mark ops request `Progressing`/`Running`.
 2. Validate `spec.tls` present; require an issuerRef somewhere; scram needs PG ≥ 11.
 3. **Pause** the Postgres (so the provisioner & cert controller stop fighting), wait for
@@ -373,11 +393,11 @@ The reconcile algorithm:
 
 ## 9. Cross-repo wiring (where the code physically runs)
 
-| Concern | Package | Runs in pod |
-|---|---|---|
-| Create/rotate Certificate CRs, gRPC PKI, react to Postgres objects | `pkg/ops` (`Controller.managePostgresEvent`) | **ops-manager** |
-| Wait for cert secrets, mount volumes, set SSL env, build PetSet, AppBinding | `pkg/controller` (provisioner `Reconciler`) | **provisioner** |
-| `ReconfigureTLS` ops handling | `pkg/ops` (`postgresOpsReqController`) | **ops-manager** |
+| Concern                                                                     | Package                                          | Runs in pod           |
+| --------------------------------------------------------------------------- | ------------------------------------------------ | --------------------- |
+| Create/rotate Certificate CRs, gRPC PKI, react to Postgres objects          | `pkg/ops` (`Controller.managePostgresEvent`) | **ops-manager** |
+| Wait for cert secrets, mount volumes, set SSL env, build PetSet, AppBinding | `pkg/controller` (provisioner `Reconciler`)  | **provisioner** |
+| `ReconfigureTLS` ops handling                                             | `pkg/ops` (`postgresOpsReqController`)       | **ops-manager** |
 
 Because ops-manager constructs a `controller.Reconciler` struct literal from another Go
 module, any field it sets must be **exported** (`PgQueue`, `SkipArchiver`, etc.).
@@ -398,6 +418,7 @@ Scheme note: cert-manager types (`cm_api`, `cmmeta`) must be registered in both
 Mirror the structure above. Concretely:
 
 ### A. API (in your apimachinery / types)
+
 1. Add to `DocumentDBSpec`:
    - `TLS *kmapi.TLSConfig`
    - `SSLMode <YourSSLMode>` (or the DocumentDB/Mongo equivalent of TLS modes:
@@ -411,6 +432,7 @@ Mirror the structure above. Concretely:
    gating for any auth mode that needs it.
 
 ### B. Certificate management controller (issue certs)
+
 5. Add a `certificates.go` with `manageTLS`, `ensureServerCert`, `ensureClientCert`
    (and `manageExporterClientCert`). Use
    `cm_util.CreateOrPatchCertificate(...)` against the cert-manager client. Copy the
@@ -422,6 +444,7 @@ Mirror the structure above. Concretely:
    pg-coordinator gRPC, build a self-signed CA PKI like `ensureGrpcTLS`.
 
 ### C. Provisioner (consume certs)
+
 9. In `ReconcileNodes`, compute `RequiredCertSecretNames(db)` and **block PetSet creation
    until all TLS secrets exist** (return early & rely on re-enqueue on secret events).
 10. In the PetSet builder, add `upsertTLSVolume` (secret-backed volumes projecting
@@ -434,17 +457,20 @@ Mirror the structure above. Concretely:
     and the connection query (sslmode equivalent).
 
 ### D. Day-2 ops
+
 13. Add a `ReconfigureTLS` ops type + `reconfigure_tls.go`: pause DB → merge/issue/rotate or
     remove certs → wait for cert sync → reconcile PetSets → restart pods → patch DB → clean up
     orphaned certs/secrets → resume.
 
 ### E. Plumbing
+
 14. Register cert-manager schemes in both your root cmd and webhook server.
 15. Make sure any cross-module `Reconciler` fields are exported.
 16. Vendor: `github.com/cert-manager/cert-manager`, `kmodules.xyz/cert-manager-util`,
     `kmodules.xyz/client-go/api/v1` (TLSConfig).
 
 ### Prerequisite for users
+
 - cert-manager must be installed in the cluster, and the user must create an `Issuer`/
   `ClusterIssuer` and reference it in `spec.tls.issuerRef`.
 
