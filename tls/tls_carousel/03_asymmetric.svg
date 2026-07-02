@@ -1,0 +1,45 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1080" height="1080" viewBox="0 0 1080 1080" font-family="Segoe UI, Helvetica, Arial, sans-serif">
+  <rect width="1080" height="1080" fill="#0B1120"/>
+  <rect x="0" y="0" width="1080" height="8" fill="#60A5FA"/>
+
+  <!-- header -->
+  <circle cx="105" cy="120" r="40" fill="#60A5FA"/>
+  <text x="105" y="135" text-anchor="middle" fill="#0B1120" font-size="44" font-weight="700">3</text>
+  <text x="170" y="115" fill="#F1F5F9" font-size="46" font-weight="700">Asymmetric</text>
+  <text x="170" y="165" fill="#60A5FA" font-size="34" font-weight="600">a key pair fixes the sharing problem</text>
+
+  <!-- actors -->
+  <rect x="90" y="290" width="200" height="120" rx="18" fill="#16213A" stroke="#60A5FA" stroke-width="2.5"/>
+  <text x="190" y="360" text-anchor="middle" fill="#60A5FA" font-size="34" font-weight="700">You</text>
+  <rect x="790" y="290" width="200" height="120" rx="18" fill="#16213A" stroke="#34D399" stroke-width="2.5"/>
+  <text x="890" y="345" text-anchor="middle" fill="#34D399" font-size="34" font-weight="700">Server</text>
+  <text x="890" y="388" text-anchor="middle" fill="#94A3B8" font-size="20">holds private key 🔑</text>
+
+  <!-- step 1: public key travels to you -->
+  <line x1="788" y1="345" x2="292" y2="345" stroke="#60A5FA" stroke-width="3.5"/>
+  <polygon points="292,339 280,345 292,351" fill="#60A5FA"/>
+  <rect x="420" y="315" width="240" height="60" rx="14" fill="#0B1120" stroke="#60A5FA" stroke-width="2"/>
+  <text x="540" y="353" text-anchor="middle" fill="#60A5FA" font-size="24" font-weight="600">public key 🔓 (open)</text>
+
+  <!-- step 2: locked secret travels to server -->
+  <line x1="292" y1="470" x2="788" y2="470" stroke="#FBBF24" stroke-width="3.5"/>
+  <polygon points="788,464 800,470 788,476" fill="#FBBF24"/>
+  <rect x="360" y="440" width="360" height="60" rx="14" fill="#0B1120" stroke="#FBBF24" stroke-width="2"/>
+  <text x="540" y="478" text-anchor="middle" fill="#FBBF24" font-size="23" font-weight="600">secret 🔒 locked with public key</text>
+  <line x1="190" y1="410" x2="190" y2="470" stroke="#FBBF24" stroke-width="3"/>
+  <line x1="890" y1="410" x2="890" y2="470" stroke="#FBBF24" stroke-width="3"/>
+
+  <text x="540" y="560" text-anchor="middle" fill="#94A3B8" font-size="24" font-style="italic">only the private key unlocks it — and it never leaves the server</text>
+
+  <!-- result -->
+  <rect x="60" y="620" width="960" height="150" rx="20" fill="#16213A" stroke="#34D399" stroke-width="2.5"/>
+  <text x="540" y="690" text-anchor="middle" fill="#34D399" font-size="32" font-weight="700">✓ Both now share a secret</text>
+  <text x="540" y="738" text-anchor="middle" fill="#F1F5F9" font-size="28">an eavesdropper can't open</text>
+
+  <!-- but one attack remains -->
+  <rect x="60" y="800" width="960" height="110" rx="20" fill="#2A0F14" stroke="#F87171" stroke-width="2.5"/>
+  <text x="540" y="868" text-anchor="middle" fill="#F87171" font-size="30" font-weight="700">…but one attack remains  →</text>
+
+  <text x="70" y="1035" fill="#475569" font-size="24">How HTTPS Really Works</text>
+  <text x="1010" y="1035" text-anchor="end" fill="#475569" font-size="24">4 / 9</text>
+</svg>

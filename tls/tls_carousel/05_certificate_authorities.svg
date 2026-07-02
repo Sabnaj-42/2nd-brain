@@ -1,0 +1,58 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1080" height="1080" viewBox="0 0 1080 1080" font-family="Segoe UI, Helvetica, Arial, sans-serif">
+  <rect width="1080" height="1080" fill="#0B1120"/>
+  <rect x="0" y="0" width="1080" height="8" fill="#A78BFA"/>
+
+  <!-- header -->
+  <circle cx="105" cy="120" r="40" fill="#A78BFA"/>
+  <text x="105" y="135" text-anchor="middle" fill="#0B1120" font-size="44" font-weight="700">5</text>
+  <text x="170" y="115" fill="#F1F5F9" font-size="46" font-weight="700">Certificate Authorities</text>
+  <text x="170" y="165" fill="#A78BFA" font-size="32" font-weight="600">proof of identity · DigiCert, Let's Encrypt</text>
+
+  <!-- SIGNING (CA side) -->
+  <rect x="55" y="230" width="970" height="230" rx="20" fill="#16213A" stroke="#A78BFA" stroke-width="2"/>
+  <text x="85" y="285" fill="#A78BFA" font-size="28" font-weight="700">① CA signs  (once)</text>
+  <g text-anchor="middle" font-weight="600" font-size="24">
+    <rect x="90"  y="320" width="150" height="90" rx="14" fill="#0B1120" stroke="#334155" stroke-width="2"/>
+    <text x="165" y="372" fill="#CBD5E1">cert</text>
+    <rect x="320" y="320" width="150" height="90" rx="14" fill="#0B1120" stroke="#334155" stroke-width="2"/>
+    <text x="395" y="372" fill="#CBD5E1">hash</text>
+    <rect x="560" y="320" width="230" height="90" rx="14" fill="#0B1120" stroke="#A78BFA" stroke-width="2"/>
+    <text x="675" y="360" fill="#A78BFA" font-size="22">encrypt w/</text>
+    <text x="675" y="388" fill="#A78BFA" font-size="22">CA private key</text>
+    <rect x="860" y="320" width="140" height="90" rx="14" fill="#0B1120" stroke="#FBBF24" stroke-width="2"/>
+    <text x="930" y="360" fill="#FBBF24" font-size="22">= sig-</text>
+    <text x="930" y="388" fill="#FBBF24" font-size="22">nature</text>
+  </g>
+  <g stroke="#64748B" stroke-width="3" fill="#64748B">
+    <line x1="242" y1="365" x2="316" y2="365"/><polygon points="316,359 328,365 316,371"/>
+    <line x1="472" y1="365" x2="556" y2="365"/><polygon points="556,359 568,365 556,371"/>
+    <line x1="792" y1="365" x2="856" y2="365"/><polygon points="856,359 868,365 856,371"/>
+  </g>
+
+  <!-- VERIFY (browser side) -->
+  <rect x="55" y="490" width="970" height="280" rx="20" fill="#16213A" stroke="#60A5FA" stroke-width="2"/>
+  <text x="85" y="545" fill="#60A5FA" font-size="28" font-weight="700">② Browser checks</text>
+  <g text-anchor="middle" font-weight="600" font-size="23">
+    <!-- path A -->
+    <rect x="90" y="575" width="410" height="70" rx="14" fill="#0B1120" stroke="#334155" stroke-width="2"/>
+    <text x="295" y="618" fill="#CBD5E1">hash the cert  →  <tspan fill="#34D399" font-weight="700">A</tspan></text>
+    <!-- path B -->
+    <rect x="90" y="665" width="410" height="70" rx="14" fill="#0B1120" stroke="#334155" stroke-width="2"/>
+    <text x="295" y="708" fill="#CBD5E1">decrypt sig w/ CA key  →  <tspan fill="#34D399" font-weight="700">B</tspan></text>
+  </g>
+  <!-- compare -->
+  <g text-anchor="middle" font-weight="700" font-size="26">
+    <rect x="540" y="575" width="440" height="70" rx="14" fill="#0B1120" stroke="#34D399" stroke-width="2.5"/>
+    <text x="760" y="618" fill="#34D399">A = B  →  trusted ✓</text>
+    <rect x="540" y="665" width="440" height="70" rx="14" fill="#2A0F14" stroke="#F87171" stroke-width="2.5"/>
+    <text x="760" y="708" fill="#F87171">A ≠ B  →  reject ✗</text>
+  </g>
+
+  <!-- takeaway -->
+  <rect x="55" y="800" width="970" height="120" rx="20" fill="#16213A" stroke="#334155" stroke-width="2"/>
+  <text x="540" y="852" text-anchor="middle" fill="#F1F5F9" font-size="28">Proves <tspan fill="#A78BFA" font-weight="700">integrity + authenticity</tspan></text>
+  <text x="540" y="895" text-anchor="middle" fill="#94A3B8" font-size="25" font-style="italic">up a chain of trust to a trusted root</text>
+
+  <text x="70" y="1035" fill="#475569" font-size="24">How HTTPS Really Works</text>
+  <text x="1010" y="1035" text-anchor="end" fill="#475569" font-size="24">6 / 9</text>
+</svg>

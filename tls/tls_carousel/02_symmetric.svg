@@ -1,0 +1,57 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1080" height="1080" viewBox="0 0 1080 1080" font-family="Segoe UI, Helvetica, Arial, sans-serif">
+  <rect width="1080" height="1080" fill="#0B1120"/>
+  <rect x="0" y="0" width="1080" height="8" fill="#34D399"/>
+
+  <!-- header -->
+  <circle cx="105" cy="120" r="40" fill="#34D399"/>
+  <text x="105" y="135" text-anchor="middle" fill="#0B1120" font-size="44" font-weight="700">2</text>
+  <text x="170" y="115" fill="#F1F5F9" font-size="46" font-weight="700">Symmetric</text>
+  <text x="170" y="165" fill="#34D399" font-size="34" font-weight="600">one shared key</text>
+
+  <!-- flow: data + key -> scrambled -> sent -> key -> data -->
+  <g text-anchor="middle" font-weight="600">
+    <rect x="60" y="300" width="180" height="110" rx="16" fill="#16213A" stroke="#60A5FA" stroke-width="2"/>
+    <text x="150" y="350" fill="#60A5FA" font-size="26">data</text>
+    <text x="150" y="385" fill="#FBBF24" font-size="24">+ key 🔑</text>
+
+    <rect x="300" y="300" width="200" height="110" rx="16" fill="#16213A" stroke="#334155" stroke-width="2"/>
+    <text x="400" y="345" fill="#CBD5E1" font-size="26">scrambled</text>
+    <text x="400" y="385" fill="#94A3B8" font-size="20" font-weight="400">ciphertext</text>
+
+    <rect x="560" y="300" width="160" height="110" rx="16" fill="#16213A" stroke="#334155" stroke-width="2"/>
+    <text x="640" y="362" fill="#CBD5E1" font-size="26">sent →</text>
+
+    <rect x="780" y="300" width="220" height="110" rx="16" fill="#16213A" stroke="#34D399" stroke-width="2"/>
+    <text x="890" y="345" fill="#FBBF24" font-size="24">same key 🔑</text>
+    <text x="890" y="385" fill="#34D399" font-size="26">→ data</text>
+  </g>
+  <g stroke="#475569" stroke-width="3" fill="#475569">
+    <line x1="242" y1="355" x2="296" y2="355"/><polygon points="296,349 308,355 296,361"/>
+    <line x1="502" y1="355" x2="556" y2="355"/><polygon points="556,349 568,355 556,361"/>
+    <line x1="722" y1="355" x2="776" y2="355"/><polygon points="776,349 788,355 776,361"/>
+  </g>
+
+  <!-- flaw -->
+  <rect x="60" y="520" width="960" height="360" rx="20" fill="#2A0F14" stroke="#F87171" stroke-width="2.5"/>
+  <text x="100" y="600" fill="#F87171" font-size="34" font-weight="700">⚠ The flaw</text>
+  <text x="100" y="670" fill="#F1F5F9" font-size="30">Both sides need the <tspan fill="#FBBF24" font-weight="700">same key</tspan> — so it has to be</text>
+  <text x="100" y="712" fill="#F1F5F9" font-size="30">shared first.</text>
+
+  <!-- mini diagram of key interception -->
+  <g font-size="24" font-weight="600" text-anchor="middle">
+    <rect x="120" y="760" width="150" height="70" rx="14" fill="#16213A" stroke="#60A5FA" stroke-width="2"/>
+    <text x="195" y="803" fill="#60A5FA">You</text>
+    <rect x="810" y="760" width="150" height="70" rx="14" fill="#16213A" stroke="#34D399" stroke-width="2"/>
+    <text x="885" y="803" fill="#34D399">Server</text>
+    <text x="540" y="778" fill="#FBBF24">🔑 key over network</text>
+  </g>
+  <line x1="272" y1="795" x2="808" y2="795" stroke="#FBBF24" stroke-width="3"/>
+  <g>
+    <line x1="540" y1="795" x2="540" y2="855" stroke="#F87171" stroke-width="3" stroke-dasharray="6 6"/>
+    <polygon points="535,855 540,845 545,855" fill="#F87171"/>
+  </g>
+  <text x="540" y="875" text-anchor="middle" fill="#F87171" font-size="23">sending the key hands it to the attacker too</text>
+
+  <text x="70" y="1035" fill="#475569" font-size="24">How HTTPS Really Works</text>
+  <text x="1010" y="1035" text-anchor="end" fill="#475569" font-size="24">3 / 9</text>
+</svg>

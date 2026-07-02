@@ -1,0 +1,44 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1080" height="1080" viewBox="0 0 1080 1080" font-family="Segoe UI, Helvetica, Arial, sans-serif">
+  <rect width="1080" height="1080" fill="#0B1120"/>
+  <rect x="0" y="0" width="1080" height="8" fill="#F1F5F9"/>
+
+  <!-- header -->
+  <text x="540" y="130" text-anchor="middle" fill="#F1F5F9" font-size="52" font-weight="700">The big picture</text>
+
+  <!-- padlock -->
+  <g transform="translate(540 250) scale(0.7)">
+    <path d="M -70 0 A 70 70 0 0 1 70 0" fill="none" stroke="#34D399" stroke-width="20"/>
+    <rect x="-95" y="0" width="190" height="150" rx="24" fill="#16213A" stroke="#34D399" stroke-width="6"/>
+    <circle cx="0" cy="60" r="20" fill="#34D399"/>
+    <rect x="-8" y="72" width="16" height="42" rx="8" fill="#34D399"/>
+  </g>
+
+  <!-- three layers -->
+  <g font-weight="600">
+    <rect x="90" y="400" width="900" height="100" rx="18" fill="#16213A" stroke="#A78BFA" stroke-width="2.5"/>
+    <text x="130" y="450" fill="#A78BFA" font-size="32" font-weight="700">CAs</text>
+    <text x="130" y="486" fill="#94A3B8" font-size="22">certificate authorities</text>
+    <text x="960" y="463" text-anchor="end" fill="#F1F5F9" font-size="28">prove who you're talking to</text>
+
+    <rect x="90" y="520" width="900" height="100" rx="18" fill="#16213A" stroke="#60A5FA" stroke-width="2.5"/>
+    <text x="130" y="570" fill="#60A5FA" font-size="32" font-weight="700">Asymmetric</text>
+    <text x="130" y="606" fill="#94A3B8" font-size="22">public / private key pair</text>
+    <text x="960" y="583" text-anchor="end" fill="#F1F5F9" font-size="28">agree on a key, safely, once</text>
+
+    <rect x="90" y="640" width="900" height="100" rx="18" fill="#16213A" stroke="#34D399" stroke-width="2.5"/>
+    <text x="130" y="690" fill="#34D399" font-size="32" font-weight="700">Symmetric</text>
+    <text x="130" y="726" fill="#94A3B8" font-size="22">one shared session key (AES)</text>
+    <text x="960" y="703" text-anchor="end" fill="#F1F5F9" font-size="28">encrypt all the data, fast</text>
+  </g>
+
+  <text x="540" y="810" text-anchor="middle" fill="#CBD5E1" font-size="28" font-style="italic">Next time you see that padlock, you'll know what's behind it.</text>
+
+  <!-- CTA -->
+  <rect x="140" y="850" width="800" height="70" rx="16" fill="#0B1120" stroke="#60A5FA" stroke-width="2"/>
+  <text x="540" y="895" text-anchor="middle" fill="#60A5FA" font-size="24" font-weight="600">▸ Full walkthrough (video) — link in the post</text>
+
+  <text x="540" y="980" text-anchor="middle" fill="#64748B" font-size="24">#HTTPS  #TLS  #WebSecurity  #Cryptography</text>
+
+  <text x="70" y="1035" fill="#475569" font-size="24">How HTTPS Really Works</text>
+  <text x="1010" y="1035" text-anchor="end" fill="#475569" font-size="24">9 / 9</text>
+</svg>

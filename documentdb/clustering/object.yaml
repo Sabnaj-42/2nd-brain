@@ -18,6 +18,7 @@ spec:
               memory: 2Gi
 
   storage:
+    storageClassName: local-path
     accessModes:
       - ReadWriteOnce
     resources:

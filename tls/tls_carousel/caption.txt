@@ -1,0 +1,36 @@
+You type a password and hit enter. What actually keeps it safe on the way to the server?
+
+The padlock in your address bar hides 3 layers of cryptography working together — and once you see how they fit, HTTPS stops being magic.
+
+I broke the whole thing down into 9 diagrams 👇
+
+① Plain HTTP leaks everything — a $17 sniffer reads your password in clear text
+② Symmetric encryption — fast, but how do you share the key safely?
+③ Asymmetric — a public/private key pair solves the sharing problem
+④ Man-in-the-middle — the one attack a key pair alone can't stop
+⑤ Certificate Authorities — how your browser proves it's the real server
+⑥ Session keys — where slow asymmetric hands off to fast symmetric (AES)
+⑦ TLS 1.3 & forward secrecy — why a leaked key can't decrypt your past traffic
+
+The big picture:
+• CAs → prove who you're talking to
+• Asymmetric → agree on a key, safely, once
+• Symmetric → encrypt all the data, fast
+
+Next time you see that padlock, you'll know exactly what's behind it.
+
+▸ Full walkthrough (video): https://www.youtube.com/watch?v=EnY6fSng3Ew
+
+What's a "basic" concept you understood far later than you'd like to admit?
+
+#HTTPS #TLS #WebSecurity #Cryptography #SoftwareEngineering
+
+---
+HOW TO POST (carousel):
+- Upload the 9 PNGs in png/ IN ORDER (00 → 08) as a LinkedIn image carousel,
+  OR combine them into a single PDF and post as a "document" (best reach).
+  Quick PDF:  convert png/00_title.png png/01_plain_http.png png/02_symmetric.png \
+                     png/03_asymmetric.png png/04_mitm.png png/05_certificate_authorities.png \
+                     png/06_session_key.png png/07_tls_versions.png png/08_big_picture.png \
+                     https_carousel.pdf
+- Source SVGs are alongside the PNGs; re-export any time after edits.

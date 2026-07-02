@@ -1,0 +1,33 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1080" height="1080" viewBox="0 0 1080 1080" font-family="Segoe UI, Helvetica, Arial, sans-serif">
+  <rect width="1080" height="1080" fill="#0B1120"/>
+  <rect x="0" y="0" width="1080" height="8" fill="#60A5FA"/>
+
+  <!-- padlock -->
+  <g transform="translate(540 300)">
+    <path d="M -70 0 A 70 70 0 0 1 70 0" fill="none" stroke="#34D399" stroke-width="20"/>
+    <rect x="-95" y="0" width="190" height="150" rx="24" fill="#16213A" stroke="#34D399" stroke-width="6"/>
+    <circle cx="0" cy="60" r="20" fill="#34D399"/>
+    <rect x="-8" y="72" width="16" height="42" rx="8" fill="#34D399"/>
+  </g>
+
+  <text x="540" y="560" text-anchor="middle" fill="#F1F5F9" font-size="82" font-weight="700">How HTTPS</text>
+  <text x="540" y="652" text-anchor="middle" fill="#F1F5F9" font-size="82" font-weight="700">Really Works</text>
+  <text x="540" y="720" text-anchor="middle" fill="#94A3B8" font-size="34" font-style="italic">— explained with diagrams —</text>
+
+  <!-- three-layer chips -->
+  <g font-size="26" font-weight="600">
+    <rect x="150" y="800" width="780" height="66" rx="16" fill="#16213A" stroke="#A78BFA" stroke-width="2"/>
+    <text x="185" y="842" fill="#A78BFA">CAs</text>
+    <text x="330" y="842" fill="#CBD5E1">prove who you're talking to</text>
+
+    <rect x="150" y="878" width="780" height="66" rx="16" fill="#16213A" stroke="#60A5FA" stroke-width="2"/>
+    <text x="185" y="920" fill="#60A5FA">Asymmetric</text>
+    <text x="360" y="920" fill="#CBD5E1">agree on a key, safely, once</text>
+
+    <rect x="150" y="956" width="780" height="66" rx="16" fill="#16213A" stroke="#34D399" stroke-width="2"/>
+    <text x="185" y="998" fill="#34D399">Symmetric</text>
+    <text x="360" y="998" fill="#CBD5E1">encrypt all the data, fast</text>
+  </g>
+
+  <text x="1030" y="1050" text-anchor="end" fill="#475569" font-size="24">1 / 9</text>
+</svg>

@@ -1,0 +1,56 @@
+𝗛𝗼𝘄 𝗛𝗧𝗧𝗣𝗦 𝗥𝗲𝗮𝗹𝗹𝘆 𝗪𝗼𝗿𝗸𝘀 — explained with diagrams
+
+① 𝗣𝗹𝗮𝗶𝗻 𝗛𝗧𝗧𝗣 𝗹𝗲𝗮𝗸𝘀 𝗲𝘃𝗲𝗿𝘆𝘁𝗵𝗶𝗻𝗴
+   password → binary → radio waves → router → server
+                          ↑ $17 sniffer → "email + password" exposed
+Browsers flag this as “𝘕𝘰𝘵 𝘚𝘦𝘤𝘶𝘳𝘦.” The fix: encryption, in 3 layers.
+
+② 𝗦𝘆𝗺𝗺𝗲𝘁𝗿𝗶𝗰 — one shared key
+   data + key → scrambled → sent → key → data
+𝘍𝘭𝘢𝘸: sending the key over the network hands it to the attacker too.
+
+③ 𝗔𝘀𝘆𝗺𝗺𝗲𝘁𝗿𝗶𝗰 — a key pair fixes that
+   You ← public key ← Server   (private key never leaves server)
+   You → secret locked with public key → Server unlocks with private key
+Now both share a secret an eavesdropper can't open. One attack remains.
+
+④ 𝗠𝗮𝗻-𝗶𝗻-𝘁𝗵𝗲-𝗺𝗶𝗱𝗱𝗹𝗲
+   You → attacker (poses as server) → real server
+   You ← attacker's OWN public key ← (you can't tell)
+So we must 𝗽𝗿𝗼𝘃𝗲 a public key belongs to the real server.
+
+⑤ 𝗖𝗲𝗿𝘁𝗶𝗳𝗶𝗰𝗮𝘁𝗲 𝗔𝘂𝘁𝗵𝗼𝗿𝗶𝘁𝗶𝗲𝘀 — proof of identity
+A trusted party (DigiCert, Let's Encrypt) signs a 𝗵𝗮𝘀𝗵 𝗼𝗳 𝘁𝗵𝗲 𝗰𝗲𝗿𝘁:
+   cert → hash → encrypt with CA's private key = signature
+Browser checks:
+   hash cert → A ; decrypt signature with CA key → B
+   A = B → trusted   |   A ≠ B → reject
+Proves 𝗶𝗻𝘁𝗲𝗴𝗿𝗶𝘁𝘆 + 𝗮𝘂𝘁𝗵𝗲𝗻𝘁𝗶𝗰𝗶𝘁𝘆, up a 𝘤𝘩𝘢𝘪𝘯 𝘰𝘧 𝘵𝘳𝘶𝘴𝘵 to a trusted root.
+
+⑥ 𝗦𝗲𝘀𝘀𝗶𝗼𝗻 𝗸𝗲𝘆 — asymmetric hands off to symmetric
+   shared secret + randoms → key derivation → session keys
+   → “Finished” confirms no tampering
+   → switch to fast 𝘀𝘆𝗺𝗺𝗲𝘁𝗿𝗶𝗰 𝗲𝗻𝗰𝗿𝘆𝗽𝘁𝗶𝗼𝗻 (𝗔𝗘𝗦) for all data
+
+⑦ 𝗧𝗟𝗦 𝘃𝗲𝗿𝘀𝗶𝗼𝗻𝘀
+   1.0 / 1.1 → weak, deprecated (2020–21)
+   1.2       → common; RSA key exchange
+   1.3       → current; faster + safer
+𝘞𝘩𝘺 1.3: RSA rests on one long-lived key — leak it and past traffic
+decrypts. 1.3 uses 𝗲𝗽𝗵𝗲𝗺𝗲𝗿𝗮𝗹 𝗗𝗶𝗳𝗳𝗶𝗲-𝗛𝗲𝗹𝗹𝗺𝗮𝗻:
+   both swap throwaway public keys → each derives the SAME secret
+   → secret never sent, keys discarded after the session
+Leaked key 𝗰𝗮𝗻'𝘁 𝘂𝗻𝗹𝗼𝗰𝗸 𝗽𝗮𝘀𝘁 𝘁𝗿𝗮𝗳𝗳𝗶𝗰 = 𝘧𝘰𝘳𝘸𝘢𝘳𝘥 𝘴𝘦𝘤𝘳𝘦𝘤𝘺.
+
+𝗧𝗵𝗲 𝗯𝗶𝗴 𝗽𝗶𝗰𝘁𝘂𝗿𝗲
+   CAs        → prove who you're talking to
+   asymmetric → agree on a key, safely, once
+   symmetric  → encrypt all the data, fast
+
+Next time you see that padlock, you'll know what's behind it.
+
+▸ 𝗙𝘂𝗹𝗹 𝘄𝗮𝗹𝗸𝘁𝗵𝗿𝗼𝘂𝗴𝗵 (𝘃𝗶𝗱𝗲𝗼): https://www.youtube.com/watch?v=EnY6fSng3Ew
+
+𝘞𝘩𝘢𝘵'𝘴 𝘢 “𝘣𝘢𝘴𝘪𝘤” 𝘤𝘰𝘯𝘤𝘦𝘱𝘵 𝘺𝘰𝘶 𝘶𝘯𝘥𝘦𝘳𝘴𝘵𝘰𝘰𝘥 𝘧𝘢𝘳 𝘭𝘢𝘵𝘦𝘳 𝘵𝘩𝘢𝘯 𝘺𝘰𝘶'𝘥 𝘭𝘪𝘬𝘦 𝘵𝘰 𝘢𝘥𝘮𝘪𝘵?
+
+#HTTPS #TLS #WebSecurity #Cryptography #SoftwareEngineering

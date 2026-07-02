@@ -1,0 +1,53 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1080" height="1080" viewBox="0 0 1080 1080" font-family="Segoe UI, Helvetica, Arial, sans-serif">
+  <rect width="1080" height="1080" fill="#0B1120"/>
+  <rect x="0" y="0" width="1080" height="8" fill="#F87171"/>
+
+  <!-- header -->
+  <circle cx="105" cy="120" r="40" fill="#F87171"/>
+  <text x="105" y="135" text-anchor="middle" fill="#0B1120" font-size="44" font-weight="700">1</text>
+  <text x="170" y="115" fill="#F1F5F9" font-size="46" font-weight="700">Plain HTTP</text>
+  <text x="170" y="165" fill="#F87171" font-size="38" font-weight="700">leaks everything</text>
+
+  <!-- flow row -->
+  <g font-size="24" font-weight="600" text-anchor="middle">
+    <rect x="70"  y="300" width="150" height="80" rx="14" fill="#16213A" stroke="#60A5FA" stroke-width="2"/>
+    <text x="145" y="335" fill="#60A5FA">password</text>
+    <text x="145" y="362" fill="#94A3B8" font-size="19" font-weight="400">you type</text>
+
+    <rect x="260" y="300" width="130" height="80" rx="14" fill="#16213A" stroke="#334155" stroke-width="2"/>
+    <text x="325" y="348" fill="#CBD5E1">binary</text>
+
+    <rect x="430" y="300" width="160" height="80" rx="14" fill="#16213A" stroke="#334155" stroke-width="2"/>
+    <text x="510" y="340" fill="#CBD5E1">radio</text>
+    <text x="510" y="366" fill="#CBD5E1">waves</text>
+
+    <rect x="630" y="300" width="130" height="80" rx="14" fill="#16213A" stroke="#334155" stroke-width="2"/>
+    <text x="695" y="348" fill="#CBD5E1">router</text>
+
+    <rect x="800" y="300" width="150" height="80" rx="14" fill="#16213A" stroke="#34D399" stroke-width="2"/>
+    <text x="875" y="348" fill="#34D399">server</text>
+  </g>
+  <!-- arrows -->
+  <g stroke="#475569" stroke-width="3" fill="#475569">
+    <line x1="222" y1="340" x2="256" y2="340"/><polygon points="256,335 266,340 256,345"/>
+    <line x1="392" y1="340" x2="426" y2="340"/><polygon points="426,335 436,340 426,345"/>
+    <line x1="592" y1="340" x2="626" y2="340"/><polygon points="626,335 636,340 626,345"/>
+    <line x1="762" y1="340" x2="796" y2="340"/><polygon points="796,335 806,340 796,345"/>
+  </g>
+
+  <!-- sniffer -->
+  <line x1="510" y1="382" x2="510" y2="470" stroke="#F87171" stroke-width="3" stroke-dasharray="6 6"/>
+  <polygon points="505,382 510,372 515,382" fill="#F87171"/>
+  <rect x="300" y="470" width="480" height="120" rx="18" fill="#2A0F14" stroke="#F87171" stroke-width="2.5"/>
+  <text x="540" y="520" text-anchor="middle" fill="#F87171" font-size="30" font-weight="700">$17 sniffer</text>
+  <text x="540" y="562" text-anchor="middle" fill="#FCA5A5" font-size="26">reads: "email + password"  ⚠ exposed</text>
+
+  <!-- takeaway -->
+  <rect x="70" y="700" width="940" height="230" rx="20" fill="#16213A" stroke="#334155" stroke-width="2"/>
+  <text x="105" y="770" fill="#F1F5F9" font-size="30">Browsers flag this as <tspan fill="#F87171" font-weight="700" font-style="italic">"Not Secure."</tspan></text>
+  <text x="105" y="835" fill="#CBD5E1" font-size="30">The fix: <tspan fill="#34D399" font-weight="700">encryption</tspan>, built in 3 layers</text>
+  <text x="105" y="890" fill="#94A3B8" font-size="26" font-style="italic">→ symmetric · asymmetric · certificate authorities</text>
+
+  <text x="70" y="1035" fill="#475569" font-size="24">How HTTPS Really Works</text>
+  <text x="1010" y="1035" text-anchor="end" fill="#475569" font-size="24">2 / 9</text>
+</svg>

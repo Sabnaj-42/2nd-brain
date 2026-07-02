@@ -1,0 +1,40 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1080" height="1080" viewBox="0 0 1080 1080" font-family="Segoe UI, Helvetica, Arial, sans-serif">
+  <rect width="1080" height="1080" fill="#0B1120"/>
+  <rect x="0" y="0" width="1080" height="8" fill="#34D399"/>
+
+  <!-- header -->
+  <circle cx="105" cy="120" r="40" fill="#34D399"/>
+  <text x="105" y="135" text-anchor="middle" fill="#0B1120" font-size="44" font-weight="700">6</text>
+  <text x="170" y="115" fill="#F1F5F9" font-size="46" font-weight="700">Session key</text>
+  <text x="170" y="165" fill="#34D399" font-size="32" font-weight="600">asymmetric hands off to symmetric</text>
+
+  <!-- vertical flow -->
+  <g text-anchor="middle" font-weight="600">
+    <rect x="190" y="270" width="700" height="100" rx="16" fill="#16213A" stroke="#60A5FA" stroke-width="2"/>
+    <text x="540" y="312" fill="#60A5FA" font-size="27">shared secret  +  randoms</text>
+    <text x="540" y="348" fill="#94A3B8" font-size="21" font-weight="400">the material both sides now hold</text>
+
+    <rect x="190" y="410" width="700" height="90" rx="16" fill="#16213A" stroke="#334155" stroke-width="2"/>
+    <text x="540" y="465" fill="#CBD5E1" font-size="27">key derivation  →  session keys 🔑</text>
+
+    <rect x="190" y="540" width="700" height="90" rx="16" fill="#16213A" stroke="#FBBF24" stroke-width="2"/>
+    <text x="540" y="583" fill="#FBBF24" font-size="27">"Finished"</text>
+    <text x="540" y="613" fill="#94A3B8" font-size="21" font-weight="400">confirms no tampering happened</text>
+
+    <rect x="190" y="670" width="700" height="120" rx="16" fill="#16213A" stroke="#34D399" stroke-width="2.5"/>
+    <text x="540" y="720" fill="#34D399" font-size="28" font-weight="700">switch to fast symmetric (AES)</text>
+    <text x="540" y="758" fill="#CBD5E1" font-size="24" font-weight="400">for all data from here on</text>
+  </g>
+  <!-- down arrows -->
+  <g stroke="#475569" stroke-width="3" fill="#475569">
+    <line x1="540" y1="372" x2="540" y2="406"/><polygon points="534,406 540,418 546,406"/>
+    <line x1="540" y1="502" x2="540" y2="536"/><polygon points="534,536 540,548 546,536"/>
+    <line x1="540" y1="632" x2="540" y2="666"/><polygon points="534,666 540,678 546,666"/>
+  </g>
+
+  <rect x="55" y="830" width="970" height="90" rx="18" fill="#0B1120" stroke="#334155" stroke-width="2"/>
+  <text x="540" y="887" text-anchor="middle" fill="#94A3B8" font-size="25" font-style="italic">slow public-key math sets up the key · fast AES does the bulk work</text>
+
+  <text x="70" y="1035" fill="#475569" font-size="24">How HTTPS Really Works</text>
+  <text x="1010" y="1035" text-anchor="end" fill="#475569" font-size="24">7 / 9</text>
+</svg>

@@ -1,0 +1,44 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1080" height="1080" viewBox="0 0 1080 1080" font-family="Segoe UI, Helvetica, Arial, sans-serif">
+  <rect width="1080" height="1080" fill="#0B1120"/>
+  <rect x="0" y="0" width="1080" height="8" fill="#F87171"/>
+
+  <!-- header -->
+  <circle cx="105" cy="120" r="40" fill="#F87171"/>
+  <text x="105" y="135" text-anchor="middle" fill="#0B1120" font-size="44" font-weight="700">4</text>
+  <text x="170" y="115" fill="#F1F5F9" font-size="46" font-weight="700">Man-in-the-middle</text>
+  <text x="170" y="165" fill="#F87171" font-size="34" font-weight="600">who really sent that public key?</text>
+
+  <!-- three actors -->
+  <rect x="60" y="330" width="230" height="130" rx="18" fill="#16213A" stroke="#60A5FA" stroke-width="2.5"/>
+  <text x="175" y="405" text-anchor="middle" fill="#60A5FA" font-size="34" font-weight="700">You</text>
+
+  <rect x="420" y="330" width="240" height="130" rx="18" fill="#2A0F14" stroke="#F87171" stroke-width="3"/>
+  <text x="540" y="392" text-anchor="middle" fill="#F87171" font-size="30" font-weight="700">Attacker</text>
+  <text x="540" y="428" text-anchor="middle" fill="#FCA5A5" font-size="20">poses as the server</text>
+
+  <rect x="790" y="330" width="230" height="130" rx="18" fill="#16213A" stroke="#34D399" stroke-width="2.5"/>
+  <text x="905" y="392" text-anchor="middle" fill="#34D399" font-size="30" font-weight="700">Real</text>
+  <text x="905" y="428" text-anchor="middle" fill="#34D399" font-size="30" font-weight="700">server</text>
+
+  <!-- forward arrows -->
+  <g stroke="#64748B" stroke-width="3.5" fill="#64748B">
+    <line x1="292" y1="380" x2="416" y2="380"/><polygon points="416,374 428,380 416,386"/>
+    <line x1="662" y1="380" x2="786" y2="380"/><polygon points="786,374 798,380 786,386"/>
+  </g>
+
+  <!-- attacker's own key back to you -->
+  <line x1="418" y1="430" x2="294" y2="430" stroke="#F87171" stroke-width="3.5"/>
+  <polygon points="294,424 282,430 294,436" fill="#F87171"/>
+  <rect x="90" y="500" width="500" height="70" rx="14" fill="#2A0F14" stroke="#F87171" stroke-width="2"/>
+  <text x="340" y="544" text-anchor="middle" fill="#F87171" font-size="24" font-weight="600">attacker's OWN public key 🔓</text>
+  <text x="340" y="612" text-anchor="middle" fill="#FCA5A5" font-size="24" font-style="italic">…and you can't tell the difference</text>
+
+  <!-- the requirement -->
+  <rect x="60" y="680" width="960" height="230" rx="20" fill="#16213A" stroke="#FBBF24" stroke-width="2.5"/>
+  <text x="540" y="760" text-anchor="middle" fill="#FBBF24" font-size="34" font-weight="700">The missing piece</text>
+  <text x="540" y="822" text-anchor="middle" fill="#F1F5F9" font-size="30">We must <tspan fill="#FBBF24" font-weight="700">prove</tspan> a public key really belongs</text>
+  <text x="540" y="864" text-anchor="middle" fill="#F1F5F9" font-size="30">to the <tspan fill="#34D399" font-weight="700">real server</tspan></text>
+
+  <text x="70" y="1035" fill="#475569" font-size="24">How HTTPS Really Works</text>
+  <text x="1010" y="1035" text-anchor="end" fill="#475569" font-size="24">5 / 9</text>
+</svg>
