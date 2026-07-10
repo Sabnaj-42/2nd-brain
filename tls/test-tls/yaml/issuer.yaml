@@ -1,0 +1,42 @@
+# Two-tier issuer so ALL leaf certs (server / client / gateway) share one CA.
+# A cert-manager `selfSigned` Issuer would instead mint independent self-signed certs, each with
+# its own ca.crt — replication verify-full (standby verifies the server using the client secret's
+# ca.crt) would then fail. A CA Issuer gives every cert the same ca.crt, so cross-verification works.
+---
+# 1. bootstrap self-signed issuer (only used to sign the CA below)
+apiVersion: cert-manager.io/v1
+kind: Issuer
+metadata:
+  name: dcdb-selfsigned-boot
+  namespace: demo
+spec:
+  selfSigned: {}
+---
+# 2. a self-signed CA certificate
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: dcdb-ca
+  namespace: demo
+spec:
+  isCA: true
+  commonName: dcdb-ca
+  secretName: dcdb-ca-tls
+  duration: 87600h   # 10y
+  privateKey:
+    algorithm: ECDSA
+    size: 256
+  issuerRef:
+    name: dcdb-selfsigned-boot
+    kind: Issuer
+    group: cert-manager.io
+---
+# 3. the CA issuer the DocumentDB references; signs server/client/gateway from the shared CA
+apiVersion: cert-manager.io/v1
+kind: Issuer
+metadata:
+  name: dcdb-ca-issuer
+  namespace: demo
+spec:
+  ca:
+    secretName: dcdb-ca-tls
