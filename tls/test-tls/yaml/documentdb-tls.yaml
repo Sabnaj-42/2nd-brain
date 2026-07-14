@@ -14,6 +14,11 @@ spec:
       apiGroup: cert-manager.io
       kind: Issuer
       name: dcdb-ca-issuer
+  # Drop Kubernetes service-link env injection (the namespace's cassandra-quickstart etc.
+  # Service vars) from the pods; the app uses only its own explicit env.
+  podTemplate:
+    spec:
+      enableServiceLinks: false
   storageType: Durable
   storage:
     accessModes:

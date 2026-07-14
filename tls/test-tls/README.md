@@ -1,126 +1,85 @@
-# DocumentDB Full-TLS Test — server + replication + gateway + coordinator
+# DocumentDB Full-TLS — postgres-faithful implementation + end-to-end test
 
-End-to-end test of native TLS for the KubeDB DocumentDB operator, driven entirely by
-`spec.tls` + `spec.sslMode` on the DocumentDB CR (no manual `podTemplate` cert passthrough).
+Native TLS for the KubeDB **DocumentDB** operator, driven entirely by `spec.tls` + `spec.sslMode`
+on the DocumentDB CR. The cert-manager `Certificate` CRs are created by the **ops controller** and
+consumed by the **provisioner** — exactly how the KubeDB **postgres** operator is structured.
 
 - **Cluster:** k3s (remote node `10.2.0.226`), `export KUBECONFIG=/home/sabnaj/k3s.yaml`
-- **Namespace:** `demo`  •  **DB:** `dcdb-tls` (2 replicas)
-- **Date:** 2026-07-10
-- **cert-manager:** v1.19.2
+- **Namespace:** `demo`  ·  **DB:** `dcdb-tls` (2 replicas, `sslMode: verify-full`)
+- **cert-manager:** v1.19.2  ·  **Date:** 2026-07-14
 
-## Result: ✅ ALL SURFACES PASS
+## Result: ✅ all four TLS surfaces pass, pod env clean, DB `Ready`
 
-| # | Surface | Evidence |
+| # | Surface | Evidence (verbatim in [`evidence.txt`](./evidence.txt)) |
 |---|---------|----------|
-| 1 | **Postgres server TLS** (:9712) | `psql sslmode=verify-full` → `ssl=true, TLSv1.3` |
-| 2 | **Streaming replication over TLS** | `primary_conninfo … sslmode=verify-full`; standby `replay_lsn` advances live (`0/499EC28→0/49A0968`); log `started streaming WAL from primary` |
-| 3 | **MongoDB-wire gateway TLS** (:10260) | serves cert `issuer=CN=dcdb-ca` / `subject=CN=dcdb-tls`, `Verify return code: 0 (ok)`, `TLSv1.3`; `mongosh --tls` + SCRAM → `{ok:1}` |
-| 4 | **Coordinator** (HA control plane) | connects to Postgres over TLS + runs mutual-TLS gRPC; cluster elects primary/standby, `ssl=on`, no errors |
+| 1 | **Postgres server TLS** (:9712) | `pg_stat_ssl` → `true TLSv1.3 TLS_AES_256_GCM_SHA384` (user `documentdb`, `sslmode=verify-full`) |
+| 2 | **Streaming replication over TLS** | `pg_stat_replication` → `10.42.0.134/32 streaming async`; standby `primary_conninfo … sslmode=verify-full`; replay LSN `0/4923130 → 0/49254B0`; `pg_is_in_recovery = t` |
+| 3 | **MongoDB-wire gateway TLS** (:10260) | serves `issuer=CN=dcdb-ca / subject=CN=dcdb-tls`, `Verify return code: 0`, `TLSv1.3`; `mongosh --tls` + SCRAM (`default_user`) → `{"ok":1}` |
+| 4 | **Coordinator raft gRPC** | own **isolated grpc-CA** (`E7:95:C8…35:A0`) ≠ main `dcdb-CA` (`69:B3:9E…E8:47`); `/grpc/server` served by `grpc-server` cert, `/grpc/client` present; `SHOW ssl = on` both pods; **0** gRPC/SSL errors |
+| — | **Clean pod env** | cassandra vars **0**, `DCDB_*` service-link vars **0** (`enableServiceLinks: false`) |
+| — | **DB status** | `STATUS: Ready` (`Ready=True`, `Provisioned=True`) — operator health-check now connects over TLS (see below) |
 
-All three cert-manager certs (server/client/gateway) share one CA (fingerprint
-`8B:2D:70…CE:87`), which is what makes replication `verify-full` cross-verification work.
+The 3 public certs share one CA (`69:B3:9E…E8:47`, required for replication `verify-full`); the
+coordinator gRPC uses a **separate** grpc-CA chain (`grpc-ca → grpc-server/grpc-client`), matching
+the postgres operator.
 
-**📋 Full step-by-step procedure with the command + real result for every step:
-[`TESTING-PROCEDURE.md`](./TESTING-PROCEDURE.md).**
-Raw captures: [`final-evidence.txt`](./final-evidence.txt), [`step-by-step-raw-output.txt`](./step-by-step-raw-output.txt).
-
----
-
-## Images used
-
-| Component | Image | Why |
-|-----------|-------|-----|
-| provisioner + ops-manager StatefulSets | `sabnaj/documentdb-operator:dcdb-tls7` | operator with all TLS wiring (below) |
-| DocumentDBVersion `pg17-0.109.0` initContainer | `sabnaj/documentdb-init:dcdb-tls-hba2` | patched `pg_hba` + `ssl=on` at bootstrap (below) |
+**📐 How it works + which files changed + diagram → [`ARCHITECTURE.md`](./ARCHITECTURE.md)**
+**📋 Step-by-step procedure with the command + result for every step → [`TESTING-PROCEDURE.md`](./TESTING-PROCEDURE.md)**
 
 ---
 
-## What had to change
+## What this fixes vs. the earlier attempt
 
-### A. Operator code (`kubedb.dev/documentdb`, `kubedb.dev/apimachinery`)
-- **apimachinery `v1alpha2`**: `spec.tls` (`*kmapi.TLSConfig`) + `spec.sslMode` enum, cert aliases
-  (server/client/gateway), `SetTLSDefaults`, `GetCertSecretName`, deepcopy. CRD regenerated + applied.
-- **`pkg/controllers/certificates.go`** (new): `manageTLS` creates the server/client/gateway
-  cert-manager Certificates. Cert creation lives in the **reconcile loop** (not `pkg/ops`) because
-  the standalone `documentdb-operator` binary only runs the provisioner reconcile.
-  - Server & gateway certs include the **Service FQDN with cluster domain**
-    (`dcdb-tls.demo.svc.cluster.local`) as a SAN — required for replication `verify-full`.
-- **`pkg/controllers/tls.go`**: secrets mount read-only at `/certs/{server,client,gateway}`; the
-  init container copies them into a writable `/tls` emptyDir (the image's contract, incl. the
-  required `exporter` dir); sets `SSL=ON`, `SSL_MODE`, gateway `CERT_PATH`/`KEY_FILE`.
-- **`pkg/controllers/reconcile.go`**: cert-manager client field + `manageTLS` call before the
-  cert-wait gate.
-- **`pkg/controllers/petset.go`**: the **coordinator** container now gets `SSL=ON`,
-  `SSL_MODE=prefer` when TLS is on, plus mounts of `/tls` and the `/grpc/{server,client}` cert
-  pairs (the coordinator runs a mutual-TLS gRPC server and connects to Postgres over TLS).
-  `prefer` (not `require`) avoids a bootstrap deadlock.
-- **`pkg/cmds/server/operator.go`**: builds the cert-manager clientset.
+1. **Postgres-faithful cert creation.** Cert-manager `Certificate` CRs are created by the **ops
+   controller** (`pkg/ops`, run by `documentdb-operator ops`); the provisioner only **waits** for
+   the secrets (`missingCertSecrets` gate) and mounts them. The earlier attempt wrongly duplicated
+   `manageTLS` into `pkg/controllers/certificates.go` — that file is **deleted**.
+2. **Correct per-surface credentials.** DocumentDB has two auth secrets; each surface is tested with
+   the right one: `dcdb-tls-admin-auth`/`documentdb` for the Postgres backend + replication,
+   `dcdb-tls-auth`/`default_user` for the MongoDB gateway. (The operator code already wired these
+   correctly; only the test was wrong before.)
+3. **Clean pod env.** `spec.podTemplate.spec.enableServiceLinks: false` drops the namespace's
+   service-link env (the `cassandra-quickstart` / `DCDB_*` vars) from the containers.
+4. **Replication SAN fix.** The **server** and **gateway** certs now include the primary Service
+   FQDN `dcdb-tls.demo.svc.cluster.local`, because replicas bootstrap against `PRIMARY_HOST` under
+   `sslmode=verify-full`. (Added to `pkg/ops/certificates.go`.)
+5. **Dedicated gRPC CA chain (final postgres-parity gap).** The coordinator's raft gRPC now runs on
+   its own isolated `grpc-ca → grpc-server/grpc-client` chain (ported `ensureGrpcTLS` from postgres)
+   instead of reusing the public server/client certs — see [`ARCHITECTURE.md`](./ARCHITECTURE.md).
 
-### B. DocumentDB init image (`configure.sh` / role scripts) — `dcdb-tls-hba2`
-The prebuilt DocumentDB image's co-located gateway/coordinator connect to Postgres over **plaintext
-localhost**, which `SSL=ON`'s `hostssl`-only `pg_hba` rejects; and `ssl=on` was only set by the role
-script, creating a bootstrap deadlock. Two small script patches fixed both (see
-[`init-image-patch/`](./init-image-patch/)):
-1. **`ssl = on` + cert paths added to `configure.sh`** so Postgres serves TLS from first boot (no
-   `ssl=off` window → coordinator can complete role assignment).
-2. **`host … 127.0.0.1/32 trust` + `::1/128 trust`** added ahead of the `hostssl` rules in all 6
-   pg_hba-generating scripts, so co-located components reach Postgres over localhost while **external
-   connections still require `hostssl`** (replication comes from pod IPs, so it stays TLS).
+## Images
 
-### C. Two operational prerequisites cleared
-- **License crashloop** (`Error: license status unknown`): removed the `--license-file` arg from
-  the provisioner + ops-manager StatefulSets (no license-proxyserver API present → license
-  enforcement skipped, acceptable for a test cluster).
-- **cert-manager controller** installed (only CRDs were present).
-
----
+| Component | Image | Command |
+|-----------|-------|---------|
+| ops-manager StatefulSet | `sabnaj/documentdb-operator:dcdb-tls12` | `ops` → creates certs |
+| provisioner StatefulSet | `sabnaj/documentdb-operator:dcdb-tls12` | `operator` → consumes secrets |
+| DocumentDBVersion `pg17-0.109.0` initContainer | `sabnaj/documentdb-init:dcdb-tls-hba2` | patched `pg_hba` + `ssl=on` at bootstrap ([`init-image-patch/`](./init-image-patch/)) |
 
 ## Reproduce
 
 ```bash
 export KUBECONFIG=/home/sabnaj/k3s.yaml
+# prereqs: cert-manager running; ops-manager sts on dcdb-tls12 with arg `ops`;
+#          provisioner sts on dcdb-tls12 with arg `operator`; init image dcdb-tls-hba2.
+kubectl apply -f yaml/issuer.yaml          # two-tier CA issuer (shared CA)
+kubectl apply -f yaml/documentdb-tls.yaml  # TLS DocumentDB, enableServiceLinks:false
 
-# 0) prereqs: cert-manager v1.19.2 running; operator StatefulSets on dcdb-tls7 with
-#    --license-file arg removed; DocumentDBVersion pg17-0.109.0 initContainer = dcdb-tls-hba2
-
-# 1) two-tier CA issuer (shared CA for all certs) + TLS DocumentDB
-kubectl apply -f yaml/issuer.yaml
-kubectl apply -f yaml/documentdb-tls.yaml
-
-# 2) watch cert-manager issue certs, then pods come up
-kubectl -n demo get certificate
-kubectl -n demo get pods -l app.kubernetes.io/instance=dcdb-tls
+kubectl -n demo get certificate                 # 3 certs, created by the ops pod
+kubectl -n demo get pods -l app.kubernetes.io/instance=dcdb-tls   # dcdb-tls-0/1 → 2/2
 ```
 
-### Verification commands
-```bash
-export KUBECONFIG=/home/sabnaj/k3s.yaml
-PGPASS=$(kubectl -n demo get secret dcdb-tls-auth -o jsonpath='{.data.password}' | base64 -d)
+Verification commands are in [`TESTING-PROCEDURE.md`](./TESTING-PROCEDURE.md); captured output in
+[`evidence.txt`](./evidence.txt).
 
-# [1] server TLS
-kubectl -n demo exec dcdb-tls-0 -c documentdb -- bash -c \
- "PGPASSWORD='$PGPASS' psql 'host=127.0.0.1 port=9712 user=default_user dbname=postgres sslmode=verify-full sslrootcert=/tls/certs/server/ca.crt' \
-  -tAc \"SELECT ssl, version FROM pg_stat_ssl WHERE pid=pg_backend_pid();\""
-
-# [2] replication over TLS — standby replay LSN advances (query twice); conninfo is verify-full
-kubectl -n demo exec dcdb-tls-1 -c documentdb -- bash -c \
- "PGPASSWORD='$PGPASS' psql 'host=127.0.0.1 port=9712 user=default_user dbname=postgres sslmode=require' -tAc 'SELECT pg_last_wal_replay_lsn();'"
-kubectl -n demo exec dcdb-tls-1 -c documentdb -- sh -c "grep primary_conninfo /var/pv/data/postgresql.conf"
-# NOTE: pg_stat_replication / pg_stat_wal_receiver return no rows as default_user (needs
-# pg_read_all_stats); use pg_last_wal_replay_lsn() which is callable and proves live replay.
-
-# [3] gateway TLS
-kubectl -n demo exec dcdb-tls-0 -c documentdb -- bash -c \
- 'echo | openssl s_client -connect 127.0.0.1:10260 -CAfile /tls/certs/gateway/ca.crt 2>/dev/null | openssl x509 -noout -issuer -subject'
-kubectl -n demo exec dcdb-tls-0 -c documentdb -- bash -c \
- "mongosh 'mongodb://default_user:$PGPASS@127.0.0.1:10260/?authMechanism=SCRAM-SHA-256&tls=true&tlsCAFile=/tls/certs/gateway/ca.crt&tlsAllowInvalidHostnames=true' --quiet --eval 'db.runCommand({ping:1})'"
-```
-
----
-
-## Known notes
-- DB `.status.phase` stays `Provisioning`: a health probe queries a `documentdb` database that is not
-  created (also absent on the pre-existing non-TLS `dcdb` cluster) — app-level, orthogonal to TLS.
-- `clientAuthMode: scram` (org default) → replication is TLS-encrypted + scram-authenticated
-  (`sslmode=verify-full`), not client-cert mutual auth. Set `clientAuthMode: cert` for cert-based
-  replication auth (would also require clients/gateway to present client certs).
+## DB `Ready` — the health-checker TLS fix
+Earlier the DB stayed `Provisioning` with
+`Ready=False: pq: no pg_hba.conf entry for host … no encryption`. Root cause: the operator's own
+health checker (`pkg/controllers/health.go` `getPostgresClient`, and the ops-side
+`pkg/ops/pg_client.go`) connected to the backend Postgres with a **hardcoded `sslmode=disable`** —
+which the `SSL=ON` `hostssl` pg_hba rejects. Fixed by making those connections TLS-aware: they now
+honor `spec.sslMode` (coercing `prefer`/`allow` → `require` for lib/pq) and pass `sslrootcert` (the
+server cert's CA, via `certholder`) for `verify-ca`/`verify-full`. The DB now reaches **`Ready`**
+(`Ready=True`, `Provisioned=True`); `pg_stat_ssl` shows the operator's `documentdb` connections as
+`ssl=t`, while the co-located coordinator/gateway keep using the `127.0.0.1` trust rule.
+> (My earlier note blaming a missing `documentdb` database was incorrect — the cause was the
+> plaintext health-check connection.)

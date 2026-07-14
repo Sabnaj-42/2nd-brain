@@ -1,0 +1,54 @@
+DocumentDB full-TLS verification (grpc chain + DB Ready) — 2026-07-14 11:24 UTC
+operator image: sabnaj/documentdb-operator:dcdb-tls12   init image: sabnaj/documentdb-init:dcdb-tls-hba2
+provisioner sts arg: operator   |   ops-manager sts arg: ops
+========================================================================
+
+[0] SECRET -> COMPONENT MAPPING
+  dcdb-tls-admin-auth  user=documentdb   -> Postgres backend (POSTGRES_USER/PASSWORD)
+  dcdb-tls-auth        user=default_user -> MongoDB gateway (USERNAME/PASSWORD)
+
+[DB] STATUS / READINESS
+    kubectl get documentdb dcdb-tls -> Ready
+    ProvisioningStarted=True (DatabaseProvisioningStartedSuccessfully)
+    ReplicaReady=True (AllReplicasReady)
+    AcceptingConnection=True (DatabaseAcceptingConnectionRequest)
+    Ready=True (ReadinessCheckSucceeded)
+    Provisioned=True (DatabaseSuccessfullyProvisioned)
+    operator health-check backend connections (documentdb user, non-local):
+      ssl=false count=2
+      ssl=true count=3
+
+[1] POSTGRES SERVER TLS (user=documentdb via admin-auth, sslmode=verify-full)
+    pg_stat_ssl -> true TLSv1.3 TLS_AES_256_GCM_SHA384
+
+[2] STREAMING REPLICATION OVER TLS
+    standby conninfo sslmode -> sslmode=verify-full
+    pg_stat_replication -> 10.42.0.146/32 streaming async
+    standby pg_is_in_recovery -> t
+
+[3] MONGODB-WIRE GATEWAY TLS (user=default_user via auth)
+    issuer=CN=dcdb-ca
+    subject=CN=dcdb-tls
+    mongosh --tls + SCRAM ping -> {"ok":1}
+
+[4] COORDINATOR — DEDICATED gRPC CA CHAIN (isolated)
+    /grpc/server/ca.crt (grpc-CA) subject -> subject=CN = dcdb-tls
+    grpc-server leaf issuer/subject -> issuer=CN = dcdb-tls subject=CN = dcdb-tls-pods 
+    /grpc/client files -> ca.crt client.crt client.key 
+    grpc-CA sha256      -> E7:95:C8:0B:86:BE:D7:74:53:A7:B6:9D:E2:48:57:62:F8:4D:F0:91:F3:89:05:C4:25:75:5E:F1:4F:DA:35:A0
+    main dcdb-CA sha256 -> 69:B3:9E:9F:E2:2C:67:41:34:EC:E6:36:55:97:58:56:2B:AB:B8:87:CD:81:7C:FF:4F:81:83:46:52:34:E8:47  (DIFFERENT => isolated chain)
+    SHOW ssl (both pods) -> on / on
+    coordinator gRPC/SSL errors (both pods) -> 0
+
+[5] CLEAN POD ENV
+    cassandra vars -> 0   DCDB_* vars -> 0   enableServiceLinks -> false
+
+[6] CERTS + ISSUERS CREATED BY THE OPS CONTROLLER
+    dcdb-tls-client-cert         ready=True
+    dcdb-tls-gateway-cert        ready=True
+    dcdb-tls-grpc-ca-cert        ready=True
+    dcdb-tls-grpc-client-cert    ready=True
+    dcdb-tls-grpc-server-cert    ready=True
+    dcdb-tls-server-cert         ready=True
+    dcdb-tls-grpc-issuer         ready=True
+    dcdb-tls-grpc-selfsigned     ready=True
