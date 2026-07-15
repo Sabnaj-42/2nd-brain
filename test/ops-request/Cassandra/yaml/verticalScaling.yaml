@@ -1,0 +1,41 @@
+spec:
+  type: VerticalScaling
+  databaseRef:
+    name: cassandra-prod
+  verticalScaling:
+    mode: Restart          # <- defaulted by the CRD, I didn't set it
+    node:
+      resources:
+        requests:
+          cpu: "2"
+          memory: 3Gi
+        limits:
+          cpu: "3"
+          memory: 4Gi
+  timeout: 5m
+  apply: IfReady
+
+
+  ---------------
+
+  apiVersion: ops.kubedb.com/v1alpha1
+kind: CassandraOpsRequest
+metadata:
+  name: cassandra-vscale-inplace
+  namespace: demo
+spec:
+  type: VerticalScaling
+  databaseRef:
+    name: cassandra-prod
+  verticalScaling:
+    mode: InPlace
+    node:
+      resources:
+        requests:
+          memory: "3Gi"
+          cpu: "2"
+        limits:
+          memory: "4Gi"
+          cpu: "3"
+  timeout: 5m
+  apply: IfReady
