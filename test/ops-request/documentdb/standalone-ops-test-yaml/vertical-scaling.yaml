@@ -1,0 +1,18 @@
+apiVersion: ops.kubedb.com/v1alpha1
+kind: DocumentDBOpsRequest
+metadata:
+  name: documentdb-standalone-vscale
+  namespace: demo
+spec:
+  type: VerticalScaling
+  databaseRef:
+    name: documentdb
+  verticalScaling:
+    documentdb:
+      resources:
+        requests:
+          cpu: 800m
+          memory: 3Gi
+        limits:
+          cpu: "1"
+          memory: 3Gi

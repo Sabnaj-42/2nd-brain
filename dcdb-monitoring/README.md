@@ -1,6 +1,7 @@
 # Monitoring — DocumentDB (Microsoft/CNPG) operator, and how to adopt it KubeDB/postgres-style
 
 Theory-level notes (no code). Three parts:
+
 1. How the upstream **DocumentDB Kubernetes operator** ([documentdb/documentdb-kubernetes-operator](https://github.com/documentdb/documentdb-kubernetes-operator)) does monitoring.
 2. How I can **adopt monitoring in my KubeDB DocumentDB operator**, following the postgres structure.
 3. How **KubeDB postgres** (`kubedb.dev/postgres`) does monitoring — the pattern to copy.
@@ -15,6 +16,7 @@ Prometheus-exporter sidecar; it is an **OpenTelemetry (OTel) Collector sidecar**
 `spec.monitoring`.
 
 ### How it works (theory)
+
 - The CR carries a **`spec.monitoring`** block (`enabled`, a `prometheus` port, and OTel sidecar
   resource requests/limits).
 - When `monitoring.enabled = true`, the operator reconcile loop does two things:
@@ -75,6 +77,7 @@ ServiceMonitor**, all driven by `spec.monitor`. This fits my existing structure 
 the PetSet; ops-manager owns TLS) and reuses the shared `kmodules.xyz/monitoring-agent-api`.
 
 ### The pieces to add (mirroring postgres, theory)
+
 1. **apimachinery** — add a **`spec.monitor` (`*mona.AgentSpec`)** field to `DocumentDBSpec`, plus a
    **`StatsService()`** helper (returns the `<db>-stats` service identity) and a metrics port name.
    *(My `DocumentDBSpec` has no `Monitor` field today — this is the first step.)* Regenerate CRD +
@@ -98,6 +101,7 @@ the PetSet; ops-manager owns TLS) and reuses the shared `kmodules.xyz/monitoring
    after services/petset), gated on `spec.monitor != nil`.
 
 ### Which layer owns it?
+
 Following postgres, **the provisioner owns monitoring** (it builds the PetSet, the StatsService, and
 the ServiceMonitor in the same reconcile). This is different from TLS, where the **ops-manager**
 creates the certs — monitoring has no such split in postgres, so keep it in `pkg/controllers`.
@@ -106,7 +110,7 @@ creates the certs — monitoring has no such split in postgres, so keep it in `p
 flowchart LR
   CR["DocumentDB CR<br/>spec.monitor.agent=prometheus.io/operator"] --> PROV["provisioner Reconciler<br/>(pkg/controllers)"]
   PROV -->|"add exporter sidecar"| POD
-  PROV -->|"ensureStatsService"| SVC["Service &lt;db&gt;-stats"]
+  PROV -->|"ensureStatsService"| SVC["Service <db>-stats"]
   PROV -->|"ensureMonitoring → mona.Agent"| SM["ServiceMonitor CR"]
 
   subgraph POD["DocumentDB pod"]
@@ -137,6 +141,7 @@ flowchart LR
 The reference implementation I'm copying. Pull-based Prometheus, three moving parts.
 
 ### Components (theory + where they live)
+
 - **API**: `spec.monitor` is a **`*mona.AgentSpec`** (`kmodules.xyz/monitoring-agent-api`) —
   `apimachinery/apis/kubedb/v1/postgres_types.go`. It selects the **agent** (`prometheus.io/operator`
   or `prometheus.io/builtin`) and holds the **exporter** config (`Prometheus.Exporter`: port, args,
@@ -153,15 +158,14 @@ The reference implementation I'm copying. Pull-based Prometheus, three moving pa
   - `ensureMonitoring` (gate: `spec.Monitor != nil && Agent.Vendor()==VendorPrometheus`) → ensures the
     StatsService, then
   - `manageMonitor` / `addOrUpdateMonitor` → `newMonitorController` builds a **`mona.Agent`**
-    (`agents.New(agent, kubeClient, PromClient)`) and calls **`agent.CreateOrUpdate(db.StatsService(),
-    db.Spec.Monitor)`**, which for the operator agent **creates/patches a `ServiceMonitor`** selecting
+    (`agents.New(agent, kubeClient, PromClient)`) and calls **`agent.CreateOrUpdate(db.StatsService(), db.Spec.Monitor)`**, which for the operator agent **creates/patches a `ServiceMonitor`** selecting
     `<db>-stats`. (`prometheus.io/builtin` instead annotates the Service for a plain Prometheus.)
-- **Wiring** — the provisioner `Reconciler` is constructed with a **`PromClient
-  pcm.MonitoringV1Interface`** (`pkg/controller/reconciler.go`); the reconcile loop calls
+- **Wiring** — the provisioner `Reconciler` is constructed with a **`PromClient pcm.MonitoringV1Interface`** (`pkg/controller/reconciler.go`); the reconcile loop calls
   `ensureMonitoring(db)`. (`monitor_distributed.go` handles the sharded/distributed case with a
   hub StatsService + `ServiceExport`.)
 
 ### The flow
+
 ```mermaid
 flowchart LR
   CR["Postgres CR<br/>spec.monitor"] --> RC["provisioner Reconciler"]
@@ -183,16 +187,17 @@ flowchart LR
 ```
 
 ### DocumentDB (Microsoft) vs postgres (KubeDB) — the contrast
-| | DocumentDB operator (Microsoft) | KubeDB postgres (what I'll adopt) |
-|---|---|---|
-| Base | CloudNativePG wrapper | native KubeDB PetSet |
-| Collector | **OTel Collector** sidecar | **postgres_exporter** sidecar |
-| Config | OTel `ConfigMap` (SQL queries + pipelines) | `spec.monitor` (agent + exporter) |
-| Metric source | SQL receiver **+** gateway OTLP push | postgres_exporter (built-in Postgres metrics) |
-| Delivery | Prometheus scrape **and/or** OTLP push | Prometheus **scrape** only |
-| Discovery | Prometheus scrapes the collector endpoint | **ServiceMonitor** → Prometheus Operator |
-| New metrics | edit SQL in collector config (no code) | exporter's built-ins / exporter args |
-| Owned by | operator reconcile (sidecar injection) | **provisioner** reconcile (sidecar + Service + ServiceMonitor) |
+
+|               | DocumentDB operator (Microsoft)             | KubeDB postgres (what I'll adopt)                                    |
+| ------------- | ------------------------------------------- | -------------------------------------------------------------------- |
+| Base          | CloudNativePG wrapper                       | native KubeDB PetSet                                                 |
+| Collector     | **OTel Collector** sidecar            | **postgres_exporter** sidecar                                  |
+| Config        | OTel`ConfigMap` (SQL queries + pipelines) | `spec.monitor` (agent + exporter)                                  |
+| Metric source | SQL receiver**+** gateway OTLP push   | postgres_exporter (built-in Postgres metrics)                        |
+| Delivery      | Prometheus scrape**and/or** OTLP push | Prometheus**scrape** only                                      |
+| Discovery     | Prometheus scrapes the collector endpoint   | **ServiceMonitor** → Prometheus Operator                      |
+| New metrics   | edit SQL in collector config (no code)      | exporter's built-ins / exporter args                                 |
+| Owned by      | operator reconcile (sidecar injection)      | **provisioner** reconcile (sidecar + Service + ServiceMonitor) |
 
 **Takeaway for my operator:** adopt the postgres three-piece model — **exporter sidecar → `<db>-stats`
 Service → ServiceMonitor** via `monitoring-agent-api`, driven by a new **`spec.monitor`** field and a

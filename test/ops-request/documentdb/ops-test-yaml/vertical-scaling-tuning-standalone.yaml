@@ -1,0 +1,19 @@
+# VerticalScaling against a STANDALONE DB with tuning enabled
+apiVersion: ops.kubedb.com/v1alpha1
+kind: DocumentDBOpsRequest
+metadata:
+  name: dcdb-vscale-tuning
+  namespace: demo
+spec:
+  type: VerticalScaling
+  databaseRef:
+    name: dcdb
+  verticalScaling:
+    documentdb:
+      resources:
+        requests:
+          cpu: "1"
+          memory: 3Gi
+        limits:
+          cpu: "1"
+          memory: 3Gi

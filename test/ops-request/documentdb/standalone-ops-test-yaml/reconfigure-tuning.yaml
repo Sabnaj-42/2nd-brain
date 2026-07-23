@@ -1,0 +1,15 @@
+# Reconfigure via the structured tuning block — maps to db.spec.configuration.tuning.
+apiVersion: ops.kubedb.com/v1alpha1
+kind: DocumentDBOpsRequest
+metadata:
+  name: documentdb-standalone-reconfigure-tuning
+  namespace: demo
+spec:
+  type: Reconfigure
+  databaseRef:
+    name: documentdb
+  configuration:
+    tuning:
+      profile: web
+      storageType: ssd
+      maxConnections: 300
