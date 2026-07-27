@@ -1,0 +1,27 @@
+# Stats Service — created by operator when spec.monitor is set
+# Exposes both postgres_exporter (56790) and otel-collector (8888) metrics ports
+apiVersion: v1
+kind: Service
+metadata:
+  name: dcdb-stats
+  namespace: demo
+  labels:
+    app.kubernetes.io/name: documentdbs.kubedb.com
+    app.kubernetes.io/instance: dcdb
+    app.kubernetes.io/managed-by: kubedb.com
+    app.kubernetes.io/component: database
+    kubedb.com/role: stats
+spec:
+  selector:
+    app.kubernetes.io/name: documentdbs.kubedb.com
+    app.kubernetes.io/instance: dcdb
+    app.kubernetes.io/managed-by: kubedb.com
+  ports:
+    - name: metrics
+      port: 56790
+      targetPort: metrics
+      protocol: TCP
+    - name: otel-metrics
+      port: 8888
+      targetPort: otel-metrics
+      protocol: TCP

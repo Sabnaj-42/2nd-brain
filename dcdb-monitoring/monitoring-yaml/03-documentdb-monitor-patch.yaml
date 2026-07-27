@@ -1,0 +1,15 @@
+# DocumentDB Monitor Patch — apply this to enable monitoring on your DocumentDB CR
+# Usage: kubectl patch documentdb -n <ns> <name> --type='merge' -p "$(cat 03-documentdb-monitor-patch.yaml)"
+spec:
+  monitor:
+    agent: prometheus.io/builtin
+    prometheus:
+      exporter:
+        port: 56790
+        resources:
+          requests:
+            cpu: 50m
+            memory: 64Mi
+          limits:
+            cpu: 200m
+            memory: 128Mi

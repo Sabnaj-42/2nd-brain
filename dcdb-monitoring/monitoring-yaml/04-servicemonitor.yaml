@@ -1,0 +1,21 @@
+# ServiceMonitor for DocumentDB monitoring
+# Created by operator when agent=prometheus.io/operator
+# For agent=prometheus.io/builtin, Prometheus uses annotations on the stats Service instead
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: dcdb-stats
+  namespace: demo
+  labels:
+    release: monitoring
+spec:
+  selector:
+    matchLabels:
+      kubedb.com/role: stats
+  endpoints:
+    - port: metrics
+      interval: 30s
+      path: /metrics
+    - port: otel-metrics
+      interval: 30s
+      path: /metrics
