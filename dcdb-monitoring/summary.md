@@ -43,7 +43,7 @@ Based on live metrics from `dcdb-0` pod running `sabnaj/documentdb-operator:moni
 | Source | **Postgres backend** (`localhost:9712`) via custom SQL queries every 30s |
 | Image | `ghcr.io/open-telemetry/opentelemetry-collector-releases/opentelemetry-collector-contrib:0.124.0` |
 | Port | `:8888/metrics` |
-| Total metric series | **29** (13 unique names × labels) |
+| Total metric series | **30** (14 unique names × labels) |
 
 ### All metrics (actual, current values)
 
@@ -51,6 +51,7 @@ Based on live metrics from `dcdb-0` pod running `sabnaj/documentdb-operator:moni
 | Metric | Value | Source (SQL) |
 |--------|-------|-------------|
 | `documentdb_postgres_up` | 1 | `SELECT 1 AS up` |
+| `documentdb_gateway_up` | 1 (>0 = up, 0 = down) | `count(*) FROM pg_stat_activity WHERE usename='default_user'` |
 
 **Connections (MongoDB clients via gateway → Postgres):**
 | Metric | Value | Source (SQL) |
