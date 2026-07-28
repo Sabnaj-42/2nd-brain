@@ -1,0 +1,125 @@
+{
+  "dashboard": {
+    "title": "DocumentDB Monitoring",
+    "uid": "documentdb",
+    "panels": [
+      {
+        "title": "Documents Inserted (per second)",
+        "type": "timeseries",
+        "gridPos": {"x": 0, "y": 0, "w": 12, "h": 8},
+        "targets": [
+          {
+            "expr": "rate(pg_stat_database_tup_inserted{job=\"dcdb-stats\",datname!~\"template.*\"}[1m])",
+            "legendFormat": "{{datname}}"
+          }
+        ]
+      },
+      {
+        "title": "Documents Updated (per second)",
+        "type": "timeseries",
+        "gridPos": {"x": 12, "y": 0, "w": 12, "h": 8},
+        "targets": [
+          {
+            "expr": "rate(pg_stat_database_tup_updated{job=\"dcdb-stats\",datname!~\"template.*\"}[1m])",
+            "legendFormat": "{{datname}}"
+          }
+        ]
+      },
+      {
+        "title": "Documents Fetched (per second)",
+        "type": "timeseries",
+        "gridPos": {"x": 0, "y": 8, "w": 12, "h": 8},
+        "targets": [
+          {
+            "expr": "rate(pg_stat_database_tup_fetched{job=\"dcdb-stats\",datname!~\"template.*\"}[1m])",
+            "legendFormat": "{{datname}}"
+          }
+        ]
+      },
+      {
+        "title": "Active Connections",
+        "type": "timeseries",
+        "gridPos": {"x": 12, "y": 8, "w": 12, "h": 8},
+        "targets": [
+          {
+            "expr": "documentdb_gateway_connections_active{job=\"dcdb-stats\"}",
+            "legendFormat": "active"
+          },
+          {
+            "expr": "documentdb_gateway_connections_idle{job=\"dcdb-stats\"}",
+            "legendFormat": "idle"
+          },
+          {
+            "expr": "documentdb_gateway_connections_total{job=\"dcdb-stats\"}",
+            "legendFormat": "total"
+          }
+        ]
+      },
+      {
+        "title": "Database Size (bytes)",
+        "type": "stat",
+        "gridPos": {"x": 0, "y": 16, "w": 6, "h": 4},
+        "targets": [
+          {
+            "expr": "documentdb_gateway_database_size_bytes{job=\"dcdb-stats\"}",
+            "legendFormat": "{{datname}}"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "unit": "bytes"
+          }
+        }
+      },
+      {
+        "title": "Deadlocks",
+        "type": "stat",
+        "gridPos": {"x": 6, "y": 16, "w": 6, "h": 4},
+        "targets": [
+          {
+            "expr": "documentdb_gateway_deadlocks{job=\"dcdb-stats\"}"
+          }
+        ]
+      },
+      {
+        "title": "Active Locks (by mode)",
+        "type": "timeseries",
+        "gridPos": {"x": 12, "y": 16, "w": 12, "h": 8},
+        "targets": [
+          {
+            "expr": "pg_locks_count{job=\"dcdb-stats\",datname=\"postgres\"}",
+            "legendFormat": "{{mode}}"
+          }
+        ]
+      },
+      {
+        "title": "Per-Collection: Documents Inserted",
+        "type": "timeseries",
+        "gridPos": {"x": 0, "y": 20, "w": 12, "h": 8},
+        "targets": [
+          {
+            "expr": "documentdb_gateway_collection_documents_inserted{job=\"dcdb-stats\"}",
+            "legendFormat": "{{db}}.{{collection}}"
+          }
+        ]
+      },
+      {
+        "title": "Commits vs Rollbacks (per second)",
+        "type": "timeseries",
+        "gridPos": {"x": 12, "y": 20, "w": 12, "h": 8},
+        "targets": [
+          {
+            "expr": "rate(documentdb_gateway_operations_commits{job=\"dcdb-stats\"}[1m])",
+            "legendFormat": "commits"
+          },
+          {
+            "expr": "rate(documentdb_gateway_operations_rollbacks{job=\"dcdb-stats\"}[1m])",
+            "legendFormat": "rollbacks"
+          }
+        ]
+      }
+    ],
+    "refresh": "10s",
+    "time": {"from": "now-15m", "to": "now"}
+  }
+}

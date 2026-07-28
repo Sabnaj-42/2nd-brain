@@ -1,0 +1,24 @@
+apiVersion: kubedb.com/v1alpha2
+kind: DocumentDB
+metadata:
+  name: dcdb
+  namespace: demo
+spec:
+  version: pg17-0.109.0
+  replicas: 1
+  authSecret:
+    name: dcdb-auth
+  adminAuthSecret:
+    name: dcdb-admin-auth
+  storageType: Durable
+  storage:
+    accessModes:
+      - ReadWriteOnce
+    resources:
+      requests:
+        storage: 1Gi
+  monitor:
+    agent: prometheus.io/operator
+    prometheus:
+      exporter:
+        port: 56790

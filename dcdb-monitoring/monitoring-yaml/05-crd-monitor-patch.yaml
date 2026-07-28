@@ -1,0 +1,28 @@
+# CRD patch to add the monitor field to the DocumentDB CRD
+# Apply with: kubectl patch crd documentdbs.kubedb.com --type='json' --patch-file 05-crd-monitor-patch.yaml
+- op: add
+  path: /spec/versions/0/schema/openAPIV3Schema/properties/spec/properties/monitor
+  value:
+    type: object
+    properties:
+      agent:
+        type: string
+        enum:
+          - prometheus.io/builtin
+          - prometheus.io/operator
+      prometheus:
+        type: object
+        properties:
+          exporter:
+            type: object
+            properties:
+              port:
+                type: integer
+                minimum: 1024
+                maximum: 65535
+              args:
+                type: array
+                items:
+                  type: string
+              resources:
+                type: object
