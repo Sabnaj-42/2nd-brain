@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DocumentDB Monitoring Architecture</title>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js"></script>
+<style>
+  body { background: #1a1a2e; color: #eee; font-family: system-ui; padding: 20px; }
+  h1 { text-align: center; color: #4fc3f7; margin-bottom: 5px; }
+  .subtitle { text-align: center; color: #888; margin-bottom: 30px; }
+  .mermaid { background: #16213e; border-radius: 12px; padding: 20px; margin: 15px 0; }
+  h2 { color: #81c784; border-bottom: 1px solid #333; padding-bottom: 8px; margin-top: 40px; }
+  table { width: 100%; border-collapse: collapse; margin: 15px 0; }
+  th { background: #0d47a1; padding: 10px; text-align: left; }
+  td { padding: 8px 10px; border-bottom: 1px solid #333; }
+  tr:hover { background: #1a3a5c; }
+  .metrics-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+  .metrics-card { background: #16213e; border-radius: 10px; padding: 15px; }
+  .metrics-card h3 { color: #ffb74d; margin-top: 0; }
+  .port-box { display: inline-block; background: #0d47a1; color: #fff; padding: 3px 8px; border-radius: 4px; font-family: monospace; font-size: 13px; }
+  .source-tag { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 12px; margin-left: 5px; }
+  .source-pg { background: #1b5e20; color: #a5d6a7; }
+  .source-otel { background: #4a148c; color: #ce93d8; }
+  .value { font-family: monospace; color: #4fc3f7; }
+  small { color: #888; }
+</style>
+</head>
+<body>
+<h1>DocumentDB Monitoring — Full Architecture</h1>
+<p class="subtitle">Live metrics from dcdb-0 pod | Operator: monitoring-v6</p>
+
+<div class="mermaid">
+flowchart TB
+    subgraph K8S["Kubernetes Cluster"]
+        subgraph DEMO["namespace: demo"]
+            subgraph POD["Pod: dcdb-0"]
+                DOCDB["<b>documentdb</b><br/>main container<br/>━━━━━━━━<br/>Postgres <span class='port-box'>:9712</span><br/>Gateway <span class='port-box'>:10260</span>"]
+                EXP["<b>exporter</b><br/>sidecar<br/>━━━━━━━━<br/>postgres_exporter<br/>image: v0.17.0<br/>━━━━━━━━<br/>→ localhost:9712<br/>→ exposes <span class='port-box'>:56790</span>/metrics<br/>→ 1213 data points"]
+                OTEL["<b>otel-collector</b><br/>sidecar<br/>━━━━━━━━<br/>sqlquery receiver<br/>image: contrib 0.124.0<br/>━━━━━━━━<br/>→ localhost:9712<br/>  (SQL every 30s)<br/>→ exposes <span class='port-box'>:8888</span>/metrics<br/>→ 30 data points"]
+            end
+            DOCDB -->|"SQL connection"| EXP
+            DOCDB -->|"SQL connection"| OTEL
+            SVC["<b>Service: dcdb-stats</b><br/>━━━━━━━━<br/>Port <span class='port-box'>metrics:56790</span> → exporter<br/>Port <span class='port-box'>otel-metrics:8888</span> → otel-collector<br/>Label: kubedb.com/role=stats"]
+            SM["<b>ServiceMonitor: dcdb-stats</b><br/>━━━━━━━━<br/>Auto-created by operator<br/>Interval: 30s<br/>Selects: kubedb.com/role=stats"]
+            EXP -->|"registers port"| SVC
+            OTEL -->|"registers port"| SVC
+            SVC -->|"discovered by"| SM
+        end
+        subgraph MON["namespace: monitoring"]
+            PROM["<b>Prometheus</b><br/>━━━━━━━━<br/>Scrapes every 30s<br/>:56790/metrics → pg_*<br/>:8888/metrics → documentdb_*<br/>UI <span class='port-box'>:9090</span>"]
+            GRAF["<b>Grafana</b><br/>━━━━━━━━<br/>Data source: Prometheus<br/>Dashboard: DocumentDB<br/>UI <span class='port-box'>:3000</span><br/>Login: admin / admin123"]
+        end
+        subgraph OPS["namespace: kubedb"]
+            OPERATOR["<b>DocumentDBReconciler</b><br/>━━━━━━━━<br/>Image: monitoring-v6<br/>On spec.monitor set:<br/>① Creates dcdb-otel-config<br/>② Adds sidecar containers<br/>③ Creates dcdb-stats Service<br/>④ Creates dcdb-stats ServiceMonitor"]
+        end
+        SM -->|"tells what to scrape"| PROM
+        PROM -->|"PromQL queries"| GRAF
+        OPERATOR -.->|"auto-creates"| POD
+        OPERATOR -.->|"auto-creates"| SVC
+        OPERATOR -.->|"auto-creates"| SM
+    end
+    USER["👤 User<br/>kubectl port-forward"]
+    USER -->|"http://localhost:3000"| GRAF
+    USER -->|"http://localhost:9090"| PROM
+
+    style DOCDB fill:#1a237e,stroke:#5c6bc0,color:#fff
+    style EXP fill:#1b5e20,stroke:#66bb6a,color:#fff
+    style OTEL fill:#4a148c,stroke:#ab47bc,color:#fff
+    style SVC fill:#e65100,stroke:#ff9800,color:#fff
+    style SM fill:#bf360c,stroke:#f4511e,color:#fff
+    style PROM fill:#01579b,stroke:#29b6f6,color:#fff
+    style GRAF fill:#004d40,stroke:#26a69a,color:#fff
+    style OPERATOR fill:#263238,stroke:#546e7a,color:#fff
+    style POD fill:#121212,stroke:#333,color:#fff
+    style DEMO fill:#0a0a1a,stroke:#222,#fff
+    style MON fill:#0a0a1a,stroke:#222,#fff
+    style OPS fill:#0a0a1a,stroke:#222,#fff
+</div>
+
+<h2>Metrics: postgres_exporter (<span class="port-box">:56790</span>)</h2>
+<p>Source: <span class="source-tag source-pg">Postgres</span> — Connects to localhost:9712, runs built-in collector queries</p>
+<div class="metrics-grid">
+<div class="metrics-card">
+<h3>Database & Connection Metrics</h3>
+<table>
+<tr><th>Metric</th><th>Current</th><th>Description</th></tr>
+<tr><td><code>pg_stat_database_tup_inserted</code></td><td class="value">30,324</td><td>Documents inserted</td></tr>
+<tr><td><code>pg_stat_database_tup_updated</code></td><td class="value">29,602</td><td>Documents updated</td></tr>
+<tr><td><code>pg_stat_database_tup_deleted</code></td><td class="value">3,522</td><td>Documents deleted</td></tr>
+<tr><td><code>pg_stat_database_tup_fetched</code></td><td class="value">6,814,592</td><td>Documents fetched</td></tr>
+<tr><td><code>pg_stat_database_xact_commit</code></td><td class="value">115,863</td><td>Committed transactions</td></tr>
+<tr><td><code>pg_stat_database_deadlocks</code></td><td class="value">0</td><td>Deadlocks</td></tr>
+<tr><td><code>pg_locks_count</code></td><td class="value">varies</td><td>Locks by mode</td></tr>
+<tr><td><code>pg_stat_activity_count</code></td><td class="value">varies</td><td>Connections by state</td></tr>
+</table>
+</div>
+<div class="metrics-card">
+<h3>Replication, WAL, Storage & Settings</h3>
+<table>
+<tr><th>Metric</th><th>Current</th><th>Description</th></tr>
+<tr><td><code>pg_replication_is_replica</code></td><td class="value">0</td><td>Is standby?</td></tr>
+<tr><td><code>pg_replication_lag_seconds</code></td><td class="value">0</td><td>Replication lag</td></tr>
+<tr><td><code>pg_wal_size_bytes</code></td><td class="value">50 MB</td><td>WAL disk usage</td></tr>
+<tr><td><code>pg_database_size_bytes</code></td><td class="value">20.7 MB</td><td>Database size</td></tr>
+<tr><td><code>pg_stat_user_tables_n_tup_ins</code></td><td class="value">per-table</td><td>Per-collection inserts</td></tr>
+<tr><td><code>pg_stat_bgwriter_buffers_alloc</code></td><td class="value">3,267</td><td>Buffer allocations</td></tr>
+<tr><td><code>pg_up</code></td><td class="value">1</td><td>Postgres alive</td></tr>
+<tr><td><code>pg_settings_*</code></td><td class="value">~350</td><td>PG + DocumentDB config</td></tr>
+</table>
+</div>
+</div>
+
+<h2>Metrics: otel-collector (<span class="port-box">:8888</span>)</h2>
+<p>Source: <span class="source-tag source-pg">Postgres</span> — Runs custom SQL queries every 30 seconds</p>
+<div class="metrics-grid">
+<div class="metrics-card">
+<h3>Health & Connections</h3>
+<table>
+<tr><th>Metric</th><th>Current</th><th>Description</th></tr>
+<tr><td><code>documentdb_postgres_up</code></td><td class="value">1</td><td>Postgres alive</td></tr>
+<tr><td style="background:#1b5e20"><code>documentdb_gateway_up</code></td><td class="value">1</td><td><b>Gateway alive</b><br/><small>default_user connections > 0</small></td></tr>
+<tr><td><code>documentdb_gateway_connections_total</code></td><td class="value">16</td><td>Total connections</td></tr>
+<tr><td><code>documentdb_gateway_connections_active</code></td><td class="value">1</td><td>Active queries</td></tr>
+<tr><td><code>documentdb_gateway_connections_idle</code></td><td class="value">15</td><td>Idle connections</td></tr>
+<tr><td><code>documentdb_gateway_connections_waiting</code></td><td class="value">0</td><td>Waiting on locks</td></tr>
+</table>
+</div>
+<div class="metrics-card">
+<h3>Operations & Per-Collection Stats</h3>
+<table>
+<tr><th>Metric</th><th>Current</th><th>Description</th></tr>
+<tr><td><code>documentdb_gateway_documents_inserted</code></td><td class="value">30,324</td><td>Total inserts</td></tr>
+<tr><td><code>documentdb_gateway_documents_updated</code></td><td class="value">29,602</td><td>Total updates</td></tr>
+<tr><td><code>documentdb_gateway_documents_deleted</code></td><td class="value">3,522</td><td>Total deletes</td></tr>
+<tr><td><code>documentdb_gateway_documents_fetched</code></td><td class="value">6,814,592</td><td>Total reads</td></tr>
+<tr><td><code>documentdb_gateway_deadlocks</code></td><td class="value">0</td><td>Deadlock count</td></tr>
+<tr><td><code>documentdb_gateway_database_size_bytes</code></td><td class="value">20.7 MB</td><td>Storage per DB</td></tr>
+<tr><td><code>*_collection_documents_inserted</code></td><td class="value">per-collection</td><td>Per-collection inserts<br/><small>labeled: db, collection</small></td></tr>
+<tr><td><code>*_collection_documents_updated</code></td><td class="value">per-collection</td><td>Per-collection updates</td></tr>
+</table>
+</div>
+</div>
+
+</body>
+</html>
