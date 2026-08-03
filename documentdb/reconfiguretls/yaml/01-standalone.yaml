@@ -1,0 +1,17 @@
+apiVersion: kubedb.com/v1alpha2
+kind: DocumentDB
+metadata:
+  name: dcdb-rtls-standalone
+  namespace: demo
+spec:
+  version: pg17-0.109.0
+  replicas: 1
+  storageType: Durable
+  storage:
+    accessModes:
+      - ReadWriteOnce
+    resources:
+      requests:
+        storage: 2Gi
+    storageClassName: local-path
+  deletionPolicy: WipeOut

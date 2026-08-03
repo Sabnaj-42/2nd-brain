@@ -1,0 +1,14 @@
+apiVersion: ops.kubedb.com/v1alpha1
+kind: DocumentDBOpsRequest
+metadata:
+  name: dcdb-rtls-ha-change-issuer
+  namespace: demo
+spec:
+  type: ReconfigureTLS
+  databaseRef:
+    name: dcdb-rtls-ha
+  tls:
+    issuerRef:
+      name: dcdb-alt-issuer
+      kind: Issuer
+      apiGroup: cert-manager.io

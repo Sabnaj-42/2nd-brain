@@ -40,3 +40,38 @@ metadata:
 spec:
   ca:
     secretName: dcdb-ca-tls
+---
+# Alternate CA chain used for "change issuer" tests, so it differs from dcdb-ca-issuer above.
+apiVersion: cert-manager.io/v1
+kind: Issuer
+metadata:
+  name: dcdb-alt-selfsigned-boot
+  namespace: demo
+spec:
+  selfSigned: {}
+---
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: dcdb-alt-ca
+  namespace: demo
+spec:
+  isCA: true
+  commonName: dcdb-alt-ca
+  secretName: dcdb-alt-ca-secret
+  privateKey:
+    algorithm: ECDSA
+    size: 256
+  issuerRef:
+    name: dcdb-alt-selfsigned-boot
+    kind: Issuer
+    group: cert-manager.io
+---
+apiVersion: cert-manager.io/v1
+kind: Issuer
+metadata:
+  name: dcdb-alt-issuer
+  namespace: demo
+spec:
+  ca:
+    secretName: dcdb-alt-ca-secret

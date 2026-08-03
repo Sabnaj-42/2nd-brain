@@ -1,0 +1,14 @@
+apiVersion: ops.kubedb.com/v1alpha1
+kind: DocumentDBOpsRequest
+metadata:
+  name: dcdb-rtls-standalone-add-tls
+  namespace: demo
+spec:
+  type: ReconfigureTLS
+  databaseRef:
+    name: dcdb-rtls-standalone
+  tls:
+    issuerRef:
+      name: dcdb-ca-issuer
+      kind: Issuer
+      apiGroup: cert-manager.io
