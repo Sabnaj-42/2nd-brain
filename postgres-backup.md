@@ -49,15 +49,15 @@ secrets, TLS, HA/failover, ops-requests. For backup it owns the **orchestration*
 
 Its backup-related responsibilities:
 
-| Responsibility | Where |
-| -------------- | ----- |
-| Discover which archiver applies to a DB and stamp `spec.archiver` on it | `pkg/controller/archiver.go` |
-| Translate a `PostgresArchiver` CR into a KubeStash `BackupConfiguration` | `pkg/controller/backup_configuration.go` |
-| Create and maintain the long-lived incremental `Snapshot` (the WAL ledger) | `pkg/controller/snapshot.go` |
-| Create the `Sidekick` CR that runs the wal-g archiver container | `pkg/controller/sidekick.go` |
-| Turn on WAL archiving in the DB container via env vars | `pkg/controller/petset.go` |
-| Drive the whole restore choreography | `pkg/controller/restore.go`, `restoresession.go` |
-| Gate the DB from serving until restore completes | `spec.init.waitForInitialRestore` |
+| Responsibility                                                              | Where                                                |
+| --------------------------------------------------------------------------- | ---------------------------------------------------- |
+| Discover which archiver applies to a DB and stamp`spec.archiver` on it    | `pkg/controller/archiver.go`                       |
+| Translate a`PostgresArchiver` CR into a KubeStash `BackupConfiguration` | `pkg/controller/backup_configuration.go`           |
+| Create and maintain the long-lived incremental`Snapshot` (the WAL ledger) | `pkg/controller/snapshot.go`                       |
+| Create the`Sidekick` CR that runs the wal-g archiver container            | `pkg/controller/sidekick.go`                       |
+| Turn on WAL archiving in the DB container via env vars                      | `pkg/controller/petset.go`                         |
+| Drive the whole restore choreography                                        | `pkg/controller/restore.go`, `restoresession.go` |
+| Gate the DB from serving until restore completes                            | `spec.init.waitForInitialRestore`                  |
 
 **Key idea:** the operator is the only component that understands *PostgreSQL semantics* (primary vs
 standby, replication strategy, major version). The plugins are deliberately dumb about the cluster.
@@ -67,12 +67,12 @@ standby, replication strategy, major version). The plugins are deliberately dumb
 A CLI binary (`kubestash-postgres`) shipped as a container image, invoked by KubeStash inside a
 backup or restore **Job**. Four subcommands, which map 1:1 to KubeStash task names:
 
-| Subcommand | Tool | KubeStash component |
-| ---------- | ---- | ------------------- |
-| `backup` | `pg_dumpall` (default) or `pg_dump` | `dump` |
-| `restore` | `psql` | `dump` |
-| `physical-backup` | `pg_basebackup` (or `pg_tde_basebackup` if present) | `physical` |
-| `physical-restore` | `tar -x` | `physical` |
+| Subcommand           | Tool                                                    | KubeStash component |
+| -------------------- | ------------------------------------------------------- | ------------------- |
+| `backup`           | `pg_dumpall` (default) or `pg_dump`                 | `dump`            |
+| `restore`          | `psql`                                                | `dump`            |
+| `physical-backup`  | `pg_basebackup` (or `pg_tde_basebackup` if present) | `physical`        |
+| `physical-restore` | `tar -x`                                              | `physical`        |
 
 **The streaming model.** Nothing is staged on disk. The plugin builds a shell command and hands it to
 restic as a stdin pipe — effectively `pg_dumpall | restic backup --stdin`. Restore is the mirror:
@@ -176,15 +176,15 @@ coordinate only through KubeStash `Snapshot` objects.
 
 Four API groups are in play.
 
-| Group | Kinds | Owned by |
-| ----- | ----- | -------- |
-| `kubedb.com` | `Postgres` | KubeDB |
-| `catalog.kubedb.com` | `PostgresVersion` | KubeDB |
-| `archiver.kubedb.com` | `PostgresArchiver` | KubeDB |
-| `core.kubestash.com` | `BackupConfiguration`, `BackupSession`, `RestoreSession` | KubeStash |
+| Group                     | Kinds                                                                | Owned by  |
+| ------------------------- | -------------------------------------------------------------------- | --------- |
+| `kubedb.com`            | `Postgres`                                                         | KubeDB    |
+| `catalog.kubedb.com`    | `PostgresVersion`                                                  | KubeDB    |
+| `archiver.kubedb.com`   | `PostgresArchiver`                                                 | KubeDB    |
+| `core.kubestash.com`    | `BackupConfiguration`, `BackupSession`, `RestoreSession`       | KubeStash |
 | `storage.kubestash.com` | `BackupStorage`, `Repository`, `Snapshot`, `RetentionPolicy` | KubeStash |
-| `addons.kubestash.com` | `Addon`, `Function` (cluster-scoped) | KubeStash |
-| `apps.k8s.appscode.com` | `Sidekick` | kubeops |
+| `addons.kubestash.com`  | `Addon`, `Function` (cluster-scoped)                             | KubeStash |
+| `apps.k8s.appscode.com` | `Sidekick`                                                         | kubeops   |
 
 ### 4.1 `PostgresArchiver` — the user-facing PITR knob
 
@@ -220,16 +220,16 @@ not a code change.
 
 ### 4.3 Naming conventions the whole system relies on
 
-| Object | Name |
-| ------ | ---- |
-| BackupConfiguration | `<db>-archiver` |
-| Full backup session | `full-backup` |
-| Manifest session | `manifest-backup` |
-| Full backup repository | `<db>-full` |
-| Manifest repository | `<db>-manifest` |
-| WAL ledger Snapshot | `<db>-incremental-snapshot` |
-| Sidekick | `<db>-sidekick` |
-| wal-g container | `wal-g` |
+| Object                 | Name                          |
+| ---------------------- | ----------------------------- |
+| BackupConfiguration    | `<db>-archiver`             |
+| Full backup session    | `full-backup`               |
+| Manifest session       | `manifest-backup`           |
+| Full backup repository | `<db>-full`                 |
+| Manifest repository    | `<db>-manifest`             |
+| WAL ledger Snapshot    | `<db>-incremental-snapshot` |
+| Sidekick               | `<db>-sidekick`             |
+| wal-g container        | `wal-g`                     |
 
 ---
 
@@ -346,11 +346,11 @@ listing, no wal-g catalog query — Kubernetes objects are the source of truth.
 
 Writer/reader split:
 
-| Field | Written by | Read by |
-| ----- | ---------- | ------- |
+| Field                                     | Written by                             | Read by                          |
+| ----------------------------------------- | -------------------------------------- | -------------------------------- |
 | Full snapshot restic/volumesnapshot stats | restic-plugin / csi-snapshotter-plugin | operator (base backup selection) |
-| Incremental `logStats.end` / `.lsn` | postgres-archiver | operator (PITR bound check) |
-| `logStats.lastLogRetentionStats` | postgres-archiver retention cron | operator / user |
+| Incremental`logStats.end` / `.lsn`    | postgres-archiver                      | operator (PITR bound check)      |
+| `logStats.lastLogRetentionStats`        | postgres-archiver retention cron       | operator / user                  |
 
 ---
 
@@ -599,32 +599,24 @@ These are the transferable ideas — the reasons this architecture works, indepe
 
 1. **Separate orchestration from data movement.** The operator understands the database; the plugins
    understand one tool each. Neither needs to change when the other does.
-
 2. **One binary, one image, one job per concern.** Logical backup, block snapshot, and log shipping
    have wildly different lifetimes (short Job / short Job / forever). Forcing them into one component
    would compromise all three.
-
 3. **Scheduled work is a Job; continuous work is a Sidekick.** KubeStash's CronJob model is a poor fit
    for something that must run constantly and follow the primary through failovers. That is why the
    archiver lives outside KubeStash's Job machinery while still reporting into its objects.
-
 4. **Use a Kubernetes object as the coordination ledger.** The long-lived incremental `Snapshot`
    removes any need for the operator to query object storage or the backup tool's catalog. Everything
    PITR needs is answerable with a `list` and a `get`.
-
 5. **Never start log shipping before a base backup exists.** `InitialBackupSucceeded` is a hard gate.
    WAL without a base is unusable, and silently archiving it would create a false sense of safety.
-
 6. **Re-derive role on every operation, not once at startup.** The primary can change under you. The
    archiver checks before every push.
-
 7. **Push image and task names into the catalog CR.** `PostgresVersion.spec.archiver` means adding a
    new engine version, or switching addon implementations, is a YAML change rather than a release.
-
 8. **Resolve all connection details from the AppBinding.** Plugins receive only a namespace and a
    BackupSession name. Everything else — host, port, credentials, TLS, topology — comes from one
    indirection, so plugins stay identical across managed and external databases.
-
 9. **Restore is choreography, not a single job.** Manifest → base volume → log replay → cluster
    reconstitution are four distinct phases with explicit gates between them, each individually
    observable and retryable.
@@ -633,9 +625,9 @@ These are the transferable ideas — the reasons this architecture works, indepe
 
 ## Appendix — repo-to-concern index
 
-| Repo | Runs as | Lifetime | Tools it wraps | Writes to Snapshot |
-| ---- | ------- | -------- | -------------- | ------------------ |
-| `kubedb.dev/postgres` | Operator deployment | Always | — (creates objects only) | creates the incremental Snapshot |
-| `kubedb.dev/postgres-restic-plugin` | KubeStash Job | Seconds–minutes | `pg_dump`, `pg_dumpall`, `psql`, `pg_basebackup`, `tar`, `restic` | `dump` / `physical` components |
-| `kubedb.dev/postgres-csi-snapshotter-plugin` | KubeStash Job | Seconds | Kubernetes `VolumeSnapshot` API, `pg_wal_replay_pause/resume` | volume-snapshotter component |
-| `kubedb.dev/postgres-archiver` | Sidekick container | Forever | `wal-g wal-push`, WAL decoding, bucket deletes | `wal` component `logStats` |
+| Repo                                           | Runs as             | Lifetime         | Tools it wraps                                                                | Writes to Snapshot                 |
+| ---------------------------------------------- | ------------------- | ---------------- | ----------------------------------------------------------------------------- | ---------------------------------- |
+| `kubedb.dev/postgres`                        | Operator deployment | Always           | — (creates objects only)                                                     | creates the incremental Snapshot   |
+| `kubedb.dev/postgres-restic-plugin`          | KubeStash Job       | Seconds–minutes | `pg_dump`, `pg_dumpall`, `psql`, `pg_basebackup`, `tar`, `restic` | `dump` / `physical` components |
+| `kubedb.dev/postgres-csi-snapshotter-plugin` | KubeStash Job       | Seconds          | Kubernetes`VolumeSnapshot` API, `pg_wal_replay_pause/resume`              | volume-snapshotter component       |
+| `kubedb.dev/postgres-archiver`               | Sidekick container  | Forever          | `wal-g wal-push`, WAL decoding, bucket deletes                              | `wal` component `logStats`     |
