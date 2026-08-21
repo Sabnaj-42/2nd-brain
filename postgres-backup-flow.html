@@ -1,0 +1,1015 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>KubeDB Postgres Backup Flow</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Familjen+Grotesk:wght@400;500;600;700&family=Source+Sans+3:ital,wght@0,400;0,600;1,400&family=JetBrains+Mono:wght@400;500&display=swap">
+
+<style>
+:root{
+  --ground:#F6F7F9; --surface:#FFFFFF; --surface-2:#EDF0F4; --surface-3:#E4E9F0;
+  --ink:#1A2231; --ink-2:#56647A; --ink-3:#7C8B9F;
+  --rule:#D8DEE7; --rule-2:#C3CCD9;
+  --sched:#2F6FB5; --sched-soft:#E6EFF8;
+  --cont:#C0741A; --cont-soft:#FBF0DF;
+  --gate:#2C7A55; --gate-soft:#E2F1E9;
+  --shadow:0 1px 2px rgba(26,34,49,.05), 0 8px 24px -16px rgba(26,34,49,.18);
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --ground:#10151B; --surface:#171D25; --surface-2:#1F2731; --surface-3:#28323E;
+    --ink:#E3E9F1; --ink-2:#9AA8BA; --ink-3:#77869A;
+    --rule:#2C3542; --rule-2:#3A4553;
+    --sched:#79ADE2; --sched-soft:#17293C;
+    --cont:#E0A257; --cont-soft:#332613;
+    --gate:#66B78F; --gate-soft:#16301F;
+    --shadow:0 1px 2px rgba(0,0,0,.4), 0 8px 24px -16px rgba(0,0,0,.6);
+  }
+}
+:root[data-theme="dark"]{
+  --ground:#10151B; --surface:#171D25; --surface-2:#1F2731; --surface-3:#28323E;
+  --ink:#E3E9F1; --ink-2:#9AA8BA; --ink-3:#77869A;
+  --rule:#2C3542; --rule-2:#3A4553;
+  --sched:#79ADE2; --sched-soft:#17293C;
+  --cont:#E0A257; --cont-soft:#332613;
+  --gate:#66B78F; --gate-soft:#16301F;
+  --shadow:0 1px 2px rgba(0,0,0,.4), 0 8px 24px -16px rgba(0,0,0,.6);
+}
+
+*{box-sizing:border-box}
+body{
+  margin:0; background:var(--ground); color:var(--ink);
+  font-family:"Source Sans 3","Segoe UI",system-ui,sans-serif;
+  font-size:17px; line-height:1.62; -webkit-font-smoothing:antialiased;
+}
+.wrap{width:100%; max-width:1000px; margin:0 auto; padding:0 28px 96px}
+.col{max-width:70ch}
+
+h1,h2,h3,.eyebrow,.step-n,.chip{font-family:"Familjen Grotesk","Familjen Grotesk Fallback",system-ui,sans-serif}
+h1{font-size:clamp(2.1rem,4.4vw,3.1rem); line-height:1.06; font-weight:700; letter-spacing:-.022em; text-wrap:balance; margin:0 0 .5rem}
+h2{font-size:1.62rem; font-weight:600; letter-spacing:-.014em; text-wrap:balance; margin:0 0 .1rem}
+h3{font-size:1.1rem; font-weight:600; letter-spacing:-.006em; text-wrap:balance; margin:0 0 .35rem}
+p{margin:0 0 1.05rem}
+a{color:var(--sched)}
+code,kbd{font-family:"JetBrains Mono",ui-monospace,SFMono-Regular,Menlo,monospace; font-size:.855em}
+p code,li code,td code,th code{background:var(--surface-2); border:1px solid var(--rule); border-radius:4px; padding:.06em .34em; white-space:nowrap}
+
+.eyebrow{
+  font-size:.72rem; font-weight:600; letter-spacing:.14em; text-transform:uppercase;
+  color:var(--ink-3); margin:0 0 .55rem;
+}
+
+/* ---- masthead ---- */
+header.top{padding:76px 0 8px}
+.lede{font-size:1.2rem; line-height:1.55; color:var(--ink-2); max-width:60ch; margin:0 0 1.6rem}
+.lede strong{color:var(--ink); font-weight:600}
+
+.legend{display:flex; flex-wrap:wrap; gap:10px; margin:0 0 8px; padding:0; list-style:none}
+.legend li{
+  display:flex; align-items:center; gap:8px; font-size:.83rem; color:var(--ink-2);
+  background:var(--surface); border:1px solid var(--rule); border-radius:999px; padding:5px 13px 5px 9px;
+}
+.swatch{width:10px; height:10px; border-radius:2px; flex:none}
+.sw-s{background:var(--sched)} .sw-c{background:var(--cont)} .sw-g{background:var(--gate)}
+
+/* ---- sections ---- */
+section{padding-top:58px}
+.sec-head{display:flex; align-items:baseline; gap:14px; margin-bottom:1.1rem; border-top:1px solid var(--rule); padding-top:20px}
+.sec-n{
+  font-family:"JetBrains Mono",monospace; font-size:.8rem; color:var(--ink-3);
+  font-variant-numeric:tabular-nums; padding-top:.32rem; flex:none;
+}
+.sec-sub{color:var(--ink-2); font-size:.97rem; margin:.25rem 0 0}
+
+/* ---- figures ---- */
+figure{width:100%; min-width:0; margin:26px 0 30px; background:var(--surface); border:1px solid var(--rule); border-radius:10px; box-shadow:var(--shadow); overflow:hidden}
+.fig-scroll{overflow-x:auto; padding:22px 22px 6px}
+figure svg{display:block; max-width:100%; height:auto; min-width:640px; color:var(--ink-2)}
+figcaption{
+  padding:12px 22px 15px; border-top:1px solid var(--rule); background:var(--surface-2);
+  font-size:.87rem; line-height:1.5; color:var(--ink-2);
+}
+figcaption b{color:var(--ink); font-weight:600}
+
+/* svg primitives */
+.bx{fill:var(--surface); stroke:var(--rule-2); stroke-width:1.25}
+.bx-2{fill:var(--surface-2); stroke:var(--rule-2); stroke-width:1.25}
+.bx-s{fill:var(--sched-soft); stroke:var(--sched); stroke-width:1.4}
+.bx-c{fill:var(--cont-soft); stroke:var(--cont); stroke-width:1.4}
+.bx-g{fill:var(--gate-soft); stroke:var(--gate); stroke-width:1.4}
+.lane{fill:var(--surface-2); stroke:none}
+.lane-r{fill:none; stroke:var(--rule); stroke-width:1; stroke-dasharray:3 4}
+.t{fill:var(--ink); font-family:"Source Sans 3",sans-serif; font-size:12.5px}
+.t-b{fill:var(--ink); font-family:"Familjen Grotesk",sans-serif; font-size:13px; font-weight:600}
+.t-m{fill:var(--ink-2); font-family:"JetBrains Mono",monospace; font-size:10.5px}
+.t-s{fill:var(--ink-2); font-family:"Source Sans 3",sans-serif; font-size:11.5px}
+.t-lane{fill:var(--ink-3); font-family:"Familjen Grotesk",sans-serif; font-size:10.5px; font-weight:600; letter-spacing:.1em}
+.t-sched{fill:var(--sched)} .t-cont{fill:var(--cont)} .t-gate{fill:var(--gate)}
+.a{fill:none; stroke:var(--ink-3); stroke-width:1.4}
+.a-s{fill:none; stroke:var(--sched); stroke-width:1.6}
+.a-c{fill:none; stroke:var(--cont); stroke-width:1.6}
+.a-g{fill:none; stroke:var(--gate); stroke-width:1.6}
+.a-d{stroke-dasharray:4 4}
+.mk{fill:var(--ink-3)} .mk-s{fill:var(--sched)} .mk-c{fill:var(--cont)} .mk-g{fill:var(--gate)}
+
+/* ---- tables ---- */
+.tbl-scroll{overflow-x:auto; margin:22px 0 26px; border:1px solid var(--rule); border-radius:10px; background:var(--surface)}
+table{border-collapse:collapse; width:100%; font-size:.9rem; min-width:560px}
+th,td{text-align:left; padding:10px 15px; border-bottom:1px solid var(--rule); vertical-align:top}
+thead th{
+  font-family:"Familjen Grotesk",sans-serif; font-weight:600; font-size:.75rem;
+  letter-spacing:.075em; text-transform:uppercase; color:var(--ink-3); background:var(--surface-2);
+}
+tbody tr:last-child td{border-bottom:none}
+td.num{font-variant-numeric:tabular-nums}
+
+/* ---- numbered spine ---- */
+ol.spine{list-style:none; margin:22px 0 26px; padding:0; counter-reset:sp}
+ol.spine>li{
+  position:relative; padding:0 0 22px 46px; counter-increment:sp;
+  border-left:1.5px solid var(--rule); margin-left:13px;
+}
+ol.spine>li:last-child{border-left-color:transparent; padding-bottom:0}
+ol.spine>li::before{
+  content:counter(sp); position:absolute; left:-13.5px; top:0;
+  width:27px; height:27px; border-radius:50%; background:var(--surface); color:var(--ink-2);
+  border:1.5px solid var(--rule-2); font-family:"Familjen Grotesk",sans-serif; font-weight:600;
+  font-size:.78rem; display:flex; align-items:center; justify-content:center;
+}
+ol.spine>li.on-gate::before{border-color:var(--gate); color:var(--gate); background:var(--gate-soft)}
+ol.spine>li.on-cont::before{border-color:var(--cont); color:var(--cont); background:var(--cont-soft)}
+ol.spine>li.on-sched::before{border-color:var(--sched); color:var(--sched); background:var(--sched-soft)}
+ol.spine>li p{margin:0 0 .4rem}
+ol.spine>li p:last-child{margin-bottom:0}
+.li-h{font-family:"Familjen Grotesk",sans-serif; font-weight:600; font-size:1.02rem; display:block; margin-bottom:.15rem}
+
+/* ---- callout ---- */
+.note{
+  border:1px solid var(--rule); border-left:3px solid var(--sched); background:var(--surface);
+  border-radius:0 8px 8px 0; padding:15px 20px; margin:22px 0 26px; font-size:.94rem;
+}
+.note.warn{border-left-color:var(--cont)}
+.note.good{border-left-color:var(--gate)}
+.note p:last-child{margin-bottom:0}
+.note .nh{
+  display:block; font-family:"Familjen Grotesk",sans-serif; font-weight:600; font-size:.79rem;
+  letter-spacing:.09em; text-transform:uppercase; color:var(--ink-3); margin-bottom:.35rem;
+}
+
+.chip{
+  display:inline-block; font-family:"JetBrains Mono",monospace; font-size:.72rem;
+  background:var(--surface-2); border:1px solid var(--rule); border-radius:4px;
+  padding:.1em .4em; color:var(--ink-2);
+}
+
+ul.tight{margin:0 0 1.05rem; padding-left:1.15rem}
+ul.tight li{margin-bottom:.32rem}
+
+footer{margin-top:70px; padding-top:22px; border-top:1px solid var(--rule); color:var(--ink-3); font-size:.86rem}
+
+:focus-visible{outline:2px solid var(--sched); outline-offset:2px; border-radius:3px}
+@media (prefers-reduced-motion:no-preference){html{scroll-behavior:smooth}}
+@media (max-width:640px){
+  body{font-size:16px} .wrap{padding:0 18px 64px} header.top{padding-top:48px}
+  .sec-head{flex-direction:column; gap:2px}
+}
+</style>
+</head>
+<body>
+
+<div class="wrap">
+
+<header class="top">
+  <p class="eyebrow">KubeDB · PostgreSQL</p>
+  <h1>Postgres Backup &amp; Restore, End to End</h1>
+  <p class="lede">Four repositories, one KubeStash control plane, and three completely separate routes
+  from a database to a bucket. The thing worth holding onto: KubeDB runs <strong>two cadences at
+  once</strong> — scheduled jobs that wake, copy, and die, and one always-on process that never
+  stops — and almost every confusing behaviour in this system comes from the seam between them.</p>
+  <ul class="legend">
+    <li><span class="swatch sw-s"></span>Scheduled — cron-driven, ephemeral Job</li>
+    <li><span class="swatch sw-c"></span>Continuous — always-on sidekick</li>
+    <li><span class="swatch sw-g"></span>Gate — blocks until satisfied</li>
+  </ul>
+</header>
+
+<section id="cast">
+  <div class="sec-head">
+    <span class="sec-n">01</span>
+    <div>
+      <h2>Who owns what</h2>
+      <p class="sec-sub">One operator decides, three separate binaries do the copying.</p>
+    </div>
+  </div>
+
+  <div class="col">
+    <p>The Postgres operator never moves a byte of backup data. Its entire job is to translate a
+    user's intent into resources other components act on — then wait, and gate. The actual copying is
+    done by short-lived Jobs it does not create and a sidekick pod it does not run.</p>
+  </div>
+
+  <figure>
+    <div class="fig-scroll">
+      <svg viewBox="0 0 980 420" role="img" aria-label="Ownership map: the KubeDB Postgres operator creates a BackupConfiguration and a Sidekick; KubeStash spawns three kinds of Job from the BackupConfiguration and the Sidekick operator runs the wal-g archiver pod; three of the four routes write to the object storage bucket under different prefixes while the CSI route creates an in-cluster VolumeSnapshot.">
+        <defs>
+          <marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="mk"/></marker>
+          <marker id="ar-s" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="mk-s"/></marker>
+          <marker id="ar-c" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="mk-c"/></marker>
+        </defs>
+
+        <rect class="lane" x="0" y="24"  width="980" height="76"  rx="8"/>
+        <rect class="lane" x="0" y="200" width="980" height="100" rx="8"/>
+        <text class="t-lane" x="10" y="70">OPERATOR</text>
+        <text class="t-lane" x="10" y="156">RESOURCES</text>
+        <text class="t-lane" x="10" y="256">WORKLOADS</text>
+        <text class="t-lane" x="10" y="360">DESTINATION</text>
+
+        <!-- band 1 -->
+        <rect class="bx" x="130" y="38" width="830" height="48" rx="6"/>
+        <text class="t-b" x="146" y="59">KubeDB Postgres operator</text>
+        <text class="t-m" x="146" y="76">kubedb.dev/postgres · reconciles, decides, gates — copies nothing</text>
+
+        <!-- band 1 -> 2 -->
+        <path class="a-s" d="M365,86 L365,120" marker-end="url(#ar-s)"/>
+        <text class="t-m t-sched" x="373" y="108">creates</text>
+        <path class="a-c" d="M805,86 L805,120" marker-end="url(#ar-c)"/>
+        <text class="t-m t-cont" x="813" y="108">creates</text>
+
+        <!-- band 2 -->
+        <rect class="bx-s" x="130" y="124" width="470" height="52" rx="6"/>
+        <text class="t-b" x="146" y="145">BackupConfiguration</text>
+        <text class="t-m" x="146" y="162">core.kubestash.com · sessions on a cron</text>
+        <rect class="bx-c" x="650" y="124" width="310" height="52" rx="6"/>
+        <text class="t-b" x="666" y="145">Sidekick</text>
+        <text class="t-m" x="666" y="162">apps.k8s.appscode.com</text>
+
+        <!-- band 2 -> 3 -->
+        <path class="a-s" d="M365,176 L365,192 M210,192 L530,192"/>
+        <path class="a-s" d="M210,192 L210,208" marker-end="url(#ar-s)"/>
+        <path class="a-s" d="M375,192 L375,208" marker-end="url(#ar-s)"/>
+        <path class="a-s" d="M530,192 L530,208" marker-end="url(#ar-s)"/>
+        <path class="a-c" d="M805,176 L805,208" marker-end="url(#ar-c)"/>
+
+        <!-- band 3 -->
+        <rect class="bx" x="130" y="212" width="160" height="76" rx="6"/>
+        <text class="t-b" x="144" y="234">backup Job</text>
+        <text class="t-m" x="144" y="252">postgres-restic-</text>
+        <text class="t-m" x="144" y="266">plugin</text>
+        <text class="t-s" x="144" y="281">run by KubeStash</text>
+
+        <rect class="bx" x="300" y="212" width="150" height="76" rx="6"/>
+        <text class="t-b" x="314" y="234">manifest Job</text>
+        <text class="t-m" x="314" y="252">kubedbmanifest-</text>
+        <text class="t-m" x="314" y="266">backup</text>
+        <text class="t-s" x="314" y="281">run by KubeStash</text>
+
+        <rect class="bx" x="460" y="212" width="140" height="76" rx="6"/>
+        <text class="t-b" x="474" y="234">snapshot Job</text>
+        <text class="t-m" x="474" y="252">postgres-csi-</text>
+        <text class="t-m" x="474" y="266">snapshotter-plugin</text>
+        <text class="t-s" x="474" y="281">run by KubeStash</text>
+
+        <rect class="bx-c" x="650" y="212" width="310" height="76" rx="6"/>
+        <text class="t-b" x="666" y="236">wal-g archiver pod</text>
+        <text class="t-m" x="666" y="255">postgres-archiver · never exits</text>
+        <text class="t-s" x="666" y="275">run by the Sidekick operator, pinned to the primary</text>
+
+        <!-- band 3 -> 4 -->
+        <path class="a" d="M210,288 L210,320" marker-end="url(#ar)"/>
+        <text class="t-m" x="218" y="308">restic</text>
+        <path class="a" d="M375,288 L375,320" marker-end="url(#ar)"/>
+        <text class="t-m" x="383" y="308">restic</text>
+        <path class="a" d="M530,288 L530,320" marker-end="url(#ar)"/>
+        <text class="t-m" x="538" y="308">CSI API</text>
+        <path class="a-c" d="M805,288 L805,320" marker-end="url(#ar-c)"/>
+        <text class="t-m t-cont" x="813" y="308">wal-g</text>
+
+        <!-- band 4 -->
+        <rect class="bx-2" x="130" y="324" width="160" height="60" rx="6"/>
+        <text class="t" x="144" y="346">restic repository</text>
+        <text class="t-m" x="144" y="365">…/&lt;db&gt;/full</text>
+
+        <rect class="bx-2" x="300" y="324" width="150" height="60" rx="6"/>
+        <text class="t" x="314" y="346">restic repository</text>
+        <text class="t-m" x="314" y="365">…/&lt;db&gt;/manifest</text>
+
+        <rect class="bx-2" x="460" y="324" width="140" height="60" rx="6" stroke-dasharray="5 4"/>
+        <text class="t" x="474" y="346">VolumeSnapshot</text>
+        <text class="t-m" x="474" y="365">stays in-cluster</text>
+
+        <rect class="bx-2" x="650" y="324" width="310" height="60" rx="6"/>
+        <text class="t" x="666" y="346">wal-g native layout</text>
+        <text class="t-m" x="666" y="365">…/&lt;db&gt;/wal/wal_005/  ·  no restic, no encryption secret</text>
+      </svg>
+    </div>
+    <figcaption><b>Four producers, four destinations.</b> Three of the four routes end in the same
+    bucket under different prefixes — but only two of them are restic repositories. The WAL prefix is
+    written by wal-g in its own format and is not encrypted by the KubeStash encryption secret; the
+    CSI route never leaves the cluster at all.</figcaption>
+  </figure>
+
+  <div class="tbl-scroll">
+    <table>
+      <thead><tr><th>Repository</th><th>Ships</th><th>Runs as</th><th>Lifetime</th></tr></thead>
+      <tbody>
+        <tr><td><code>kubedb.dev/postgres</code></td><td>the operator binary</td><td>Deployment in <code>kubedb</code></td><td>always</td></tr>
+        <tr><td><code>kubedb.dev/postgres-restic-plugin</code></td><td><code>backup</code>, <code>physical-backup</code>, <code>restore</code>, <code>physical-restore</code></td><td>Job, one per session</td><td>minutes</td></tr>
+        <tr><td><code>kubedb.dev/postgres-csi-snapshotter-plugin</code></td><td>the VolumeSnapshotter driver</td><td>Job</td><td>seconds</td></tr>
+        <tr><td><code>kubedb.dev/postgres-archiver</code></td><td><code>archive</code> — the wal-g pusher</td><td>Sidekick pod, and again as the WAL-replay pod on restore</td><td>forever / one-shot</td></tr>
+        <tr><td><code>kubedb.dev/postgres-init-docker</code></td><td><code>start.sh</code>, <code>restore.sh</code>, <code>copy-data.sh</code></td><td>init container; its scripts are executed by other pods</td><td>seconds</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="note">
+    <span class="nh">Worth noticing</span>
+    <p>The archiver image appears <em>twice</em> in the lifecycle — once as the long-lived WAL pusher
+    during backup, and once as a short-lived pod during restore that runs
+    <code>/scripts/restore.sh</code> and replays WAL. Same image, opposite direction. It is the only
+    component that both writes to and reads from the bucket.</p>
+  </div>
+</section>
+
+<section id="kubestash">
+  <div class="sec-head">
+    <span class="sec-n">02</span>
+    <div>
+      <h2>Where KubeStash plugs in</h2>
+      <p class="sec-sub">Three independent chains that meet inside one Job.</p>
+    </div>
+  </div>
+
+  <div class="col">
+    <p>KubeStash is not one graph, it is three, and they only touch at the moment a Job is built.
+    One chain says <em>where the bytes go</em>, one says <em>when to run</em>, one says <em>what
+    binary to run</em>. Understanding which chain a problem lives in is most of debugging this
+    system.</p>
+  </div>
+
+  <figure>
+    <div class="fig-scroll">
+      <svg viewBox="0 0 980 392" role="img" aria-label="The KubeStash resource graph: a storage chain of BackupStorage, Repository and Snapshot; an invoker chain of BackupConfiguration, BackupSession and Job; a catalog chain of Addon, Task and Function. The BackupConfiguration references the storage chain through backends and repositories, references the catalog through addon, and the Job it spawns pulls its image from the Function and writes its result into a Snapshot.">
+        <defs>
+          <marker id="br" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="mk"/></marker>
+          <marker id="br-s" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="mk-s"/></marker>
+        </defs>
+
+        <text class="t-lane" x="155" y="30" text-anchor="middle">STORAGE — WHERE</text>
+        <text class="t-lane" x="495" y="30" text-anchor="middle">INVOKER — WHEN</text>
+        <text class="t-lane" x="830" y="30" text-anchor="middle">CATALOG — WHAT</text>
+
+        <!-- column 1 -->
+        <rect class="bx-2" x="30" y="52" width="250" height="58" rx="6"/>
+        <text class="t-b" x="44" y="74">BackupStorage</text>
+        <text class="t-m" x="44" y="93">bucket, endpoint, credentials Secret</text>
+
+        <rect class="bx-2" x="30" y="166" width="250" height="58" rx="6"/>
+        <text class="t-b" x="44" y="188">Repository</text>
+        <text class="t-m" x="44" y="207">one restic repo at one directory</text>
+
+        <rect class="bx-2" x="30" y="280" width="250" height="58" rx="6"/>
+        <text class="t-b" x="44" y="302">Snapshot</text>
+        <text class="t-m" x="44" y="321">the receipt: what, when, restic id</text>
+
+        <path class="a" d="M155,110 L155,162" marker-end="url(#br)"/>
+        <text class="t-m" x="163" y="141">storageRef</text>
+        <path class="a" d="M155,224 L155,276" marker-end="url(#br)"/>
+        <text class="t-m" x="163" y="255">repository</text>
+
+        <!-- column 2 -->
+        <rect class="bx-s" x="380" y="52" width="230" height="58" rx="6"/>
+        <text class="t-b" x="394" y="74">BackupConfiguration</text>
+        <text class="t-m" x="394" y="93">sessions, each with a cron</text>
+
+        <rect class="bx-s" x="380" y="166" width="230" height="58" rx="6"/>
+        <text class="t-b" x="394" y="188">BackupSession</text>
+        <text class="t-m" x="394" y="207">one firing of one session</text>
+
+        <rect class="bx-s" x="380" y="280" width="230" height="58" rx="6"/>
+        <text class="t-b" x="394" y="302">Job</text>
+        <text class="t-m" x="394" y="321">does the copying, then dies</text>
+
+        <path class="a-s" d="M495,110 L495,162" marker-end="url(#br-s)"/>
+        <text class="t-m t-sched" x="503" y="141">cron fires</text>
+        <path class="a-s" d="M495,224 L495,276" marker-end="url(#br-s)"/>
+        <text class="t-m t-sched" x="503" y="255">spawns</text>
+
+        <!-- column 3 -->
+        <rect class="bx" x="710" y="52" width="240" height="58" rx="6"/>
+        <text class="t-b" x="724" y="74">Addon</text>
+        <text class="t-m" x="724" y="93">postgres-addon · cluster-scoped</text>
+
+        <rect class="bx" x="710" y="166" width="240" height="58" rx="6"/>
+        <text class="t-b" x="724" y="188">Task</text>
+        <text class="t-m" x="724" y="207">physical-backup, logical-backup, …</text>
+
+        <rect class="bx" x="710" y="280" width="240" height="58" rx="6"/>
+        <text class="t-b" x="724" y="302">Function</text>
+        <text class="t-m" x="724" y="321">image + argv template</text>
+
+        <path class="a" d="M830,110 L830,162" marker-end="url(#br)"/>
+        <text class="t-m" x="838" y="141">backupTasks[]</text>
+        <path class="a" d="M830,224 L830,276" marker-end="url(#br)"/>
+        <text class="t-m" x="838" y="255">function</text>
+
+        <!-- cross links -->
+        <path class="a-s" d="M380,80 L284,80" marker-end="url(#br-s)"/>
+        <text class="t-m t-sched" x="332" y="71" text-anchor="middle">backends[]</text>
+
+        <path class="a-s" d="M380,104 L336,104 L336,196 L284,196" marker-end="url(#br-s)"/>
+        <text class="t-m t-sched" x="342" y="152">repositories[]</text>
+
+        <path class="a-s" d="M610,80 L706,80" marker-end="url(#br-s)"/>
+        <text class="t-m t-sched" x="658" y="71" text-anchor="middle">addon</text>
+
+        <path class="a" d="M710,309 L614,309" marker-end="url(#br)"/>
+        <text class="t-m" x="662" y="300" text-anchor="middle">image</text>
+
+        <path class="a-s" d="M380,309 L284,309" marker-end="url(#br-s)"/>
+        <text class="t-m t-sched" x="332" y="300" text-anchor="middle">writes</text>
+      </svg>
+    </div>
+    <figcaption><b>Only the BackupConfiguration knows all three chains.</b> It is the join: it names
+    a backend, declares the repositories that backend should hold, and picks the addon task whose
+    Function supplies the image. Everything else is one chain minding its own business — which is why
+    a broken backup is almost always traceable to exactly one of the three.</figcaption>
+  </figure>
+
+  <div class="col">
+    <p>The <code>Function</code> image is a template, not a literal:
+    <code>postgres-restic-plugin:v0.29.0_${DB_VERSION}</code>. <code>${DB_VERSION}</code> is
+    substituted from the backup target's version, and the Function declares which values it accepts
+    (<code>12.17</code>, <code>14.10</code>, <code>16.4</code>, <code>17.2</code>,
+    <code>18.2</code>). A target whose version isn't on that list produces an image tag that doesn't
+    exist, and the failure surfaces as <code>ImagePullBackOff</code> rather than anything that
+    mentions versions.</p>
+  </div>
+</section>
+
+<section id="bootstrap">
+  <div class="sec-head">
+    <span class="sec-n">03</span>
+    <div>
+      <h2>Which backup is taken when</h2>
+      <p class="sec-sub">The startup order, and the one gate that holds everything up.</p>
+    </div>
+  </div>
+
+  <div class="col">
+    <p>Adding <code>spec.archiver</code> to a Postgres flips two environment variables with different
+    jobs. <code>WAL_BACKUP_TYPE=WALG</code> makes the init scripts write a real
+    <code>archive_command</code>; <code>ARCHIVER_ENABLED</code> creates the directories. Postgres
+    therefore begins archiving <em>early</em> — but the process that ships those segments off the
+    node does not start until a full backup has already succeeded.</p>
+  </div>
+
+  <figure>
+    <div class="fig-scroll">
+      <svg viewBox="0 0 980 540" role="img" aria-label="Seven-step bootstrap sequence. Postgres starts writing WAL to a local directory at step three, but the wal-g sidekick that ships those segments to object storage is not created until step seven, after the InitialBackupSucceeded gate at step six. In between, WAL accumulates on the data volume and is drained when the sidekick finally starts.">
+        <defs>
+          <marker id="cr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="mk"/></marker>
+          <marker id="cr-c" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="mk-c"/></marker>
+        </defs>
+
+        <line x1="44" y1="72" x2="44" y2="488" class="a" stroke-dasharray="2 5"/>
+
+        <circle cx="44" cy="84"  r="13" class="bx"/><text class="t-m" x="44" y="88" text-anchor="middle">1</text>
+        <rect class="bx"   x="68" y="60"  width="380" height="48" rx="6"/>
+        <text class="t-b"  x="82" y="80">User creates a PostgresArchiver</text>
+        <text class="t-m"  x="82" y="98">archiver.kubedb.com/v1alpha1</text>
+
+        <circle cx="44" cy="148" r="13" class="bx"/><text class="t-m" x="44" y="152" text-anchor="middle">2</text>
+        <rect class="bx"   x="68" y="124" width="380" height="48" rx="6"/>
+        <text class="t-b"  x="82" y="144">Operator patches the PetSet env</text>
+        <text class="t-m"  x="82" y="162">WAL_BACKUP_TYPE=WALG · ARCHIVER_ENABLED=true</text>
+
+        <circle cx="44" cy="212" r="13" class="bx-c"/><text class="t-m" x="44" y="216" text-anchor="middle">3</text>
+        <rect class="bx-c" x="68" y="188" width="380" height="48" rx="6"/>
+        <text class="t-b"  x="82" y="208">Postgres restarts — archiving begins</text>
+        <text class="t-m"  x="82" y="226">archive_command = 'cp %p /var/pv/wal_archive/%f'</text>
+
+        <circle cx="44" cy="276" r="13" class="bx"/><text class="t-m" x="44" y="280" text-anchor="middle">4</text>
+        <rect class="bx"   x="68" y="252" width="380" height="48" rx="6"/>
+        <text class="t-b"  x="82" y="272">BackupConfiguration + ledger Snapshot created</text>
+        <text class="t-m"  x="82" y="290">&lt;db&gt;-incremental-snapshot · stays Running forever</text>
+
+        <circle cx="44" cy="340" r="13" class="bx-s"/><text class="t-m" x="44" y="344" text-anchor="middle">5</text>
+        <rect class="bx-s" x="68" y="316" width="380" height="48" rx="6"/>
+        <text class="t-b"  x="82" y="336">First full backup fires immediately</text>
+        <text class="t-m"  x="82" y="354">physical-backup Job — does not wait for the cron</text>
+
+        <circle cx="44" cy="404" r="13" class="bx-g"/><text class="t-m" x="44" y="408" text-anchor="middle">6</text>
+        <rect class="bx-g" x="68" y="380" width="380" height="48" rx="6"/>
+        <text class="t-b"  x="82" y="400">GATE — InitialBackupSucceeded</text>
+        <text class="t-m"  x="82" y="418">handleInitialBackupVerification() returns early</text>
+
+        <circle cx="44" cy="476" r="13" class="bx-c"/><text class="t-m" x="44" y="480" text-anchor="middle">7</text>
+        <rect class="bx-c" x="68" y="452" width="380" height="48" rx="6"/>
+        <text class="t-b"  x="82" y="472">Sidekick created — wal-g starts pushing</text>
+        <text class="t-m"  x="82" y="490">postgres-archiver archive --snapshot-name=…</text>
+
+        <!-- accumulation band -->
+        <rect class="bx-c" x="520" y="188" width="420" height="240" rx="6" stroke-dasharray="5 4"/>
+        <text class="t-b"  x="540" y="214">WAL piles up on the data volume</text>
+        <text class="t-m"  x="540" y="234">/var/pv/wal_archive/</text>
+        <text class="t-s"  x="540" y="266">Postgres is archiving from step 3 on, but</text>
+        <text class="t-s"  x="540" y="285">nothing is shipping the segments anywhere.</text>
+        <text class="t-s"  x="540" y="317">This window is expected, not a fault. It lasts</text>
+        <text class="t-s"  x="540" y="336">exactly as long as the first full backup takes —</text>
+        <text class="t-s"  x="540" y="355">minutes on a small database, longer on a large one.</text>
+        <text class="t-s"  x="540" y="387">Size the data volume for the backlog, not for</text>
+        <text class="t-s"  x="540" y="406">the steady state.</text>
+
+        <path class="a-c" d="M730,428 L730,448" marker-end="url(#cr-c)"/>
+
+        <rect class="bx-c" x="520" y="452" width="420" height="48" rx="6"/>
+        <text class="t-b"  x="540" y="472">The backlog is drained at startup</text>
+        <text class="t-m"  x="540" y="490">GetExistingWalFiles() walks the directory before watching</text>
+      </svg>
+    </div>
+    <figcaption><b>The gap between step 3 and step 7 is the design, not a bug.</b> Because WAL starts
+    before the pusher does, the archiver cannot simply watch for new files — it walks the whole
+    directory on startup and pushes what it finds. That is why a restart of the sidekick is safe and
+    why a slow first backup shows up as disk pressure rather than as a backup failure.</figcaption>
+  </figure>
+
+  <div class="note warn">
+    <span class="nh">The failure this prevents</span>
+    <p>If the sidekick started first and the full backup later failed, you would hold a pile of WAL
+    with no base to replay it onto — useless bytes that still cost money. The gate guarantees the
+    invariant every PITR system depends on: <em>there is always a base backup older than the oldest
+    WAL segment you kept.</em></p>
+  </div>
+</section>
+
+<section id="datapath">
+  <div class="sec-head">
+    <span class="sec-n">04</span>
+    <div>
+      <h2>How the bytes reach the bucket</h2>
+      <p class="sec-sub">Four routes that share nothing — not a tool, not a format, not a credential.</p>
+    </div>
+  </div>
+
+  <div class="col">
+    <p>Nothing is staged on local disk on the way out. The two restic routes pipe their producer's
+    stdout straight into <code>restic backup --stdin</code>, so a 400&nbsp;GB base backup never needs
+    400&nbsp;GB of scratch space. The WAL route is the exception, and deliberately so — see the next
+    section for why.</p>
+  </div>
+
+  <figure>
+    <div class="fig-scroll">
+      <svg viewBox="0 0 980 440" role="img" aria-label="Four data paths out of a Postgres pod. Logical and physical backups read from the Postgres server over TCP and stream into restic, landing as dump.sql and base.tar in the bucket. WAL is read from a local directory and pushed by wal-g into a separate prefix in its own format. The CSI route snapshots the volume through the Kubernetes API and never writes to the bucket at all.">
+        <defs>
+          <marker id="dp" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="mk"/></marker>
+          <marker id="dp-s" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="mk-s"/></marker>
+          <marker id="dp-c" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="mk-c"/></marker>
+        </defs>
+
+        <text class="t-lane" x="135" y="22" text-anchor="middle">IN THE POD</text>
+        <text class="t-lane" x="430" y="22" text-anchor="middle">WHAT RUNS</text>
+        <text class="t-lane" x="855" y="22" text-anchor="middle">OBJECT STORAGE</text>
+
+        <rect class="lane-r" x="20" y="40" width="230" height="380" rx="8"/>
+        <text class="t-m" x="34" y="56">postgres-0 pod</text>
+
+        <rect class="bx-2" x="36" y="66" width="198" height="146" rx="6"/>
+        <text class="t-b" x="50" y="112">postgres server</text>
+        <text class="t-m" x="50" y="131">listening on :5432</text>
+        <text class="t-s" x="50" y="156">reached over the network —</text>
+        <text class="t-s" x="50" y="174">no volume mount needed</text>
+
+        <rect class="bx-2" x="36" y="236" width="198" height="64" rx="6"/>
+        <text class="t-b" x="50" y="260">local WAL directory</text>
+        <text class="t-m" x="50" y="279">/var/pv/wal_archive/</text>
+
+        <rect class="bx-2" x="36" y="324" width="198" height="64" rx="6"/>
+        <text class="t-b" x="50" y="348">the data volume</text>
+        <text class="t-m" x="50" y="367">PVC data-&lt;db&gt;-0</text>
+
+        <!-- source -> producer -->
+        <path class="a-s" d="M234,92 L282,92" marker-end="url(#dp-s)"/><text class="t-m" x="258" y="84" text-anchor="middle">TCP</text>
+        <path class="a-s" d="M234,180 L282,180" marker-end="url(#dp-s)"/><text class="t-m" x="258" y="172" text-anchor="middle">TCP</text>
+        <path class="a-c" d="M234,268 L282,268" marker-end="url(#dp-c)"/><text class="t-m" x="258" y="260" text-anchor="middle">dir</text>
+        <path class="a"   d="M234,356 L282,356" marker-end="url(#dp)"/><text class="t-m" x="258" y="348" text-anchor="middle">API</text>
+
+        <!-- producers -->
+        <rect class="bx-s" x="290" y="60" width="280" height="64" rx="6"/>
+        <text class="t-b" x="304" y="82">pg_dumpall</text>
+        <text class="t-m" x="304" y="100">postgres-restic-plugin · logical-backup</text>
+        <text class="t-s" x="304" y="117">stdout piped into restic --stdin</text>
+
+        <rect class="bx-s" x="290" y="148" width="280" height="64" rx="6"/>
+        <text class="t-b" x="304" y="170">pg_basebackup -D - -F t</text>
+        <text class="t-m" x="304" y="188">postgres-restic-plugin · physical</text>
+        <text class="t-s" x="304" y="205">stdout piped into restic --stdin</text>
+
+        <rect class="bx-c" x="290" y="236" width="280" height="64" rx="6"/>
+        <text class="t-b" x="304" y="258">wal-g wal-push</text>
+        <text class="t-m" x="304" y="276">postgres-archiver · the sidekick</text>
+        <text class="t-s" x="304" y="293">one segment at a time, continuously</text>
+
+        <rect class="bx" x="290" y="324" width="280" height="64" rx="6"/>
+        <text class="t-b" x="304" y="346">VolumeSnapshot request</text>
+        <text class="t-m" x="304" y="364">postgres-csi-snapshotter-plugin</text>
+        <text class="t-s" x="304" y="381">reads no data — asks the CSI driver</text>
+
+        <!-- producer -> destination -->
+        <path class="a-s" d="M570,92 L754,92" marker-end="url(#dp-s)"/>
+        <text class="t-m" x="662" y="84" text-anchor="middle">restic · encrypted</text>
+        <path class="a-s" d="M570,180 L754,180" marker-end="url(#dp-s)"/>
+        <text class="t-m" x="662" y="172" text-anchor="middle">restic · encrypted</text>
+        <path class="a-c" d="M570,268 L754,268" marker-end="url(#dp-c)"/>
+        <text class="t-m" x="662" y="260" text-anchor="middle">wal-g · compressed</text>
+        <path class="a"   d="M570,356 L754,356" marker-end="url(#dp)"/>
+        <text class="t-m" x="662" y="348" text-anchor="middle">CSI · stays in-cluster</text>
+
+        <!-- bucket -->
+        <rect class="lane-r" x="748" y="48" width="214" height="264" rx="8"/>
+
+        <rect class="bx-s" x="762" y="60" width="186" height="64" rx="6"/>
+        <text class="t-b" x="776" y="84">dump.sql</text>
+        <text class="t-m" x="776" y="103">…/&lt;db&gt;/logical</text>
+
+        <rect class="bx-s" x="762" y="148" width="186" height="64" rx="6"/>
+        <text class="t-b" x="776" y="172">base.tar</text>
+        <text class="t-m" x="776" y="191">…/&lt;db&gt;/full</text>
+
+        <rect class="bx-c" x="762" y="236" width="186" height="64" rx="6"/>
+        <text class="t-b" x="776" y="260">WAL segments</text>
+        <text class="t-m" x="776" y="279">…/&lt;db&gt;/wal/wal_005/</text>
+
+        <rect class="bx" x="762" y="324" width="186" height="64" rx="6" stroke-dasharray="5 4"/>
+        <text class="t-b" x="776" y="348">VolumeSnapshot</text>
+        <text class="t-m" x="776" y="367">never reaches the bucket</text>
+      </svg>
+    </div>
+    <figcaption><b>The WAL prefix is not a restic repository.</b> It is written by wal-g in wal-g's
+    own layout, compressed but not encrypted with the KubeStash encryption secret, and it is the one
+    place in the bucket that restic cannot read. Losing the encryption secret costs you the base
+    backups; it does not cost you the WAL.</figcaption>
+  </figure>
+
+  <div class="note">
+    <span class="nh">A consequence worth planning for</span>
+    <p>Because the two chains are independent, retention is too. The archiver runs its <em>own</em>
+    retention cron over the WAL prefix (<code>logBackup.retentionPeriod</code>), separate from the
+    KubeStash <code>RetentionPolicy</code> that prunes restic snapshots. Set one without the other and
+    you get either WAL you can't replay or base backups with nothing to replay onto them.</p>
+  </div>
+</section>
+
+<section id="twohop">
+  <div class="sec-head">
+    <span class="sec-n">05</span>
+    <div>
+      <h2>Why WAL takes two hops</h2>
+      <p class="sec-sub">Postgres never talks to object storage. That is the point.</p>
+    </div>
+  </div>
+
+  <figure>
+    <div class="fig-scroll">
+      <svg viewBox="0 0 900 250" role="img" aria-label="The two-hop WAL path. Postgres copies a finished WAL segment to a local directory, which always succeeds in milliseconds. A separate sidekick then pushes it to the bucket with wal-g, and that hop is allowed to fail and be retried without affecting the database.">
+        <defs>
+          <marker id="th" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="mk"/></marker>
+          <marker id="th-c" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="mk-c"/></marker>
+          <marker id="th-g" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="mk-g"/></marker>
+        </defs>
+
+        <rect class="bx-2" x="30" y="72" width="150" height="66" rx="6"/>
+        <text class="t-b" x="44" y="102">Postgres</text>
+        <text class="t-m" x="44" y="121">archive_command</text>
+
+        <path class="a-g" d="M180,105 L246,105" marker-end="url(#th-g)"/>
+        <text class="t-m t-gate" x="213" y="96" text-anchor="middle">cp %p</text>
+        <text class="t-m t-gate" x="213" y="126" text-anchor="middle">hop 1</text>
+
+        <rect class="bx-2" x="250" y="72" width="180" height="66" rx="6"/>
+        <text class="t-b" x="264" y="102">local directory</text>
+        <text class="t-m" x="264" y="121">/var/pv/wal_archive/</text>
+
+        <path class="a-c" d="M430,105 L496,105" marker-end="url(#th-c)"/>
+        <text class="t-m t-cont" x="463" y="96" text-anchor="middle">walk</text>
+        <text class="t-m t-cont" x="463" y="126" text-anchor="middle">+ watch</text>
+
+        <rect class="bx-c" x="500" y="72" width="160" height="66" rx="6"/>
+        <text class="t-b" x="514" y="102">wal-g sidekick</text>
+        <text class="t-m" x="514" y="121">postgres-archiver</text>
+
+        <path class="a-c" d="M660,105 L726,105" marker-end="url(#th-c)"/>
+        <text class="t-m t-cont" x="693" y="96" text-anchor="middle">wal-push</text>
+        <text class="t-m t-cont" x="693" y="126" text-anchor="middle">hop 2</text>
+
+        <rect class="bx-2" x="730" y="72" width="140" height="66" rx="6"/>
+        <text class="t-b" x="744" y="102">bucket</text>
+        <text class="t-m" x="744" y="121">…/wal/</text>
+
+        <rect class="bx-g" x="30" y="176" width="400" height="60" rx="6"/>
+        <text class="t-b" x="44" y="198">Hop 1 must never fail</text>
+        <text class="t-s" x="44" y="216">A local copy always succeeds in milliseconds. If it errored,</text>
+        <text class="t-s" x="44" y="231">Postgres would stop recycling WAL and fill the volume.</text>
+
+        <rect class="bx-c" x="500" y="176" width="370" height="60" rx="6"/>
+        <text class="t-b" x="514" y="198">Hop 2 is allowed to fail</text>
+        <text class="t-s" x="514" y="216">The network push is retried by a process that can</text>
+        <text class="t-s" x="514" y="231">crash and restart without endangering the database.</text>
+      </svg>
+    </div>
+    <figcaption><b>The split exists to isolate a failure mode.</b> Any design that puts a network
+    call inside <code>archive_command</code> makes object-storage availability a hard dependency of
+    database uptime. Splitting it means the worst a bucket outage can do is grow a directory.</figcaption>
+  </figure>
+</section>
+
+<section id="pitr">
+  <div class="sec-head">
+    <span class="sec-n">06</span>
+    <div>
+      <h2>How a point in time is resolved</h2>
+      <p class="sec-sub">Choosing the base is a sort, not a search.</p>
+    </div>
+  </div>
+
+  <figure>
+    <div class="fig-scroll">
+      <svg viewBox="0 0 960 318" role="img" aria-label="A PITR timeline. Four base backups sit under a continuous band of WAL. A recovery target falls between the third and fourth base backup, so the third is selected and WAL is replayed forward from it to the target. The fourth base backup is discarded for being newer than the target.">
+        <defs>
+          <marker id="pt" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="mk"/></marker>
+          <marker id="pt-g" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="mk-g"/></marker>
+        </defs>
+
+        <text class="t-b t-gate" x="600" y="46" text-anchor="middle">spec.init.archiver.recoveryTimestamp</text>
+        <line x1="600" y1="56" x2="600" y2="204" class="a-g" stroke-dasharray="5 4"/>
+
+        <rect class="bx-c" x="150" y="96" width="730" height="24" rx="4"/>
+        <text class="t-m t-cont" x="164" y="112">continuous WAL — every segment, in order, no gaps</text>
+
+        <path class="a-g" d="M479,146 L592,146" marker-end="url(#pt-g)"/>
+        <text class="t-m t-gate" x="530" y="138" text-anchor="middle">replay forward</text>
+
+        <rect class="bx-s" x="141" y="160" width="18" height="34" rx="3"/>
+        <rect class="bx-s" x="301" y="160" width="18" height="34" rx="3"/>
+        <rect class="bx-g" x="461" y="160" width="18" height="34" rx="3"/>
+        <rect class="bx"   x="751" y="160" width="18" height="34" rx="3" stroke-dasharray="4 3"/>
+
+        <line x1="60" y1="212" x2="912" y2="212" class="a" marker-end="url(#pt)"/>
+        <text class="t-m" x="920" y="216">time</text>
+
+        <text class="t-m" x="150" y="232" text-anchor="middle">base 00:00</text>
+        <text class="t-m" x="310" y="232" text-anchor="middle">base 06:00</text>
+        <text class="t-m t-gate" x="470" y="232" text-anchor="middle">base 12:00</text>
+        <text class="t-m t-gate" x="600" y="232" text-anchor="middle">T = 14:37</text>
+        <text class="t-m" x="760" y="232" text-anchor="middle">base 18:00</text>
+
+        <text class="t-s t-gate" x="470" y="250" text-anchor="middle">selected</text>
+        <text class="t-s" x="760" y="250" text-anchor="middle">newer than T — discarded</text>
+
+        <rect class="bx-g" x="60" y="258" width="852" height="50" rx="6"/>
+        <text class="t-s" x="76" y="278">List every Snapshot in the full repository, sort by time, take the newest one at or before T.</text>
+        <text class="t-s" x="76" y="296">Correctness never depends on picking the closest — only on picking one that is not newer.</text>
+      </svg>
+    </div>
+    <figcaption><b>Any older base would also be correct.</b> Choosing the newest one that still
+    precedes the target is purely an optimisation: it minimises how much WAL has to be replayed, and
+    therefore how long the restore takes.</figcaption>
+  </figure>
+
+  <div class="col">
+    <p>Once the base is chosen, the target itself is handed to Postgres as a recovery parameter —
+    <code>recovery_target_lsn</code> when an LSN is known, <code>recovery_target_time</code>
+    otherwise. Postgres replays until it reaches the first commit past the target, stops
+    <em>before</em> it, and promotes onto a new timeline. The stopping point is a transaction
+    boundary, never a partial write.</p>
+  </div>
+</section>
+
+<section id="choreography">
+  <div class="sec-head">
+    <span class="sec-n">07</span>
+    <div>
+      <h2>Restore, stage by stage</h2>
+      <p class="sec-sub">Five stages, each gated on the one before it.</p>
+    </div>
+  </div>
+
+  <div class="col">
+    <p>A restore is not one job. It is a sequence the operator drives from the outside, re-entering
+    its reconcile loop after every stage and refusing to advance until the previous stage reports
+    success. Nothing here runs concurrently by accident.</p>
+  </div>
+
+  <figure>
+    <div class="fig-scroll">
+      <svg viewBox="0 0 900 476" role="img" aria-label="Five gated restore stages: restore the manifest, reconcile the database in recovery mode, fill each data volume from the base backup, replay WAL to the target with one sidekick per replica, then resume the replicas and serve. Each stage is blocked until the previous one reports success.">
+        <defs>
+          <marker id="ch-g" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="mk-g"/></marker>
+        </defs>
+
+        <rect class="bx" x="60" y="34" width="780" height="64" rx="6"/>
+        <circle cx="92" cy="66" r="15" class="bx-2"/><text class="t-m" x="92" y="70" text-anchor="middle">1</text>
+        <text class="t-b" x="124" y="58">Restore the manifest first</text>
+        <text class="t-m" x="124" y="76">kubedbmanifest-restore · component: manifest</text>
+        <text class="t-s" x="124" y="91">Recreates the auth Secret, config Secret and archiver CR. The database cannot start without them.</text>
+
+        <path class="a-g" d="M150,98 L150,120" marker-end="url(#ch-g)"/>
+        <text class="t-m t-gate" x="166" y="115">gate — RestoreSucceeded</text>
+
+        <rect class="bx" x="60" y="124" width="780" height="64" rx="6"/>
+        <circle cx="92" cy="156" r="15" class="bx-2"/><text class="t-m" x="92" y="160" text-anchor="middle">2</text>
+        <text class="t-b" x="124" y="148">Reconcile the database in recovery mode</text>
+        <text class="t-m" x="124" y="166">PITR_RESTORE=true · PITR_UNIX_TIME · HAS_VOLUME_SNAPSHOT</text>
+        <text class="t-s" x="124" y="181">Pods come up, but Postgres does not serve — it is waiting for its data directory to be filled.</text>
+
+        <path class="a-g" d="M150,188 L150,210" marker-end="url(#ch-g)"/>
+        <text class="t-m t-gate" x="166" y="205">gate — DatabaseReplicaReady</text>
+
+        <rect class="bx-s" x="60" y="214" width="780" height="64" rx="6"/>
+        <circle cx="92" cy="246" r="15" class="bx"/><text class="t-m" x="92" y="250" text-anchor="middle">3</text>
+        <text class="t-b" x="124" y="238">Fill each data volume from the base backup</text>
+        <text class="t-m" x="124" y="256">one RestoreSession per replica · target kind PersistentVolumeClaim · physical-backup-restore</text>
+        <text class="t-s" x="124" y="271">Skipped entirely when the base was a VolumeSnapshot — the PVC was created from it directly.</text>
+
+        <path class="a-g" d="M150,278 L150,300" marker-end="url(#ch-g)"/>
+        <text class="t-m t-gate" x="166" y="295">gate — every PVC session Succeeded</text>
+
+        <rect class="bx-c" x="60" y="304" width="780" height="64" rx="6"/>
+        <circle cx="92" cy="336" r="15" class="bx"/><text class="t-m" x="92" y="340" text-anchor="middle">4</text>
+        <text class="t-b" x="124" y="328">Replay WAL up to the target</text>
+        <text class="t-m" x="124" y="346">one Sidekick per replica · postgres-archiver image running /scripts/restore.sh</text>
+        <text class="t-s" x="124" y="361">Starts Postgres locally, replays, promotes, stops. Exits when pg_is_in_recovery() turns false.</text>
+
+        <path class="a-g" d="M150,368 L150,390" marker-end="url(#ch-g)"/>
+        <text class="t-m t-gate" x="166" y="385">gate — every sidekick Succeeded</text>
+
+        <rect class="bx-g" x="60" y="394" width="780" height="64" rx="6"/>
+        <circle cx="92" cy="426" r="15" class="bx"/><text class="t-m" x="92" y="430" text-anchor="middle">5</text>
+        <text class="t-b" x="124" y="418">Resume the replicas and serve</text>
+        <text class="t-m" x="124" y="436">fscopy: a Job copies PGDATA to the other replicas before they are resumed</text>
+        <text class="t-s" x="124" y="451">Only now does the database accept connections.</text>
+      </svg>
+    </div>
+    <figcaption><b>Stage 3 is the one with a branch.</b> A restic base needs a Job per replica to
+    unpack it; a VolumeSnapshot base needs no Job at all, because the PVC was already provisioned
+    from the snapshot when stage 2 reconciled the PetSet. Everything downstream is identical.</figcaption>
+  </figure>
+</section>
+
+<section id="intopod">
+  <div class="sec-head">
+    <span class="sec-n">08</span>
+    <div>
+      <h2>How the data lands in the pod</h2>
+      <p class="sec-sub">Three writers, one volume, strictly in order.</p>
+    </div>
+  </div>
+
+  <div class="col">
+    <p>This is the part that surprises people: <strong>the restore never goes through the
+    database</strong>. No <code>psql</code>, no network protocol, no import. Two separate pods mount
+    the database's own PVC and write into it directly, at different mount paths, before Postgres is
+    allowed to open it.</p>
+  </div>
+
+  <figure>
+    <div class="fig-scroll">
+      <svg viewBox="0 0 900 400" role="img" aria-label="Three writers act on one persistent volume in order: a restore Job mounts it at slash kubestash-data and untars the base backup into it; a WAL replay sidekick mounts the same volume at slash var slash pv and replays WAL forward to the recovery target; then Postgres starts serving on a directory that is already correct.">
+        <defs>
+          <marker id="ip" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="mk"/></marker>
+          <marker id="ip-s" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="mk-s"/></marker>
+          <marker id="ip-c" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="mk-c"/></marker>
+        </defs>
+
+        <rect class="bx-s" x="40" y="110" width="420" height="88" rx="6"/>
+        <text class="t-b" x="56" y="134">1 · restore Job fills the volume</text>
+        <text class="t-m" x="56" y="153">postgres-restic-plugin · physical-restore</text>
+        <text class="t-s" x="56" y="172">mounts the PVC at /kubestash-data, then: restic dump | tar</text>
+        <text class="t-s" x="56" y="190">Skipped when the base is a VolumeSnapshot.</text>
+
+        <rect class="bx-c" x="40" y="210" width="420" height="88" rx="6"/>
+        <text class="t-b" x="56" y="234">2 · WAL replay sidekick catches up</text>
+        <text class="t-m" x="56" y="253">postgres-archiver · /scripts/restore.sh</text>
+        <text class="t-s" x="56" y="272">mounts the same PVC at /var/pv · wal-g wal-fetch · pg_ctl start</text>
+        <text class="t-s" x="56" y="290">Replays to the target, promotes, stops, exits.</text>
+
+        <rect class="bx-g" x="40" y="310" width="420" height="76" rx="6"/>
+        <text class="t-b" x="56" y="334">3 · Postgres starts serving</text>
+        <text class="t-m" x="56" y="353">postgres-docker · the normal start path</text>
+        <text class="t-s" x="56" y="372">The pod was already running — it was waiting for this directory.</text>
+
+        <path class="a-s" d="M460,154 L556,154" marker-end="url(#ip-s)"/>
+        <text class="t-m t-sched" x="508" y="146" text-anchor="middle">writes</text>
+        <path class="a-c" d="M460,254 L556,254" marker-end="url(#ip-c)"/>
+        <text class="t-m t-cont" x="508" y="246" text-anchor="middle">rewrites</text>
+        <path class="a" d="M460,348 L556,348" marker-end="url(#ip)"/>
+        <text class="t-m" x="508" y="340" text-anchor="middle">opens</text>
+
+        <rect class="bx-2" x="560" y="40" width="300" height="346" rx="6"/>
+        <text class="t-b" x="576" y="68">PVC  data-&lt;db&gt;-0</text>
+        <text class="t-m" x="576" y="88">PGDATA = /var/pv/data</text>
+        <line x1="560" y1="102" x2="860" y2="102" class="a"/>
+
+        <text class="t-m" x="576" y="130">after step 1</text>
+        <text class="t-b" x="576" y="152">a byte-for-byte copy of 12:00</text>
+        <text class="t-s" x="576" y="172">the base backup, nothing more</text>
+        <line x1="560" y1="202" x2="860" y2="202" class="a"/>
+
+        <text class="t-m" x="576" y="230">after step 2</text>
+        <text class="t-b" x="576" y="252">recovered to 14:37, promoted</text>
+        <text class="t-s" x="576" y="272">on a new timeline, recovery.signal removed</text>
+        <line x1="560" y1="302" x2="860" y2="302" class="a"/>
+
+        <text class="t-m" x="576" y="330">after step 3</text>
+        <text class="t-b" x="576" y="352">open for connections</text>
+        <text class="t-s" x="576" y="372">the user's database, at the chosen moment</text>
+      </svg>
+    </div>
+    <figcaption><b>The same volume, mounted at two different paths by two different images.</b> The
+    restic plugin writes under <code>/kubestash-data</code>; the archiver mounts it at
+    <code>/var/pv</code> because that is where its hardcoded paths expect PGDATA to be. Getting either
+    mount path wrong produces a restore that reports success and leaves an empty directory.</figcaption>
+  </figure>
+
+  <div class="note good">
+    <span class="nh">Why the base must be physical</span>
+    <p>WAL can only be replayed onto a byte-level copy — the LSNs in a segment refer to physical page
+    positions. That is why the archiver's full backup is always <code>pg_basebackup</code> or a
+    VolumeSnapshot and never <code>pg_dumpall</code>: a logical dump produces a <em>different</em>
+    physical layout, and there is nothing for the WAL to attach to.</p>
+  </div>
+</section>
+
+<section id="reference">
+  <div class="sec-head">
+    <span class="sec-n">09</span>
+    <div>
+      <h2>Reference</h2>
+      <p class="sec-sub">The names you need when reading logs.</p>
+    </div>
+  </div>
+
+  <h3>Tasks and what they actually run</h3>
+  <div class="tbl-scroll">
+    <table>
+      <thead><tr><th>Task</th><th>Function</th><th>Command</th><th>Produces</th></tr></thead>
+      <tbody>
+        <tr><td><code>logical-backup</code></td><td><code>postgres-backup</code></td><td><code>pg_dumpall</code> → restic stdin</td><td><code>dump.sql</code></td></tr>
+        <tr><td><code>physical-backup</code></td><td><code>postgres-physical-backup</code></td><td><code>pg_basebackup -D - -F t</code> → restic stdin</td><td><code>base.tar</code></td></tr>
+        <tr><td><code>volume-snapshot</code></td><td><code>postgres-csi-snapshotter</code></td><td>CSI VolumeSnapshot request</td><td>a snapshot object</td></tr>
+        <tr><td><code>manifest-backup</code></td><td><code>kubedbmanifest-backup</code></td><td>serialises the CR and Secrets</td><td>YAML in restic</td></tr>
+        <tr><td><code>physical-backup-restore</code></td><td><code>postgres-physical-backup-restore</code></td><td><code>restic dump</code> → <code>tar -C</code></td><td>a filled PVC</td></tr>
+        <tr><td>— (archiver only)</td><td>— (no Function)</td><td><code>wal-g wal-push</code> / <code>wal-fetch</code></td><td>WAL objects</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="col">
+    <p>The last row is the one people miss: <strong>the WAL path has no Addon, no Task and no
+    Function.</strong> It is not a KubeStash job at all. KubeStash only learns about it through the
+    ledger Snapshot the archiver writes its bookkeeping into — which is why that Snapshot sits in
+    <code>Running</code> forever and never completes.</p>
+  </div>
+
+  <h3>Paths and environment</h3>
+  <div class="tbl-scroll">
+    <table>
+      <thead><tr><th>Name</th><th>Value</th><th>Set by / meaning</th></tr></thead>
+      <tbody>
+        <tr><td><code>PGDATA</code></td><td><code>/var/pv/data</code></td><td>the data directory, on the PVC</td></tr>
+        <tr><td>WAL staging</td><td><code>/var/pv/wal_archive/</code></td><td>hardcoded in the archiver — hop 1's destination</td></tr>
+        <tr><td>restore mount</td><td><code>/kubestash-data</code></td><td>where the restic plugin mounts the target PVC</td></tr>
+        <tr><td><code>WAL_BACKUP_TYPE</code></td><td><code>WALG</code> or empty</td><td>decides whether <code>archive_command</code> is real or <code>/bin/true</code></td></tr>
+        <tr><td><code>ARCHIVER_ENABLED</code></td><td><code>true</code>/<code>false</code></td><td>creates the archive directories</td></tr>
+        <tr><td><code>WALG_S3_PREFIX</code></td><td><code>s3://…/&lt;db&gt;/wal</code></td><td>where wal-g writes; independent of the restic repos</td></tr>
+        <tr><td><code>PITR_TIME</code> / <code>PITR_LSN</code></td><td>a timestamp or LSN</td><td>becomes <code>recovery_target_*</code> during replay</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3>Two retention systems, not one</h3>
+  <div class="tbl-scroll">
+    <table>
+      <thead><tr><th></th><th>Base backups &amp; manifests</th><th>WAL</th></tr></thead>
+      <tbody>
+        <tr><td>Governed by</td><td>KubeStash <code>RetentionPolicy</code></td><td><code>logBackup.retentionPeriod</code> on the archiver</td></tr>
+        <tr><td>Enforced by</td><td>KubeStash, after each session</td><td>a cron inside the archiver pod</td></tr>
+        <tr><td>Operates on</td><td>restic snapshots</td><td>objects under the wal-g prefix</td></tr>
+        <tr><td>Failure mode</td><td>WAL you cannot replay onto anything</td><td>bases with a gap after them</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<footer>
+  <p>Drawn from <code>kubedb.dev/postgres</code>, <code>postgres-archiver</code>,
+  <code>postgres-restic-plugin</code>, <code>postgres-csi-snapshotter-plugin</code> and
+  <code>postgres-init-docker</code>.</p>
+</footer>
+
+</div>
+</body>
+</html>

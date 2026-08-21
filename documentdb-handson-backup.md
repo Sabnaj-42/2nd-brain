@@ -13,32 +13,32 @@
 
 ## 0. Headline findings
 
-| # | Finding | Impact |
-| - | ------- | ------ |
-| **F1** | **`pg_dump` cannot back up the DocumentDB catalog.** `documentdb_api_catalog.collections` and `collection_indexes` are *extension-owned*, so PostgreSQL excludes them from every dump — even when named explicitly with `-t`. Restoring a `pg_dump` into a fresh DocumentDB yields **all data present in Postgres and zero collections visible over MongoDB**. | 🔴 **Critical.** A `logical-backup` addon built the obvious way reports success and produces an unusable backup. |
-| **F2** | The defect is fixable with a **7-line `COPY` sidecar**. Proven: injecting 2 catalog rows made 1,250 invisible documents fully visible. | 🟢 Cheap fix, must be designed in from day one. |
-| **F3** | **PITR works today.** With `archive_command` pointed at a directory, a base backup + WAL replay recovered to an exact timestamp — undoing a `deleteMany({})` of 1,000 documents. | 🟢 The differentiator is real and reachable. |
-| **F4** | **`mongodump` is empirically inconsistent across collections.** Under a concurrent writer with invariant `A+B=2001`, the dump captured **2003** — two documents duplicated into both collections. `pg_dump` under the identical workload captured exactly **2001**. | 🟡 Confirms mongo-logical must never be the primary backup path. |
-| **F5** | The gateway **requires TLS even when `spec.sslMode: disable`**, and `mongodump` **silently ignores** `tlsAllowInvalidCertificates` as a URI parameter (mongosh honours it). | 🟡 Addon must pass `--tlsInsecure` as a CLI flag, not in the URI. |
-| **F6** | `archive_mode=always` is **already on**; only `archive_command` (`/bin/true`) and a wal-g binary are missing. `ALTER SYSTEM` changes **survive pod deletion**. | 🟢 Confirms §3.4 of the research note. |
-| **F7** | Manifest restore requires **stripping `ownerReferences`** and applying **Secrets before the CR**, otherwise the operator generates fresh passwords. | 🟡 Ordering is load-bearing. |
-| **F8** | CSI VolumeSnapshot is **untestable on this cluster** — no `VolumeSnapshot` CRDs, no CSI drivers, `local-path` is not a CSI provisioner. | ⚪ Not a DocumentDB limitation; needs a different cluster. |
+| #            | Finding                                                                                                                                                                                                                                                                                                                                                                                 | Impact                                                                                                                  |
+| ------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------- |
+| **F1** | **`pg_dump` cannot back up the DocumentDB catalog.** `documentdb_api_catalog.collections` and `collection_indexes` are *extension-owned*, so PostgreSQL excludes them from every dump — even when named explicitly with `-t`. Restoring a `pg_dump` into a fresh DocumentDB yields **all data present in Postgres and zero collections visible over MongoDB**. | 🔴**Critical.** A `logical-backup` addon built the obvious way reports success and produces an unusable backup. |
+| **F2** | The defect is fixable with a**7-line `COPY` sidecar**. Proven: injecting 2 catalog rows made 1,250 invisible documents fully visible.                                                                                                                                                                                                                                           | 🟢 Cheap fix, must be designed in from day one.                                                                         |
+| **F3** | **PITR works today.** With `archive_command` pointed at a directory, a base backup + WAL replay recovered to an exact timestamp — undoing a `deleteMany({})` of 1,000 documents.                                                                                                                                                                                             | 🟢 The differentiator is real and reachable.                                                                            |
+| **F4** | **`mongodump` is empirically inconsistent across collections.** Under a concurrent writer with invariant `A+B=2001`, the dump captured **2003** — two documents duplicated into both collections. `pg_dump` under the identical workload captured exactly **2001**.                                                                                            | 🟡 Confirms mongo-logical must never be the primary backup path.                                                        |
+| **F5** | The gateway**requires TLS even when `spec.sslMode: disable`**, and `mongodump` **silently ignores** `tlsAllowInvalidCertificates` as a URI parameter (mongosh honours it).                                                                                                                                                                                            | 🟡 Addon must pass`--tlsInsecure` as a CLI flag, not in the URI.                                                      |
+| **F6** | `archive_mode=always` is **already on**; only `archive_command` (`/bin/true`) and a wal-g binary are missing. `ALTER SYSTEM` changes **survive pod deletion**.                                                                                                                                                                                                      | 🟢 Confirms §3.4 of the research note.                                                                                 |
+| **F7** | Manifest restore requires**stripping `ownerReferences`** and applying **Secrets before the CR**, otherwise the operator generates fresh passwords.                                                                                                                                                                                                                        | 🟡 Ordering is load-bearing.                                                                                            |
+| **F8** | CSI VolumeSnapshot is**untestable on this cluster** — no `VolumeSnapshot` CRDs, no CSI drivers, `local-path` is not a CSI provisioner.                                                                                                                                                                                                                                       | ⚪ Not a DocumentDB limitation; needs a different cluster.                                                              |
 
 ---
 
 ## 1. Environment
 
-| Item | Value |
-| ---- | ----- |
-| Kubernetes | `v1.36.2+k3s1`, single node `sabnaj`, Ubuntu 24.04 |
-| Kubeconfig | `/home/sabnaj/k3s.yaml` |
-| KubeDB operators | namespace `kubedb` (provisioner image `sabnaj/documentdb-operator:reconfiguretls-v3`) |
-| Test namespace | `ddb-hands` |
-| DocumentDBVersion | `pg17-0.109.0` → `ghcr.io/documentdb/documentdb/documentdb-local:pg17-0.109.0` |
-| PostgreSQL | 17.9 (Debian) |
-| `documentdb` extension | `0.109-0` |
-| StorageClass | `local-path` (rancher.io/local-path) — **not CSI** |
-| Object storage | MinIO in-cluster, bucket `documentdb-backup` |
+| Item                     | Value                                                                                    |
+| ------------------------ | ---------------------------------------------------------------------------------------- |
+| Kubernetes               | `v1.36.2+k3s1`, single node `sabnaj`, Ubuntu 24.04                                   |
+| Kubeconfig               | `/home/sabnaj/k3s.yaml`                                                                |
+| KubeDB operators         | namespace`kubedb` (provisioner image `sabnaj/documentdb-operator:reconfiguretls-v3`) |
+| Test namespace           | `ddb-hands`                                                                            |
+| DocumentDBVersion        | `pg17-0.109.0` → `ghcr.io/documentdb/documentdb/documentdb-local:pg17-0.109.0`      |
+| PostgreSQL               | 17.9 (Debian)                                                                            |
+| `documentdb` extension | `0.109-0`                                                                              |
+| StorageClass             | `local-path` (rancher.io/local-path) — **not CSI**                              |
+| Object storage           | MinIO in-cluster, bucket`documentdb-backup`                                            |
 
 ### 1.1 What the DB image actually ships
 
@@ -60,11 +60,11 @@ aws / mc /curl-> MISSING
 **Consequence:** all backup work must run from a *separate* image, exactly as KubeStash does with
 plugin Jobs. Three toolbox pods were used, sharing one `backup-workspace` PVC:
 
-| Pod | Image | Provides |
-| --- | ----- | -------- |
-| `toolbox-pg` | `documentdb-local:pg17-0.109.0` | pg_dump/pg_restore/pg_basebackup + the documentdb extension libs |
-| `toolbox-mongo` | `mongo:8.0` | mongodump/mongorestore/mongosh |
-| `toolbox-mc` | `minio/mc` | MinIO upload/download |
+| Pod               | Image                             | Provides                                                         |
+| ----------------- | --------------------------------- | ---------------------------------------------------------------- |
+| `toolbox-pg`    | `documentdb-local:pg17-0.109.0` | pg_dump/pg_restore/pg_basebackup + the documentdb extension libs |
+| `toolbox-mongo` | `mongo:8.0`                     | mongodump/mongorestore/mongosh                                   |
+| `toolbox-mc`    | `minio/mc`                      | MinIO upload/download                                            |
 
 > Reusing the **DB image itself** as the pg toolbox was the single most useful trick: it already
 > contains matching client binaries *and* `shared_preload_libraries` for `pg_documentdb`, which is what
@@ -72,14 +72,14 @@ plugin Jobs. Three toolbox pods were used, sharing one `backup-workspace` PVC:
 
 ### 1.2 Ports and identities — confirmed
 
-| Item | Expected (research note) | Observed |
-| ---- | ------------------------ | -------- |
-| Gateway port | 10260 | ✅ 10260 |
-| Postgres port | 9712 | ✅ 9712 |
-| Admin user | `documentdb` | ✅ from `docdb-admin-auth` |
-| App user | `default_user` | ✅ from `docdb-auth` |
-| PGDATA | `/var/pv/data` | ✅ |
-| `hello().msg` | `isdbgrid` | ✅ |
+| Item            | Expected (research note) | Observed                    |
+| --------------- | ------------------------ | --------------------------- |
+| Gateway port    | 10260                    | ✅ 10260                    |
+| Postgres port   | 9712                     | ✅ 9712                     |
+| Admin user      | `documentdb`           | ✅ from`docdb-admin-auth` |
+| App user        | `default_user`         | ✅ from`docdb-auth`       |
+| PGDATA          | `/var/pv/data`         | ✅                          |
+| `hello().msg` | `isdbgrid`             | ✅                          |
 
 ---
 
@@ -169,15 +169,15 @@ Extensions present: `documentdb 0.109-0`, `documentdb_core 0.109-0`, `pg_cron 1.
 
 ## 3. Results matrix
 
-| # | Method | Backup | Restore | Consistency (measured) | Verdict |
-| - | ------ | :----: | :-----: | ---------------------- | ------- |
-| 1 | `pg_dump` / `pg_dumpall` | ✅ | ⚠️ **data only** | ✅ exact (2001/2001) | **Broken as specified** — loses catalog (F1) |
-| 1b | `pg_dump` **+ catalog `COPY`** | ✅ | ✅ | ✅ exact | ✅ **Recommended logical path** |
-| 2 | `mongodump` / `mongorestore` | ✅ | ✅ | ❌ torn (2003/2001) | ✅ Works; migration-only |
-| 3 | `pg_basebackup` | ✅ | ✅ | crash-consistent | ✅ Works, no extra grants needed |
-| 4 | WAL archiving → **PITR** | ✅ (manual `archive_command`) | ✅ **to exact timestamp** | transactionally exact | ✅ **Proven achievable** |
-| 5 | CSI VolumeSnapshot | ⚪ | ⚪ | — | ⚪ **Untestable** — no CSI driver |
-| 6 | Manifest (CR + Secrets) | ✅ | ✅ | n/a | ✅ Works with ordering care (F7) |
+| #  | Method                                   |             Backup             |            Restore            | Consistency (measured) | Verdict                                             |
+| -- | ---------------------------------------- | :----------------------------: | :----------------------------: | ---------------------- | --------------------------------------------------- |
+| 1  | `pg_dump` / `pg_dumpall`             |               ✅               |    ⚠️**data only**    | ✅ exact (2001/2001)   | **Broken as specified** — loses catalog (F1) |
+| 1b | `pg_dump` **+ catalog `COPY`** |               ✅               |               ✅               | ✅ exact               | ✅**Recommended logical path**                |
+| 2  | `mongodump` / `mongorestore`         |               ✅               |               ✅               | ❌ torn (2003/2001)    | ✅ Works; migration-only                            |
+| 3  | `pg_basebackup`                        |               ✅               |               ✅               | crash-consistent       | ✅ Works, no extra grants needed                    |
+| 4  | WAL archiving →**PITR**           | ✅ (manual`archive_command`) | ✅**to exact timestamp** | transactionally exact  | ✅**Proven achievable**                       |
+| 5  | CSI VolumeSnapshot                       |               ⚪               |               ⚪               | —                     | ⚪**Untestable** — no CSI driver             |
+| 6  | Manifest (CR + Secrets)                  |               ✅               |               ✅               | n/a                    | ✅ Works with ordering care (F7)                    |
 
 ---
 
@@ -236,6 +236,7 @@ select c.relname, e.extname from pg_class c
   join pg_extension e on e.oid=d.refobjid
  where c.relnamespace='documentdb_api_catalog'::regnamespace;
 ```
+
 ```
 collections                    | documentdb
 collection_indexes             | documentdb
@@ -365,13 +366,13 @@ already `always`.
 
 **The PITR drill**
 
-| Step | Action | State |
-| ---- | ------ | ----- |
-| 1 | `pg_basebackup -Fp` → `/backup/pitr-base` | base at LSN 0/5000028 |
-| 2 | insert 50 docs `gen1` into `sampledb.pitr`; `pg_switch_wal()` | pitr=50 |
-| 3 | **record T1 = `2026-08-19 05:44:17.938152+00`** | ← recovery target |
-| 4 | insert 70 docs `gen2`; **`db.orders.deleteMany({})`** — the "disaster" | pitr=120, orders=**0** |
-| 5 | `pg_switch_wal()`; 5 WAL segments archived | |
+| Step | Action                                                                           | State                        |
+| ---- | -------------------------------------------------------------------------------- | ---------------------------- |
+| 1    | `pg_basebackup -Fp` → `/backup/pitr-base`                                   | base at LSN 0/5000028        |
+| 2    | insert 50 docs`gen1` into `sampledb.pitr`; `pg_switch_wal()`               | pitr=50                      |
+| 3    | **record T1 = `2026-08-19 05:44:17.938152+00`**                          | ← recovery target           |
+| 4    | insert 70 docs`gen2`; **`db.orders.deleteMany({})`** — the "disaster" | pitr=120, orders=**0** |
+| 5    | `pg_switch_wal()`; 5 WAL segments archived                                     |                              |
 
 **Recovery** — same image, port 5555, `restore_command` reading the archive:
 
@@ -395,11 +396,11 @@ LOG: database system is ready to accept connections
 
 **Result**
 
-| Collection | Live DB (damaged) | Recovered to T1 | Expected |
-| ---------- | ----------------: | --------------: | -------- |
-| `orders` | **0** | **1000** | 1000 ✅ |
-| `customers` | 250 | **250** | 250 ✅ |
-| `pitr` | 120 | **50** | 50 ✅ (gen1 only) |
+| Collection    | Live DB (damaged) | Recovered to T1 | Expected          |
+| ------------- | ----------------: | --------------: | ----------------- |
+| `orders`    |       **0** |  **1000** | 1000 ✅           |
+| `customers` |               250 |   **250** | 250 ✅            |
+| `pitr`      |               120 |    **50** | 50 ✅ (gen1 only) |
 
 Row payload decoded to `{_id:0, gen:"gen1"}` (`BSONHEX...67656e31`). The 1,000-document deletion and
 all 70 `gen2` inserts were correctly excluded.
@@ -480,12 +481,12 @@ application that holds the old credential. **Ordering is load-bearing.**
 kubectl delete pod -n ddb-hands docdb-0
 ```
 
-| Check | Before | After |
-| ----- | ------ | ----- |
-| Pod UID | `0cc222be-…` | `02cc9072-…` (genuinely new pod, restarts=0) |
-| PV | `pvc-f9f09001-…` | `pvc-f9f09001-…` (identical) |
-| Data | orders=0, pitr=120, customers=250 | **identical** |
-| `archive_command` | custom | **survived** |
+| Check               | Before                            | After                                           |
+| ------------------- | --------------------------------- | ----------------------------------------------- |
+| Pod UID             | `0cc222be-…`                   | `02cc9072-…` (genuinely new pod, restarts=0) |
+| PV                  | `pvc-f9f09001-…`               | `pvc-f9f09001-…` (identical)                 |
+| Data                | orders=0, pitr=120, customers=250 | **identical**                             |
+| `archive_command` | custom                            | **survived**                              |
 
 Pod re-ready in <30 s. ✅ Pod deletion is a non-event; the PVC is the durable unit.
 
@@ -593,10 +594,10 @@ qty_sum     = 7979
 
 **Notable:** collection IDs are **not stable** across a dump/restore cycle:
 
-| Collection | Original | After mongorestore |
-| ---------- | -------- | ------------------ |
-| `sampledb.orders` | `documents_4` | `documents_6` |
-| `sampledb.customers` | `documents_5` | `documents_5` |
+| Collection             | Original        | After mongorestore |
+| ---------------------- | --------------- | ------------------ |
+| `sampledb.orders`    | `documents_4` | `documents_6`    |
+| `sampledb.customers` | `documents_5` | `documents_5`    |
 
 So `pg_dump` artifacts taken before and after a mongo-restore are **not interchangeable** — another
 reason catalog and data must always travel together.
@@ -643,10 +644,10 @@ TOTAL = 2001  (true invariant = 2001)
 
 ### 6.3 Side by side
 
-| Method | accA | accB | Total | Invariant 2001 |
-| ------ | ---: | ---: | ----: | -------------- |
-| `mongodump` | 990 | 1013 | **2003** | ❌ violated (+2) |
-| `pg_dump` | 1062 | 939 | **2001** | ✅ exact |
+| Method        | accA | accB |          Total | Invariant 2001   |
+| ------------- | ---: | ---: | -------------: | ---------------- |
+| `mongodump` |  990 | 1013 | **2003** | ❌ violated (+2) |
+| `pg_dump`   | 1062 |  939 | **2001** | ✅ exact         |
 
 This is the research note's central thesis, now measured rather than argued.
 
@@ -689,13 +690,13 @@ observed from the other side.
 
 Gaps #10 and #11 are the whole job:
 
-| Gap | Status after this exercise |
-| --- | -------------------------- |
-| `archive_mode = always` | ✅ already set by the image |
-| `archive_command` | 🔧 one `ALTER SYSTEM` / one script branch |
-| wal-g binary | 🔧 sidekick container (Postgres pattern) |
-| `restore.sh` wal-g logic | ✅ already present in `documentdb-init-docker` |
-| PITR recovery mechanics | ✅ **proven working** (§4.4) |
+| Gap                        | Status after this exercise                      |
+| -------------------------- | ----------------------------------------------- |
+| `archive_mode = always`  | ✅ already set by the image                     |
+| `archive_command`        | 🔧 one`ALTER SYSTEM` / one script branch      |
+| wal-g binary               | 🔧 sidekick container (Postgres pattern)        |
+| `restore.sh` wal-g logic | ✅ already present in`documentdb-init-docker` |
+| PITR recovery mechanics    | ✅**proven working** (§4.4)              |
 
 `ARCHIVER_ENABLED=false` at `petset.go:1034` is the single line that gates all of it.
 
@@ -754,8 +755,7 @@ wal_archive/000000010000000000000006             16MiB
 wal_archive/000000010000000000000007             16MiB
 ```
 
-**Final state:** `sampledb` restored via `mongorestore` from MinIO — `orders=1000, customers=250,
-qty_sum=7979`, matching the baseline fingerprint exactly.
+**Final state:** `sampledb` restored via `mongorestore` from MinIO — `orders=1000, customers=250, qty_sum=7979`, matching the baseline fingerprint exactly.
 
 **Teardown:** `kubectl delete ns ddb-hands` removes the database, MinIO, all toolboxes and all PVCs.
 
