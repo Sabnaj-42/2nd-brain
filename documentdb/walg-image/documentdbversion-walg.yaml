@@ -1,0 +1,18 @@
+# DocumentDBVersion pointing at the combined documentdb + wal-g image.
+# Built from documentdb/walg-image/Dockerfile.
+#   kubectl apply -f documentdbversion-walg.yaml
+apiVersion: catalog.kubedb.com/v1alpha1
+kind: DocumentDBVersion
+metadata:
+  name: pg17-0.109.0-walg
+spec:
+  coordinator:
+    image: ghcr.io/kubedb/documentdb-coordinator:v0.3.0-rc.0
+  db:
+    image: docker.io/sabnaj/documentdb-walg:pg17-0.109.0
+  initContainer:
+    image: ghcr.io/kubedb/documentdb-init:0.1.0
+  postgresVersion: '17'
+  securityContext:
+    runAsUser: 1000
+  version: 0.109.0

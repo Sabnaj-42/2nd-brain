@@ -1,0 +1,31 @@
+apiVersion: kubedb.com/v1alpha2
+kind: DocumentDB
+
+metadata:
+  name: docdb
+  namespace: ddb-hands
+
+spec:
+  version: 'pg17-0.109.0'
+  replicas: 1
+  storageType: Durable
+  sslMode: disable
+
+  storage:
+    accessModes:
+      - ReadWriteOnce
+    storageClassName: local-path
+    resources:
+      requests:
+        storage: 5Gi
+
+  podTemplate:
+    spec:
+      containers:
+        - name: documentdb
+          resources:
+            requests:
+              cpu: 500m
+              memory: 2Gi
+
+  deletionPolicy: WipeOut
