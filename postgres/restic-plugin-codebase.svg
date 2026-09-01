@@ -1,0 +1,423 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="1800" height="1500" viewBox="0 0 1800 1500" role="img" aria-labelledby="title desc">
+  <title id="title">postgres-restic-plugin codebase architecture</title>
+  <desc id="desc">A codebase map showing KubeStash orchestration, Kubernetes object discovery, the Go package structure, and the four PostgreSQL and Restic streaming pipelines.</desc>
+
+  <defs>
+    <linearGradient id="pageBg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#f8fafc"/>
+      <stop offset="1" stop-color="#eef2ff"/>
+    </linearGradient>
+    <linearGradient id="heroBg" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#172554"/>
+      <stop offset="0.55" stop-color="#1e3a8a"/>
+      <stop offset="1" stop-color="#312e81"/>
+    </linearGradient>
+    <linearGradient id="jobBg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#2563eb"/>
+      <stop offset="1" stop-color="#4f46e5"/>
+    </linearGradient>
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="150%">
+      <feDropShadow dx="0" dy="5" stdDeviation="7" flood-color="#0f172a" flood-opacity="0.12"/>
+    </filter>
+    <filter id="softShadow" x="-20%" y="-20%" width="140%" height="150%">
+      <feDropShadow dx="0" dy="3" stdDeviation="4" flood-color="#0f172a" flood-opacity="0.10"/>
+    </filter>
+
+    <marker id="arrowNavy" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#334155"/>
+    </marker>
+    <marker id="arrowBlue" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#2563eb"/>
+    </marker>
+    <marker id="arrowGreen" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#059669"/>
+    </marker>
+    <marker id="arrowAmber" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#d97706"/>
+    </marker>
+    <marker id="arrowPurple" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#7c3aed"/>
+    </marker>
+
+    <style>
+      text { font-family: sans-serif; }
+      .title { font-family: sans-serif; font-size: 38px; font-weight: 700; fill: #ffffff; }
+      .subtitle { font-family: sans-serif; font-size: 18px; font-weight: 400; fill: #dbeafe; }
+      .section { font-family: sans-serif; font-size: 16px; font-weight: 700; letter-spacing: 2px; fill: #475569; }
+      .cardTitle { font-family: sans-serif; font-size: 21px; font-weight: 700; fill: #0f172a; }
+      .cardTitleLight { font-family: sans-serif; font-size: 22px; font-weight: 700; fill: #ffffff; }
+      .body { font-family: sans-serif; font-size: 15px; font-weight: 400; fill: #475569; }
+      .bodyDark { font-family: sans-serif; font-size: 15px; font-weight: 500; fill: #334155; }
+      .bodyLight { font-family: sans-serif; font-size: 15px; font-weight: 400; fill: #e0e7ff; }
+      .small { font-family: sans-serif; font-size: 13px; font-weight: 400; fill: #64748b; }
+      .smallLight { font-family: sans-serif; font-size: 13px; font-weight: 500; fill: #dbeafe; }
+      .mono { font-family: monospace; font-size: 14px; font-weight: 600; fill: #1e293b; }
+      .monoLight { font-family: monospace; font-size: 14px; font-weight: 600; fill: #ffffff; }
+      .pill { font-family: sans-serif; font-size: 12px; font-weight: 700; letter-spacing: 0.6px; }
+      .pillText { font-family: sans-serif; font-size: 13px; font-weight: 600; fill: #1e40af; }
+      .flowTitle { font-family: sans-serif; font-size: 17px; font-weight: 700; fill: #0f172a; }
+      .flowNode { font-family: sans-serif; font-size: 13px; font-weight: 600; fill: #1e293b; text-anchor: middle; }
+      .arrowLabel { font-family: sans-serif; font-size: 12px; font-weight: 600; fill: #64748b; text-anchor: middle; }
+    </style>
+  </defs>
+
+  <!-- Page -->
+  <rect width="1800" height="1500" fill="#f4f7fb"/>
+  <rect x="0" y="0" width="1800" height="118" fill="#172554"/>
+  <circle cx="1690" cy="-10" r="165" fill="#60a5fa" opacity="0.10"/>
+  <circle cx="1600" cy="85" r="82" fill="#c4b5fd" opacity="0.12"/>
+
+  <text id="diagram-title" x="64" y="53" class="title">postgres-restic-plugin · codebase architecture</text>
+  <text x="64" y="84" class="subtitle">A short-lived KubeStash worker that streams PostgreSQL data through Restic, then reports component status.</text>
+  <g transform="translate(1508 35)">
+    <rect width="226" height="46" rx="23" fill="#1e40af" stroke="#93c5fd"/>
+    <text x="113" y="29" text-anchor="middle" class="monoLight">discover → stream → report</text>
+  </g>
+
+  <!-- External orchestration -->
+  <text x="64" y="153" class="section">EXTERNAL ORCHESTRATION &amp; KUBERNETES API</text>
+  <rect x="52" y="170" width="1696" height="218" rx="24" fill="#ffffff" stroke="#dbe4f0" filter="url(#shadow)"/>
+
+  <g transform="translate(82 202)">
+    <rect width="342" height="148" rx="18" fill="#eef2ff" stroke="#a5b4fc"/>
+    <rect width="342" height="38" rx="18" fill="#4338ca"/>
+    <rect y="20" width="342" height="18" fill="#4338ca"/>
+    <text x="18" y="26" class="monoLight">KubeStash controller</text>
+    <text x="18" y="67" class="bodyDark">Schedules the operation and creates:</text>
+    <text x="28" y="94" class="body">• BackupSession / RestoreSession</text>
+    <text x="28" y="118" class="body">• Snapshot(s), Repository, and Job</text>
+    <text x="28" y="140" class="small">Addon / Task / Function live outside this repo</text>
+  </g>
+
+  <g transform="translate(518 202)" filter="url(#softShadow)">
+    <rect width="420" height="148" rx="18" fill="#2563eb"/>
+    <text x="24" y="35" class="cardTitleLight">Kubernetes Job starts one command</text>
+    <text x="24" y="66" class="bodyLight">Container entrypoint: /postgres-restic-plugin</text>
+    <text x="24" y="93" class="bodyLight">Cobra name: kubestash-postgres</text>
+    <g transform="translate(24 111)">
+      <rect width="78" height="24" rx="12" fill="#dbeafe"/>
+      <text x="39" y="16" text-anchor="middle" class="pillText">backup</text>
+      <rect x="88" width="82" height="24" rx="12" fill="#dbeafe"/>
+      <text x="129" y="16" text-anchor="middle" class="pillText">restore</text>
+      <rect x="180" width="103" height="24" rx="12" fill="#dbeafe"/>
+      <text x="231" y="16" text-anchor="middle" class="pillText">physical-*</text>
+    </g>
+  </g>
+
+  <g transform="translate(1032 190)">
+    <rect width="680" height="172" rx="18" fill="#f8fafc" stroke="#cbd5e1"/>
+    <text x="22" y="31" class="cardTitle">Kubernetes API: configuration in, status out</text>
+
+    <g transform="translate(22 50)">
+      <rect width="194" height="92" rx="12" fill="#eff6ff" stroke="#93c5fd"/>
+      <text x="14" y="24" class="mono">Operation</text>
+      <text x="14" y="48" class="small">BackupSession →</text>
+      <text x="14" y="67" class="small">BackupConfiguration</text>
+      <text x="14" y="86" class="small">or RestoreSession</text>
+    </g>
+    <path d="M 220 96 H 241" fill="none" stroke="#64748b" stroke-width="2" marker-end="url(#arrowNavy)"/>
+    <g transform="translate(244 50)">
+      <rect width="190" height="92" rx="12" fill="#f0fdf4" stroke="#86efac"/>
+      <text x="14" y="24" class="mono">Database</text>
+      <text x="14" y="48" class="small">Target / Druid →</text>
+      <text x="14" y="67" class="small">AppBinding →</text>
+      <text x="14" y="86" class="small">auth + TLS Secrets</text>
+    </g>
+    <path d="M 438 96 H 459" fill="none" stroke="#64748b" stroke-width="2" marker-end="url(#arrowNavy)"/>
+    <g transform="translate(462 50)">
+      <rect width="196" height="92" rx="12" fill="#fff7ed" stroke="#fdba74"/>
+      <text x="14" y="24" class="mono">Storage</text>
+      <text x="14" y="48" class="small">Snapshot → Repository</text>
+      <text x="14" y="67" class="small">→ BackupStorage</text>
+      <text x="14" y="86" class="small">+ encryption Secret</text>
+    </g>
+  </g>
+
+  <path d="M 424 276 H 502" fill="none" stroke="#2563eb" stroke-width="3" marker-end="url(#arrowBlue)"/>
+  <text x="463" y="263" class="arrowLabel">creates</text>
+  <path d="M 938 248 C 970 248 982 230 1018 230" fill="none" stroke="#334155" stroke-width="2.5" marker-end="url(#arrowNavy)"/>
+  <text x="979" y="216" class="arrowLabel">reads</text>
+  <path d="M 1018 324 C 980 324 974 309 938 309" fill="none" stroke="#2563eb" stroke-width="2.5" marker-end="url(#arrowBlue)"/>
+  <text x="979" y="344" class="arrowLabel">patches status</text>
+
+  <!-- Go code structure -->
+  <text x="64" y="430" class="section">GO CODE INSIDE THE PLUGIN PROCESS</text>
+  <rect x="52" y="448" width="1696" height="420" rx="24" fill="#ffffff" stroke="#dbe4f0" filter="url(#shadow)"/>
+
+  <!-- Entry -->
+  <g transform="translate(82 484)">
+    <rect width="310" height="168" rx="18" fill="#f8fafc" stroke="#94a3b8"/>
+    <rect width="310" height="38" rx="18" fill="#334155"/>
+    <rect y="20" width="310" height="18" fill="#334155"/>
+    <text x="18" y="26" class="monoLight">entry &amp; command wiring</text>
+    <text x="18" y="67" class="mono">cmd/.../main.go</text>
+    <text x="18" y="90" class="small">logging · GOMAXPROCS · Execute</text>
+    <text x="18" y="117" class="mono">pkg/root.go</text>
+    <text x="18" y="140" class="small">Cobra root + 4 subcommands + version</text>
+    <text x="18" y="160" class="small">Build metadata comes from linker flags</text>
+  </g>
+
+  <!-- Options -->
+  <g transform="translate(454 484)">
+    <rect width="376" height="168" rx="18" fill="#eef2ff" stroke="#a5b4fc"/>
+    <rect width="376" height="38" rx="18" fill="#4f46e5"/>
+    <rect y="20" width="376" height="18" fill="#4f46e5"/>
+    <text x="18" y="26" class="monoLight">shared operation state</text>
+    <text x="18" y="69" class="cardTitle">common.Options</text>
+    <text x="18" y="95" class="body">Kubernetes clients · sessions · snapshots</text>
+    <text x="18" y="119" class="body">Restic setup/backup/dump options</text>
+    <text x="18" y="143" class="body">shell session · command args · target info</text>
+    <text x="18" y="162" class="small">pkg/mapper.go owns the package-global opt</text>
+  </g>
+
+  <!-- Shared helpers -->
+  <g transform="translate(892 474)">
+    <rect width="820" height="188" rx="18" fill="#f8fafc" stroke="#94a3b8"/>
+    <text x="22" y="34" class="cardTitle">Shared services</text>
+
+    <g transform="translate(22 52)">
+      <rect width="238" height="108" rx="12" fill="#eff6ff" stroke="#93c5fd"/>
+      <text x="14" y="25" class="mono">common/helpers.go</text>
+      <text x="14" y="50" class="small">CR discovery · readiness</text>
+      <text x="14" y="71" class="small">AppBinding · credentials · TLS</text>
+      <text x="14" y="92" class="small">Restic backend construction</text>
+    </g>
+    <g transform="translate(278 52)">
+      <rect width="238" height="108" rx="12" fill="#f0fdf4" stroke="#86efac"/>
+      <text x="14" y="25" class="mono">common/status.go</text>
+      <text x="14" y="50" class="small">Running → Succeeded / Failed</text>
+      <text x="14" y="71" class="small">Restic ID · size · duration</text>
+      <text x="14" y="92" class="small">integrity · error · API patch</text>
+    </g>
+    <g transform="translate(534 52)">
+      <rect width="264" height="108" rx="12" fill="#fff7ed" stroke="#fdba74"/>
+      <text x="14" y="25" class="mono">special policy</text>
+      <text x="14" y="50" class="small">options.go · flag ownership</text>
+      <text x="14" y="71" class="small">druid.go · metadata Postgres</text>
+      <text x="14" y="92" class="small">TDE selection + restore guard</text>
+    </g>
+  </g>
+
+  <path d="M 392 568 H 440" fill="none" stroke="#334155" stroke-width="2.5" marker-end="url(#arrowNavy)"/>
+  <path d="M 830 568 H 878" fill="none" stroke="#334155" stroke-width="2.5" marker-end="url(#arrowNavy)"/>
+
+  <!-- Command cards -->
+  <path d="M 642 652 V 682" fill="none" stroke="#64748b" stroke-width="2" stroke-dasharray="5 5"/>
+  <path d="M 248 682 H 1548" fill="none" stroke="#64748b" stroke-width="2" stroke-dasharray="5 5"/>
+  <path d="M 248 682 V 703 M 680 682 V 703 M 1112 682 V 703 M 1548 682 V 703" fill="none" stroke="#64748b" stroke-width="2" stroke-dasharray="5 5"/>
+
+  <g transform="translate(82 704)">
+    <rect width="354" height="126" rx="16" fill="#ecfdf5" stroke="#6ee7b7"/>
+    <rect width="8" height="126" rx="4" fill="#059669"/>
+    <text x="26" y="31" class="cardTitle">backup</text>
+    <text x="26" y="55" class="mono">pkg/backup.go</text>
+    <text x="26" y="80" class="body">Logical SQL · component: dump</text>
+    <text x="26" y="104" class="small">setupBackupOptions → performBackup</text>
+  </g>
+
+  <g transform="translate(514 704)">
+    <rect width="354" height="126" rx="16" fill="#ecfeff" stroke="#67e8f9"/>
+    <rect width="8" height="126" rx="4" fill="#0891b2"/>
+    <text x="26" y="31" class="cardTitle">physical-backup</text>
+    <text x="26" y="55" class="mono">pkg/physical_backup.go</text>
+    <text x="26" y="80" class="body">Base tar · component: physical</text>
+    <text x="26" y="104" class="small">fixed -D - · -F t · TDE auto-select</text>
+  </g>
+
+  <g transform="translate(946 704)">
+    <rect width="354" height="126" rx="16" fill="#fffbeb" stroke="#fcd34d"/>
+    <rect width="8" height="126" rx="4" fill="#d97706"/>
+    <text x="26" y="31" class="cardTitle">restore</text>
+    <text x="26" y="55" class="mono">pkg/restore.go</text>
+    <text x="26" y="80" class="body">Logical SQL · component: dump</text>
+    <text x="26" y="104" class="small">password filter · optional TDE guard</text>
+  </g>
+
+  <g transform="translate(1378 704)">
+    <rect width="334" height="126" rx="16" fill="#faf5ff" stroke="#d8b4fe"/>
+    <rect width="8" height="126" rx="4" fill="#7c3aed"/>
+    <text x="26" y="31" class="cardTitle">physical-restore</text>
+    <text x="26" y="55" class="mono">pkg/physical_restore.go</text>
+    <text x="26" y="80" class="body">Base tar · component: physical</text>
+    <text x="26" y="104" class="small">offline extraction into mounted PGDATA</text>
+  </g>
+
+  <!-- Vertical command-to-flow arrows -->
+  <path d="M 259 830 V 895" fill="none" stroke="#059669" stroke-width="3" marker-end="url(#arrowGreen)"/>
+  <path d="M 691 830 V 1108" fill="none" stroke="#0891b2" stroke-width="3" marker-end="url(#arrowBlue)"/>
+  <path d="M 1123 830 V 895" fill="none" stroke="#d97706" stroke-width="3" marker-end="url(#arrowAmber)"/>
+  <path d="M 1545 830 V 1108" fill="none" stroke="#7c3aed" stroke-width="3" marker-end="url(#arrowPurple)"/>
+
+  <!-- Data plane -->
+  <text x="64" y="912" class="section">DATA PLANE · LARGE DATABASE BYTES STAY IN STREAMS</text>
+
+  <!-- Logical backup lane -->
+  <g transform="translate(52 930)" filter="url(#softShadow)">
+    <rect width="826" height="166" rx="22" fill="#ffffff" stroke="#a7f3d0"/>
+    <rect width="826" height="38" rx="22" fill="#d1fae5"/>
+    <rect y="22" width="826" height="16" fill="#d1fae5"/>
+    <text x="22" y="26" class="flowTitle">1 · Logical backup</text>
+    <text x="606" y="25" class="small">virtual file: dumpfile.sql</text>
+
+    <g transform="translate(25 64)">
+      <ellipse cx="66" cy="38" rx="66" ry="36" fill="#eff6ff" stroke="#60a5fa"/>
+      <text x="66" y="34" class="flowNode">PostgreSQL</text>
+      <text x="66" y="53" class="small" text-anchor="middle">running server</text>
+
+      <rect x="174" y="3" width="158" height="70" rx="13" fill="#ecfdf5" stroke="#34d399"/>
+      <text x="253" y="31" class="flowNode">pg_dumpall</text>
+      <text x="253" y="51" class="small" text-anchor="middle">or pg_dump</text>
+
+      <rect x="391" y="3" width="176" height="70" rx="13" fill="#eef2ff" stroke="#818cf8"/>
+      <text x="479" y="31" class="flowNode">restic backup</text>
+      <text x="479" y="51" class="small" text-anchor="middle">--stdin · encrypted</text>
+
+      <path d="M 132 38 H 160" fill="none" stroke="#059669" stroke-width="3" marker-end="url(#arrowGreen)"/>
+      <path d="M 332 38 H 377" fill="none" stroke="#059669" stroke-width="3" marker-end="url(#arrowGreen)"/>
+      <text x="354" y="26" class="arrowLabel">SQL stream</text>
+
+      <g transform="translate(630 1)">
+        <path d="M 6 12 C 6 3 132 3 132 12 V 60 C 132 70 6 70 6 60 Z" fill="#fff7ed" stroke="#fb923c"/>
+        <ellipse cx="69" cy="12" rx="63" ry="10" fill="#ffedd5" stroke="#fb923c"/>
+        <text x="69" y="39" class="flowNode">Restic repository</text>
+        <text x="69" y="57" class="small" text-anchor="middle">object/local storage</text>
+      </g>
+      <path d="M 567 38 H 616" fill="none" stroke="#059669" stroke-width="3" marker-end="url(#arrowGreen)"/>
+    </g>
+  </g>
+
+  <!-- Logical restore lane -->
+  <g transform="translate(922 930)" filter="url(#softShadow)">
+    <rect width="826" height="166" rx="22" fill="#ffffff" stroke="#fde68a"/>
+    <rect width="826" height="38" rx="22" fill="#fef3c7"/>
+    <rect y="22" width="826" height="16" fill="#fef3c7"/>
+    <text x="22" y="26" class="flowTitle">2 · Logical restore</text>
+    <text x="680" y="25" class="small">component: dump</text>
+
+    <g transform="translate(20 64)">
+      <g transform="translate(0 1)">
+        <path d="M 6 12 C 6 3 128 3 128 12 V 60 C 128 70 6 70 6 60 Z" fill="#fff7ed" stroke="#fb923c"/>
+        <ellipse cx="67" cy="12" rx="61" ry="10" fill="#ffedd5" stroke="#fb923c"/>
+        <text x="67" y="38" class="flowNode">Repository</text>
+        <text x="67" y="56" class="small" text-anchor="middle">Restic snapshot ID</text>
+      </g>
+
+      <rect x="165" y="3" width="133" height="70" rx="13" fill="#eef2ff" stroke="#818cf8"/>
+      <text x="231" y="31" class="flowNode">restic dump</text>
+      <text x="231" y="51" class="small" text-anchor="middle">dumpfile.sql</text>
+
+      <rect x="334" y="3" width="91" height="70" rx="13" fill="#fff7ed" stroke="#fb923c"/>
+      <text x="379" y="31" class="flowNode">sed</text>
+      <text x="379" y="51" class="small" text-anchor="middle">password</text>
+
+      <rect x="461" y="3" width="110" height="70" rx="13" fill="#fffbeb" stroke="#f59e0b" stroke-dasharray="5 4"/>
+      <text x="516" y="29" class="flowNode">awk guard</text>
+      <text x="516" y="49" class="small" text-anchor="middle">if no pg_tde</text>
+
+      <rect x="607" y="3" width="88" height="70" rx="13" fill="#fffbeb" stroke="#f59e0b"/>
+      <text x="651" y="42" class="flowNode">psql</text>
+
+      <ellipse cx="767" cy="38" rx="48" ry="36" fill="#eff6ff" stroke="#60a5fa"/>
+      <text x="767" y="34" class="flowNode">Target</text>
+      <text x="767" y="53" class="small" text-anchor="middle">database</text>
+
+      <path d="M 128 38 H 151 M 298 38 H 320 M 425 38 H 447 M 571 38 H 593 M 695 38 H 705" fill="none" stroke="#d97706" stroke-width="3" marker-end="url(#arrowAmber)"/>
+    </g>
+  </g>
+
+  <!-- Physical backup lane -->
+  <g transform="translate(52 1122)" filter="url(#softShadow)">
+    <rect width="826" height="166" rx="22" fill="#ffffff" stroke="#a5f3fc"/>
+    <rect width="826" height="38" rx="22" fill="#cffafe"/>
+    <rect y="22" width="826" height="16" fill="#cffafe"/>
+    <text x="22" y="26" class="flowTitle">3 · Physical backup</text>
+    <text x="644" y="25" class="small">virtual file: base.tar</text>
+
+    <g transform="translate(25 64)">
+      <ellipse cx="66" cy="38" rx="66" ry="36" fill="#eff6ff" stroke="#60a5fa"/>
+      <text x="66" y="34" class="flowNode">PostgreSQL</text>
+      <text x="66" y="53" class="small" text-anchor="middle">Ready KubeDB</text>
+
+      <rect x="174" y="3" width="184" height="70" rx="13" fill="#ecfeff" stroke="#22d3ee"/>
+      <text x="266" y="29" class="flowNode">pg_basebackup</text>
+      <text x="266" y="49" class="small" text-anchor="middle">-D - · -F t</text>
+      <text x="266" y="66" class="small" text-anchor="middle">TDE binary if present</text>
+
+      <rect x="417" y="3" width="176" height="70" rx="13" fill="#eef2ff" stroke="#818cf8"/>
+      <text x="505" y="31" class="flowNode">restic backup</text>
+      <text x="505" y="51" class="small" text-anchor="middle">--stdin · encrypted</text>
+
+      <path d="M 132 38 H 160" fill="none" stroke="#0891b2" stroke-width="3" marker-end="url(#arrowBlue)"/>
+      <path d="M 358 38 H 403" fill="none" stroke="#0891b2" stroke-width="3" marker-end="url(#arrowBlue)"/>
+      <text x="381" y="26" class="arrowLabel">tar stream</text>
+
+      <g transform="translate(630 1)">
+        <path d="M 6 12 C 6 3 132 3 132 12 V 60 C 132 70 6 70 6 60 Z" fill="#fff7ed" stroke="#fb923c"/>
+        <ellipse cx="69" cy="12" rx="63" ry="10" fill="#ffedd5" stroke="#fb923c"/>
+        <text x="69" y="39" class="flowNode">Restic repository</text>
+        <text x="69" y="57" class="small" text-anchor="middle">may fan out to many</text>
+      </g>
+      <path d="M 593 38 H 616" fill="none" stroke="#0891b2" stroke-width="3" marker-end="url(#arrowBlue)"/>
+    </g>
+  </g>
+
+  <!-- Physical restore lane -->
+  <g transform="translate(922 1122)" filter="url(#softShadow)">
+    <rect width="826" height="166" rx="22" fill="#ffffff" stroke="#e9d5ff"/>
+    <rect width="826" height="38" rx="22" fill="#f3e8ff"/>
+    <rect y="22" width="826" height="16" fill="#f3e8ff"/>
+    <text x="22" y="26" class="flowTitle">4 · Physical restore</text>
+    <text x="665" y="25" class="small">offline target volume</text>
+
+    <g transform="translate(40 64)">
+      <g transform="translate(0 1)">
+        <path d="M 6 12 C 6 3 142 3 142 12 V 60 C 142 70 6 70 6 60 Z" fill="#fff7ed" stroke="#fb923c"/>
+        <ellipse cx="74" cy="12" rx="68" ry="10" fill="#ffedd5" stroke="#fb923c"/>
+        <text x="74" y="38" class="flowNode">Repository</text>
+        <text x="74" y="56" class="small" text-anchor="middle">physical Restic ID</text>
+      </g>
+
+      <rect x="187" y="3" width="152" height="70" rx="13" fill="#eef2ff" stroke="#818cf8"/>
+      <text x="263" y="31" class="flowNode">restic dump</text>
+      <text x="263" y="51" class="small" text-anchor="middle">base.tar</text>
+
+      <rect x="391" y="3" width="137" height="70" rx="13" fill="#faf5ff" stroke="#c084fc"/>
+      <text x="459" y="31" class="flowNode">tar -x -C</text>
+      <text x="459" y="51" class="small" text-anchor="middle">extract stream</text>
+
+      <g transform="translate(584 2)">
+        <path d="M 0 14 H 54 L 68 28 H 168 V 72 H 0 Z" fill="#f5f3ff" stroke="#8b5cf6"/>
+        <path d="M 0 14 H 54 L 68 28 H 168" fill="none" stroke="#8b5cf6" stroke-width="2"/>
+        <text x="84" y="48" class="flowNode">mounted PGDATA</text>
+        <text x="84" y="65" class="small" text-anchor="middle">/kubestash-data/...</text>
+      </g>
+
+      <path d="M 142 38 H 173 M 339 38 H 377 M 528 38 H 570" fill="none" stroke="#7c3aed" stroke-width="3" marker-end="url(#arrowPurple)"/>
+    </g>
+  </g>
+
+  <!-- Status / boundary summary -->
+  <g transform="translate(52 1320)">
+    <rect width="1696" height="128" rx="22" fill="#0f172a"/>
+    <g transform="translate(28 24)">
+      <circle cx="8" cy="8" r="8" fill="#60a5fa"/>
+      <text x="28" y="13" class="smallLight">Control/configuration</text>
+      <circle cx="190" cy="8" r="8" fill="#34d399"/>
+      <text x="210" y="13" class="smallLight">Logical backup</text>
+      <circle cx="358" cy="8" r="8" fill="#22d3ee"/>
+      <text x="378" y="13" class="smallLight">Physical backup</text>
+      <circle cx="548" cy="8" r="8" fill="#f59e0b"/>
+      <text x="568" y="13" class="smallLight">Logical restore</text>
+      <circle cx="728" cy="8" r="8" fill="#a78bfa"/>
+      <text x="748" y="13" class="smallLight">Physical restore</text>
+    </g>
+    <line x1="28" y1="55" x2="1668" y2="55" stroke="#334155"/>
+    <text x="28" y="82" class="monoLight">Status contract</text>
+    <text x="164" y="82" class="bodyLight">Snapshot / RestoreSession component: Running → Succeeded or Failed · Restic ID · duration · size · integrity · error</text>
+    <text x="28" y="108" class="monoLight">Outside repo</text>
+    <text x="164" y="108" class="bodyLight">schedules · WAL/PITR · database lifecycle · target-volume mounts · retention policy · manifest restore</text>
+  </g>
+
+  <text x="1748" y="1480" text-anchor="end" class="small">kubedb.dev/postgres-restic-plugin · architecture snapshot 2026-08-28</text>
+</svg>

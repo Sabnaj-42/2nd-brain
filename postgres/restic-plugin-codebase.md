@@ -132,10 +132,10 @@ Restic gives the plugin:
 
 There are two meanings of “snapshot” in this system:
 
-| Name | What it is |
-| --- | --- |
-| KubeStash `Snapshot` | A Kubernetes custom resource that records backup metadata and status. |
-| Restic snapshot | Restic's internal immutable backup record, identified by a Restic snapshot ID. |
+| Name                  | What it is                                                                     |
+| --------------------- | ------------------------------------------------------------------------------ |
+| KubeStash`Snapshot` | A Kubernetes custom resource that records backup metadata and status.          |
+| Restic snapshot       | Restic's internal immutable backup record, identified by a Restic snapshot ID. |
 
 The Restic ID is saved inside the status of the KubeStash `Snapshot`.
 
@@ -220,34 +220,12 @@ controller with a long-running reconcile loop. It performs one requested operati
 
 ## 4. The architecture in one picture
 
-```mermaid
-flowchart LR
-    KS["KubeStash controller<br/>creates session, snapshot, and Job"]
-    CLI["kubestash-postgres<br/>one short-lived process"]
-    API["Kubernetes API<br/>Sessions · Snapshot · AppBinding<br/>Repository · BackupStorage · Secrets"]
-    PG["PostgreSQL server"]
-    PGT["PostgreSQL client tool<br/>pg_dumpall / pg_dump / pg_basebackup / psql"]
-    R["Restic process"]
-    OBJ[("Object storage or local backend")]
-    STATUS["Snapshot / RestoreSession status"]
-
-    KS --> CLI
-    CLI <--> API
-    PGT <--> PG
-    CLI --> PGT
-    CLI --> R
-    PGT <-->|"streamed bytes"| R
-    R <--> OBJ
-    CLI --> STATUS
-    STATUS --> API
-```
-
 It helps to divide the work into two planes:
 
-| Plane | Purpose | Examples |
-| --- | --- | --- |
+| Plane         | Purpose                                    | Examples                                                                   |
+| ------------- | ------------------------------------------ | -------------------------------------------------------------------------- |
 | Control plane | Learn what to do and report what happened. | Kubernetes API reads, Secret resolution, readiness checks, status patches. |
-| Data plane | Move the actual database bytes. | `pg_dumpall | restic`, or `restic | psql`. |
+| Data plane    | Move the actual database bytes.            | `pg_dumpall                                                                |
 
 Most of `pkg/common/helpers.go` is control-plane code. The four command files assemble the data plane.
 
@@ -379,14 +357,14 @@ Think of it as the operation's mutable work bag.
 
 ### 7.1 Fields grouped by responsibility
 
-| Group | Fields | Meaning |
-| --- | --- | --- |
-| Kubernetes clients | `KubeClient`, `Client` | Typed core client plus controller-runtime client. |
-| General execution | `Namespace`, `WaitTimeout` | Session namespace and readiness timeout. |
-| Target database | private `db`, `AppBinding`, `User` | KubeDB Postgres object and connection description. |
-| KubeStash input | `BackupConfiguration`, `BackupSession`, `RestoreSession`, `Snapshots`, `Snapshot` | Objects that describe the operation. |
-| Restic input | `SetupOptions`, `BackupOptions`, `DumpOptions` | Configuration consumed by the Restic Go wrapper. |
-| Process pipeline | `Session`, `PostgresArgs`, `BackupCMD`, `RestoreCMD`, `RestorePath` | Environment, executable names, and arguments. |
+| Group              | Fields                                                                                      | Meaning                                            |
+| ------------------ | ------------------------------------------------------------------------------------------- | -------------------------------------------------- |
+| Kubernetes clients | `KubeClient`, `Client`                                                                  | Typed core client plus controller-runtime client.  |
+| General execution  | `Namespace`, `WaitTimeout`                                                              | Session namespace and readiness timeout.           |
+| Target database    | private`db`, `AppBinding`, `User`                                                     | KubeDB Postgres object and connection description. |
+| KubeStash input    | `BackupConfiguration`, `BackupSession`, `RestoreSession`, `Snapshots`, `Snapshot` | Objects that describe the operation.               |
+| Restic input       | `SetupOptions`, `BackupOptions`, `DumpOptions`                                        | Configuration consumed by the Restic Go wrapper.   |
+| Process pipeline   | `Session`, `PostgresArgs`, `BackupCMD`, `RestoreCMD`, `RestorePath`               | Environment, executable names, and arguments.      |
 
 There are two Kubernetes clients because their libraries have different strengths:
 
@@ -1038,12 +1016,12 @@ The KubeStash resolver later translates `BackupStorage.Spec.Storage` into Restic
 
 ### 14.2 Supported provider shapes in the pinned resolver
 
-| KubeStash storage | Restic repository form |
-| --- | --- |
-| Local | `<mount-path>/<directory>` |
-| S3 | `s3:<endpoint>/<bucket>/<prefix>/<directory>` |
-| GCS | `gs:<bucket>:/<prefix>/<directory>` |
-| Azure | `azure:<container>:/<prefix>/<directory>` |
+| KubeStash storage | Restic repository form                          |
+| ----------------- | ----------------------------------------------- |
+| Local             | `<mount-path>/<directory>`                    |
+| S3                | `s3:<endpoint>/<bucket>/<prefix>/<directory>` |
+| GCS               | `gs:<bucket>:/<prefix>/<directory>`           |
+| Azure             | `azure:<container>:/<prefix>/<directory>`     |
 
 The resolver also loads provider Secrets, endpoints, regions, TLS options, and connection settings.
 For S3 it can use a credential manager when no fixed Secret name is configured.
@@ -1052,10 +1030,10 @@ For S3 it can use a credential manager when no fixed Secret name is configured.
 
 Two separate credentials are involved:
 
-| Credential | Purpose |
-| --- | --- |
-| Storage credential | Permission to access S3/GCS/Azure/local storage. |
-| Encryption Secret | Supplies `RESTIC_PASSWORD`, which encrypts/decrypts repository content. |
+| Credential         | Purpose                                                                  |
+| ------------------ | ------------------------------------------------------------------------ |
+| Storage credential | Permission to access S3/GCS/Azure/local storage.                         |
+| Encryption Secret  | Supplies`RESTIC_PASSWORD`, which encrypts/decrypts repository content. |
 
 Having bucket access without the Restic password is not enough to restore the data.
 
@@ -1200,10 +1178,10 @@ The AppBinding must provide a PostgreSQL-understandable `sslmode` through the su
 
 ### 16.5 Two separate waits
 
-| Wait | Checks | Poll interval | Used by |
-| --- | --- | --- | --- |
-| KubeDB Ready wait | `Postgres.status.conditions[DatabaseReady]` | 5 seconds | KubeDB logical backup/restore; all physical backups |
-| Connection wait | `pg_isready` using assembled connection settings | 5 seconds | Logical backup, physical backup, logical restore |
+| Wait              | Checks                                             | Poll interval | Used by                                             |
+| ----------------- | -------------------------------------------------- | ------------- | --------------------------------------------------- |
+| KubeDB Ready wait | `Postgres.status.conditions[DatabaseReady]`      | 5 seconds     | KubeDB logical backup/restore; all physical backups |
+| Connection wait   | `pg_isready` using assembled connection settings | 5 seconds     | Logical backup, physical backup, logical restore    |
 
 Both use `WaitTimeout`, whose default is 300 seconds. The Restic operation itself uses the remaining
 KubeStash session deadline, which is a different timeout source.
@@ -1360,16 +1338,16 @@ The guard addresses one severe failure mode; it is not a general logical-restore
 
 Most commands expose:
 
-| Flag | Meaning |
-| --- | --- |
-| `--master` | Explicit Kubernetes API server. |
-| `--kubeconfig` | Explicit kubeconfig path. |
-| `--namespace` | BackupSession or RestoreSession namespace; default `default`. |
-| `--scratch-dir` | TLS/Restic temporary directory; default `/tmp`. |
-| `--enable-cache` | Enable Restic cache; default false. |
-| `--wait-timeout` | Database readiness wait in seconds; default 300. |
-| `--pg-args` | Extra arguments appended to the PostgreSQL/tar command. |
-| `--user` | User override, mainly useful for certificate authentication. |
+| Flag               | Meaning                                                        |
+| ------------------ | -------------------------------------------------------------- |
+| `--master`       | Explicit Kubernetes API server.                                |
+| `--kubeconfig`   | Explicit kubeconfig path.                                      |
+| `--namespace`    | BackupSession or RestoreSession namespace; default`default`. |
+| `--scratch-dir`  | TLS/Restic temporary directory; default`/tmp`.               |
+| `--enable-cache` | Enable Restic cache; default false.                            |
+| `--wait-timeout` | Database readiness wait in seconds; default 300.               |
+| `--pg-args`      | Extra arguments appended to the PostgreSQL/tar command.        |
+| `--user`         | User override, mainly useful for certificate authentication.   |
 
 Backup commands require `--backupsession`; restore commands require `--restoresession` and also need
 a valid `--snapshot` in practice.
@@ -1475,11 +1453,11 @@ compatibility surprises in logical tools.
 
 For each database version and architecture, the Makefile builds:
 
-| Variant | Template | Normal base |
-| --- | --- | --- |
-| Production | `Dockerfile.in` | `postgres:<DB>-alpine` |
-| Debug | `Dockerfile.dbg` | `postgres:<DB>` |
-| UBI | `Dockerfile.ubi` | `ubi10/ubi-minimal` |
+| Variant    | Template           | Normal base              |
+| ---------- | ------------------ | ------------------------ |
+| Production | `Dockerfile.in`  | `postgres:<DB>-alpine` |
+| Debug      | `Dockerfile.dbg` | `postgres:<DB>`        |
+| UBI        | `Dockerfile.ubi` | `ubi10/ubi-minimal`    |
 
 For `17.9-percona`, all three variables point to the same Percona PostgreSQL base image because that
 distribution is Debian-based and supplies the TDE-specific tool.
@@ -2001,37 +1979,27 @@ Read in this order if you are new to the repository:
 
 1. **`pkg/common/types.go`**
    Learn the vocabulary, constants, `Options`, and defaults.
-
 2. **`pkg/root.go` and `cmd/postgres-restic-plugin/main.go`**
    See the command surface and process lifecycle.
-
 3. **`pkg/backup.go`**
    It is the simplest complete path: Kubernetes discovery, connection setup, Restic setup, pipeline,
    progress, and status.
-
 4. **`pkg/common/helpers.go` in sections**
    Read object discovery first, database setup second, Restic setup third. Do not try to memorize all
    600 lines at once.
-
 5. **`pkg/common/status.go`**
    Understand what success/failure looks like to KubeStash.
-
 6. **`pkg/physical_backup.go` plus `pkg/options.go`**
    Compare it with logical backup and study ownership of base-backup flags.
-
 7. **`pkg/restore.go`**
    Focus on pipeline order, password filtering, TDE detection, and Restic snapshot selection.
-
 8. **`pkg/physical_restore.go`**
    Notice how little database discovery it needs and how much it assumes about the surrounding Job.
-
 9. **`pkg/common/druid.go`**
    Add the special target indirection after the normal path is clear.
-
 10. **Pinned Restic code in `vendor/gomodules.xyz/restic`**
     Read `config.go`, `backup.go`, `restore.go`, and relevant parts of `commands.go` to understand
     `--stdin`, `dump`, multi-backend leaf commands, and output extraction.
-
 11. **Makefile and Dockerfiles**
     Finish with packaging, because executable availability explains several runtime assumptions.
 
@@ -2053,122 +2021,122 @@ This simple separation makes the code much easier to follow.
 
 ### `pkg/root.go`
 
-| Function | Role |
-| --- | --- |
+| Function       | Role                                                        |
+| -------------- | ----------------------------------------------------------- |
 | `NewRootCmd` | Creates root and registers version plus four data commands. |
 
 ### `pkg/backup.go`
 
-| Function | Role |
-| --- | --- |
-| `NewCmdBackup` | End-to-end logical backup orchestration. |
-| `parseBackupFlags` | Binds logical-backup CLI flags into global state. |
-| `setupBackupOptions` | Builds database producer command and connection environment. |
-| `performBackup` | Builds Restic backends, initializes repositories, locks, runs backup, records output. |
-| `startProgressReporting` | Starts KubeStash's Restic progress reporter on deep-copied objects. |
+| Function                   | Role                                                                                  |
+| -------------------------- | ------------------------------------------------------------------------------------- |
+| `NewCmdBackup`           | End-to-end logical backup orchestration.                                              |
+| `parseBackupFlags`       | Binds logical-backup CLI flags into global state.                                     |
+| `setupBackupOptions`     | Builds database producer command and connection environment.                          |
+| `performBackup`          | Builds Restic backends, initializes repositories, locks, runs backup, records output. |
+| `startProgressReporting` | Starts KubeStash's Restic progress reporter on deep-copied objects.                   |
 
 ### `pkg/physical_backup.go`
 
-| Function | Role |
-| --- | --- |
-| `NewCmdBaseBackup` | End-to-end physical backup orchestration. |
-| `parseBaseBackupFlags` | Binds physical-backup flags. |
-| `resolveBaseBackupCmd` | Selects `pg_tde_basebackup` when available. |
+| Function                   | Role                                                                    |
+| -------------------------- | ----------------------------------------------------------------------- |
+| `NewCmdBaseBackup`       | End-to-end physical backup orchestration.                               |
+| `parseBaseBackupFlags`   | Binds physical-backup flags.                                            |
+| `resolveBaseBackupCmd`   | Selects`pg_tde_basebackup` when available.                            |
 | `setupBaseBackupOptions` | Adds fixed/default base-backup flags and switches component/file names. |
-| `performBaseBackup` | Physical equivalent of logical `performBackup`. |
+| `performBaseBackup`      | Physical equivalent of logical`performBackup`.                        |
 
 ### `pkg/restore.go`
 
-| Function | Role |
-| --- | --- |
-| `NewCmdRestore` | End-to-end logical restore orchestration. |
-| `parseRestoreFlags` | Binds logical-restore flags. |
-| `setupDumpOptions` | Builds `restic -> sed -> optional awk -> psql` and selects Restic ID. |
-| `newTDERestoreGuardCommand` | Produces the streaming `awk` guard. |
-| `performDump` | Builds one Restic backend, runs `Dump`, records restore status. |
+| Function                      | Role                                                                   |
+| ----------------------------- | ---------------------------------------------------------------------- |
+| `NewCmdRestore`             | End-to-end logical restore orchestration.                              |
+| `parseRestoreFlags`         | Binds logical-restore flags.                                           |
+| `setupDumpOptions`          | Builds`restic -> sed -> optional awk -> psql` and selects Restic ID. |
+| `newTDERestoreGuardCommand` | Produces the streaming`awk` guard.                                   |
+| `performDump`               | Builds one Restic backend, runs`Dump`, records restore status.       |
 
 ### `pkg/physical_restore.go`
 
-| Function | Role |
-| --- | --- |
-| `NewCmdBaseBackupRestore` | End-to-end physical restore orchestration. |
-| `parseBaseBackupRestoreFlags` | Binds restore command/path/session flags. |
-| `setupBaseBackupDumpOptions` | Creates target directory, builds extractor, selects Restic ID. |
-| `performBaseBackupDump` | Runs Restic dump into extractor and records status. |
+| Function                        | Role                                                           |
+| ------------------------------- | -------------------------------------------------------------- |
+| `NewCmdBaseBackupRestore`     | End-to-end physical restore orchestration.                     |
+| `parseBaseBackupRestoreFlags` | Binds restore command/path/session flags.                      |
+| `setupBaseBackupDumpOptions`  | Creates target directory, builds extractor, selects Restic ID. |
+| `performBaseBackupDump`       | Runs Restic dump into extractor and records status.            |
 
 ### `pkg/options.go`
 
-| Function | Role |
-| --- | --- |
-| `NotAllowedFlags` | Lists physical-backup flags intended to remain plugin-owned. |
-| `FixedArgs` | Returns `-D -` and `-F t`. |
-| `WalFetch`, `CheckPoint` | Names flags whose presence suppresses defaults. |
-| `validateBackupCmd` | Whitelists logical producer executables. |
-| `validateBaseBackupCmd` | Whitelists physical producer executables. |
-| `injectArgsIfNotProvided` | Adds `-X fetch` and `-c fast` defaults. |
-| `validateBaseBackupUserFlags` | Applies physical argument policy. |
-| `parseFlagsIntoSlice` | Simplified flag-name extraction used by validation/defaulting. |
+| Function                        | Role                                                           |
+| ------------------------------- | -------------------------------------------------------------- |
+| `NotAllowedFlags`             | Lists physical-backup flags intended to remain plugin-owned.   |
+| `FixedArgs`                   | Returns`-D -` and `-F t`.                                  |
+| `WalFetch`, `CheckPoint`    | Names flags whose presence suppresses defaults.                |
+| `validateBackupCmd`           | Whitelists logical producer executables.                       |
+| `validateBaseBackupCmd`       | Whitelists physical producer executables.                      |
+| `injectArgsIfNotProvided`     | Adds`-X fetch` and `-c fast` defaults.                     |
+| `validateBaseBackupUserFlags` | Applies physical argument policy.                              |
+| `parseFlagsIntoSlice`         | Simplified flag-name extraction used by validation/defaulting. |
 
 ### `pkg/common/helpers.go`: process and Kubernetes setup
 
-| Function | Role |
-| --- | --- |
-| `NewSessionWrapper` | Creates shell session and one command descriptor. |
-| `NewRuntimeClient` | Registers all required API schemes and creates dynamic client. |
-| `GetBackupSession`, `GetRestoreSession` | Load operation CRs. |
-| `GetBackupConfiguration` | Follow BackupSession invoker to configuration. |
-| `WaitForDatabaseReadyCondition` | Poll KubeDB Postgres `DatabaseReady`. |
-| `GetAppBindingForTarget`, `getTargetRef` | Resolve operation target and load its AppBinding. |
-| `GetBackupStorage`, `GetRepository` | Load storage CRs. |
-| `GetSnapshots`, `GetSnapshot` | Load KubeStash Snapshot CRs. |
-| `GetResticSnapshotID` | Read Restic ID from component status. |
+| Function                                     | Role                                                           |
+| -------------------------------------------- | -------------------------------------------------------------- |
+| `NewSessionWrapper`                        | Creates shell session and one command descriptor.              |
+| `NewRuntimeClient`                         | Registers all required API schemes and creates dynamic client. |
+| `GetBackupSession`, `GetRestoreSession`  | Load operation CRs.                                            |
+| `GetBackupConfiguration`                   | Follow BackupSession invoker to configuration.                 |
+| `WaitForDatabaseReadyCondition`            | Poll KubeDB Postgres`DatabaseReady`.                         |
+| `GetAppBindingForTarget`, `getTargetRef` | Resolve operation target and load its AppBinding.              |
+| `GetBackupStorage`, `GetRepository`      | Load storage CRs.                                              |
+| `GetSnapshots`, `GetSnapshot`            | Load KubeStash Snapshot CRs.                                   |
+| `GetResticSnapshotID`                      | Read Restic ID from component status.                          |
 
 ### `pkg/common/helpers.go`: database setup
 
-| Function | Role |
-| --- | --- |
-| `SetDatabaseConnectionParameters` | Add hostname and port, defaulting port to 5432. |
-| `SetDatabaseCredentials` | Resolve auth/virtual Secret, set password/user, write client TLS files. |
-| `TargetHasPgTdeExtension` | Side-effect-free `psql` query for target TDE capability. |
-| `getSSLMODE` | Derive PostgreSQL SSL mode from AppBinding. |
-| `SetTLSParameters` | Write CA bundle and set `PGSSLROOTCERT`. |
-| `SetUserArgs` | Append whitespace-split caller arguments. |
-| `WaitForDBConnection` | Poll `pg_isready`. |
-| `IsTargetManagedByKubeDB` | Check target API group. |
+| Function                            | Role                                                                    |
+| ----------------------------------- | ----------------------------------------------------------------------- |
+| `SetDatabaseConnectionParameters` | Add hostname and port, defaulting port to 5432.                         |
+| `SetDatabaseCredentials`          | Resolve auth/virtual Secret, set password/user, write client TLS files. |
+| `TargetHasPgTdeExtension`         | Side-effect-free`psql` query for target TDE capability.               |
+| `getSSLMODE`                      | Derive PostgreSQL SSL mode from AppBinding.                             |
+| `SetTLSParameters`                | Write CA bundle and set`PGSSLROOTCERT`.                               |
+| `SetUserArgs`                     | Append whitespace-split caller arguments.                               |
+| `WaitForDBConnection`             | Poll`pg_isready`.                                                     |
+| `IsTargetManagedByKubeDB`         | Check target API group.                                                 |
 
 ### `pkg/common/helpers.go`: Restic setup
 
-| Function | Role |
-| --- | --- |
-| `GetResticWrapperForSnapshots` | Prepare setup and construct Restic wrapper using same shell session. |
-| `setSetupOptionsForSnapshots` | Set deadline/priority and build all backends. |
-| `buildBackend` | Join Snapshot, Repository, BackupStorage, component path, and encryption Secret. |
-| `setTimeout` | Pass remaining KubeStash deadline to Restic. |
-| `setNiceAndIONiceSettings` | Read resource-priority settings from environment. |
-| `getEncryptionSecret` | Select backup or restore encryption key reference. |
-| `InitializeRepositories` | Initialize valid repositories and remove failed backends. |
-| `GetBackupTargetNamespace` | Choose namespace passed to Restic lock logic; the pinned implementation currently ignores it. |
+| Function                         | Role                                                                                          |
+| -------------------------------- | --------------------------------------------------------------------------------------------- |
+| `GetResticWrapperForSnapshots` | Prepare setup and construct Restic wrapper using same shell session.                          |
+| `setSetupOptionsForSnapshots`  | Set deadline/priority and build all backends.                                                 |
+| `buildBackend`                 | Join Snapshot, Repository, BackupStorage, component path, and encryption Secret.              |
+| `setTimeout`                   | Pass remaining KubeStash deadline to Restic.                                                  |
+| `setNiceAndIONiceSettings`     | Read resource-priority settings from environment.                                             |
+| `getEncryptionSecret`          | Select backup or restore encryption key reference.                                            |
+| `InitializeRepositories`       | Initialize valid repositories and remove failed backends.                                     |
+| `GetBackupTargetNamespace`     | Choose namespace passed to Restic lock logic; the pinned implementation currently ignores it. |
 
 ### `pkg/common/status.go`
 
-| Function | Role |
-| --- | --- |
-| `InitSnapshotComponentStatus` | Set every backup Snapshot component Running. |
-| `UpdateSnapshotStatus` | Patch component status to API server. |
-| `UpsertSnapshotsComponentStatus` | Convert error/Restic stats into a component object. |
-| `InitRestoreComponentStatus` | Set RestoreSession component Running. |
-| `UpdateRestoreSessionStatus` | Patch restore component map. |
-| `UpsertRestoreComponentStatus` | Convert restore output/error into final component state. |
-| `SetBackupOutput` | Map backend outputs and repository verification to Snapshots. |
+| Function                           | Role                                                          |
+| ---------------------------------- | ------------------------------------------------------------- |
+| `InitSnapshotComponentStatus`    | Set every backup Snapshot component Running.                  |
+| `UpdateSnapshotStatus`           | Patch component status to API server.                         |
+| `UpsertSnapshotsComponentStatus` | Convert error/Restic stats into a component object.           |
+| `InitRestoreComponentStatus`     | Set RestoreSession component Running.                         |
+| `UpdateRestoreSessionStatus`     | Patch restore component map.                                  |
+| `UpsertRestoreComponentStatus`   | Convert restore output/error into final component state.      |
+| `SetBackupOutput`                | Map backend outputs and repository verification to Snapshots. |
 
 ### `pkg/common/druid.go`
 
-| Function | Role |
-| --- | --- |
-| `getDruidTargetRef` | Detect Druid backup/restore target. |
-| `isTargetDruid` | Kind check. |
+| Function                       | Role                                   |
+| ------------------------------ | -------------------------------------- |
+| `getDruidTargetRef`          | Detect Druid backup/restore target.    |
+| `isTargetDruid`              | Kind check.                            |
 | `getDruidMetadataStorageRef` | Resolve metadata PostgreSQL reference. |
-| `getDruid` | Load Druid CR. |
+| `getDruid`                   | Load Druid CR.                         |
 
 ---
 
@@ -2270,3 +2238,25 @@ And keep three responsibility boundaries separate:
 
 Once those separations are clear, almost every function in the repository becomes a small piece of
 one of four jobs: discover, prepare, stream, or report.
+
+```mermaid
+flowchart LR
+    KS["KubeStash controller<br/>creates session, snapshot, and Job"]
+    CLI["kubestash-postgres<br/>one short-lived process"]
+    API["Kubernetes API<br/>Sessions · Snapshot · AppBinding<br/>Repository · BackupStorage · Secrets"]
+    PG["PostgreSQL server"]
+    PGT["PostgreSQL client tool<br/>pg_dumpall / pg_dump / pg_basebackup / psql"]
+    R["Restic process"]
+    OBJ[("Object storage or local backend")]
+    STATUS["Snapshot / RestoreSession status"]
+
+    KS --> CLI
+    CLI <--> API
+    PGT <--> PG
+    CLI --> PGT
+    CLI --> R
+    PGT <-->|"streamed bytes"| R
+    R <--> OBJ
+    CLI --> STATUS
+    STATUS --> API
+```
