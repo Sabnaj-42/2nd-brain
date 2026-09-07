@@ -1,0 +1,73 @@
+apiVersion: kubedb.com/v1alpha2
+kind: Milvus
+metadata:
+  annotations:
+    app.kubernetes.io/cluster-tier: GeneralPurpose
+  labels:
+    app.kubernetes.io/instance: milvus-standalone
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/name: milvuss.kubedb.com
+  name: milvus-standalone
+  namespace: demo
+spec:
+  deletionPolicy: WipeOut
+  disableSecurity: false
+  metaStorage:
+    externallyManaged: false
+    size: 3
+  objectStorage:
+    configSecret:
+      name: milvus-storage-config
+  podTemplate:
+    spec:
+      containers:
+        - name: milvus
+          resources:
+            limits:
+              memory: 2Gi
+            requests:
+              cpu: "1"
+              memory: 1Gi
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+            runAsGroup: 0
+            runAsNonRoot: true
+            runAsUser: 54321
+            seccompProfile:
+              type: RuntimeDefault
+      initContainers:
+        - name: milvus-init
+          resources:
+            limits:
+              memory: 512Mi
+            requests:
+              cpu: 200m
+              memory: 256Mi
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+            runAsGroup: 0
+            runAsNonRoot: true
+            runAsUser: 54321
+            seccompProfile:
+              type: RuntimeDefault
+      nodeSelector:
+        kubernetes.io/os: linux
+      securityContext:
+        fsGroup: 54321
+  storage:
+    accessModes:
+      - ReadWriteOnce
+    resources:
+      requests:
+        storage: 10Gi
+    storageClassName: longhorn
+  storageType: Durable
+  topology:
+    mode: Standalone
+  version: 2.6.11
