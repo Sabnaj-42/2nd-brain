@@ -1,0 +1,48 @@
+diff --git a/pkg/controller/reconcile_membership.go b/pkg/controller/reconcile_membership.go
+index ee7948b7..26d94476 100644
+--- a/pkg/controller/reconcile_membership.go
++++ b/pkg/controller/reconcile_membership.go
+@@ -18,10 +18,8 @@ package controller
+ 
+ import (
+ 	"context"
+-	"fmt"
+ 	"time"
+ 
+-	"kubedb.dev/apimachinery/apis/kubedb"
+ 	dbapi "kubedb.dev/apimachinery/apis/kubedb/v1alpha2"
+ 	etcdclient "kubedb.dev/db-client-go/etcd"
+ 
+@@ -276,13 +274,27 @@ func (r *EtcdReconciler) isLearnerCaughtUp(ctx context.Context, db *dbapi.Etcd,
+ 	return ratio >= learnerPromotionRatio, nil
+ }
+ 
+-// clusterClient dials the cluster through the client Service. The Service only
+-// routes to Ready pods, so it always lands on a serving voting member -- never
+-// on the learner that is being added.
++// clusterClient dials ordinal 0 directly instead of the shared client Service.
++// The Service was assumed to only ever route to a voting member, on the theory
++// that a learner never turns Ready -- but etcd's /health handler special-cases
++// learners (it only checks that they have a leader, since they cannot serve a
++// linearizable read), so a learner's pod does turn Ready and does join the
++// Service's endpoints. Once that happens, every admin RPC issued against the
++// Service (MemberList, Status, MemberPromote, ...) has a chance of being
++// routed to the learner instead, which etcd answers with "rpc not supported
++// for learner" -- and this file treats that as "try again later" everywhere,
++// so a promotion that keeps landing on the learner never makes progress and
++// the cluster never gets its next member.
++//
++// Ordinal 0 does not have this problem: scaleUpOneMember only ever adds the
++// next-highest ordinal as a learner, and scaleDownOneMember only ever removes
++// the highest ordinal, so ordinal 0 stays a full voting member for as long as
++// the cluster has any members at all -- it is a stable anchor to dial
++// directly, the same way promoteLearnerIfReady already dials the learner
++// directly by pod name instead of going through the Service.
+ func (r *EtcdReconciler) clusterClient(ctx context.Context, db *dbapi.Etcd) (*etcdclient.Client, error) {
+-	url := fmt.Sprintf("%s://%s:%d", db.Scheme(), db.PrimaryServiceDNS(), kubedb.EtcdClientPort)
+ 	return etcdclient.NewKubeDBClientBuilder(r.KBClient, db).
+-		WithURL(url).
++		WithPod(db.PodName(0)).
+ 		WithContext(ctx).
+ 		GetEtcdClient()
+ }

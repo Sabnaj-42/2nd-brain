@@ -1,0 +1,12 @@
+apiVersion: catalog.kubedb.com/v1alpha1
+kind: EtcdVersion
+metadata:
+  name: "3.5.21"
+spec:
+  version: "3.5.21"
+  db:
+    image: gcr.io/etcd-development/etcd:v3.5.21
+  exporter:
+    image: ghcr.io/appscode/etcd_exporter:v0.1.0
+  securityContext:
+    runAsUser: 1000

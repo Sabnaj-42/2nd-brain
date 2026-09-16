@@ -1,0 +1,49 @@
+apiVersion: minio.min.io/v2
+kind: Tenant
+metadata:
+  name: milvus-minio
+  namespace: milvus-minio
+  labels:
+    app: minio
+spec:
+  image: quay.io/minio/minio:RELEASE.2025-04-08T15-41-24Z
+  imagePullPolicy: IfNotPresent
+  configuration:
+    name: milvus-minio-env-configuration
+  buckets:
+    - name: mlv-release
+  features:
+    bucketDNS: false
+    enableSFTP: false
+  podManagementPolicy: Parallel
+  pools:
+    - name: default
+      servers: 1
+      volumesPerServer: 1
+      volumeClaimTemplate:
+        metadata:
+          name: data
+        spec:
+          accessModes:
+            - ReadWriteOnce
+          resources:
+            requests:
+              storage: 1Gi
+  poolsMetadata:
+    annotations: {}
+    labels: {}
+  prometheusOperator: false
+  requestAutoCert: false
+  mountPath: /export
+  subPath: /data
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: milvus-minio-env-configuration
+  namespace: milvus-minio
+type: Opaque
+stringData:
+  config.env: |-
+    export MINIO_ROOT_USER="minio"
+    export MINIO_ROOT_PASSWORD="minio123"
